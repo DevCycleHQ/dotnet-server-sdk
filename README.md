@@ -1,4 +1,4 @@
-# DevCycle - the C# library for the DevCycle Bucketing API
+# DevCycle - the dotnet library for the DevCycle Bucketing API
 
 Documents the DevCycle Bucketing API which provides and API interface to User Bucketing and for generated SDKs.
 
@@ -19,9 +19,8 @@ Documents the DevCycle Bucketing API which provides and API interface to User Bu
 
 <a name="installation"></a>
 ## Installation
-Generate the DLL using your preferred tool
-
-Then include the DLL (under the `bin` folder) in the C# project, and use the namespaces:
+Download the SDK from Nuget - https://nuget.info/packages/DevCycle/1.0.0
+and use the namespaces:
 ```csharp
 using DevCycle.Api;
 using DevCycle.Client;
@@ -49,12 +48,12 @@ namespace Example
 
             try
             {
-                Dictionary<string, Feature> result = await api.GetFeaturesAsync(user);
+                Dictionary<string, Feature> result = await api.AllFeaturesAsync(user);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.GetFeaturesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVC.AllFeaturesAsync: " + e.Message );
             }
         }
     }
@@ -66,9 +65,9 @@ namespace Example
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DVC* | [**GetFeaturesAsync**](docs/DVC.md#getfeatures) | **POST** /v1/features | Get all features for user
-*DVC* | [**GetVariableByKeyAsync**](docs/DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user
-*DVC* | [**GetVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
+*DVC* | [**AllFeaturesAsync**](docs/DVC.md#getfeatures) | **POST** /v1/features | Get all features for user
+*DVC* | [**VariableAsync**](docs/DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user
+*DVC* | [**AllVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
 *DVC* | [**TrackAsync**](docs/DVC.md#postevents) | **POST** /v1/track | Post events to DevCycle for user
 
 <a name="documentation-for-models"></a>
@@ -76,19 +75,8 @@ Class | Method | HTTP request | Description
 
  - [Model.ErrorResponse](docs/ErrorResponse.md)
  - [Model.Feature](docs/Feature.md)
- - [Model.InlineResponse201](docs/InlineResponse201.md)
- - [Model.ModelEvent](docs/ModelEvent.md)
- - [Model.UserData](docs/UserData.md)
- - [Model.UserDataAndEventsBody](docs/UserDataAndEventsBody.md)
+ - [Model.DVCResponse](docs/DVCResponse.md)
+ - [Model.Event](docs/Event.md)
+ - [Model.User](docs/User.md)
+ - [Model.UserDataAndEventsBody](docs/UserAndEvents.md)
  - [Model.Variable](docs/Variable.md)
-
-<a name="documentation-for-authorization"></a>
-## Documentation for Authorization
-
-<a name="bearerAuth"></a>
-### bearerAuth
-
-- **Type**: API key
-- **API key parameter name**: Authorization
-- **Location**: HTTP header
-

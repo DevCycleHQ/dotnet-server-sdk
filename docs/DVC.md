@@ -4,16 +4,16 @@ All URIs are relative to *https://bucketing-api.devcycle.com/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetFeaturesAsync**](DVC.md#getfeatures) | **POST** /v1/features | Get all features by key for user data
-[**GetVariableByKeyAsync**](DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user data
-[**GetVariablesAsync**](DVC.md#getvariables) | **POST** /v1/variables | Get all variables by key for user data
+[**AllFeaturesAsync**](DVC.md#allFeatures) | **POST** /v1/features | Get all features by key for user data
+[**VariableAsync**](DVC.md#variable) | **POST** /v1/variables/{key} | Get variable by key for user data
+[**AllVariablesAsync**](DVC.md#allVariables) | **POST** /v1/variables | Get all variables by key for user data
 [**TrackAsync**](DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
 
-<a name="getfeatures"></a>
-# **GetFeatures**
-> Dictionary<string, Feature> GetFeatures (UserData body)
+<a name="allFeatures"></a>
+# **AllFeatures**
+> Dictionary<string, Feature> AllFeatures (UserData body)
 
-Get all features by key for user data
+Get all features by user data
 
 ### Example
 ```csharp
@@ -24,7 +24,7 @@ using DevCycle.Model;
 
 namespace Example
 {
-    public class GetFeaturesExample
+    public class AllFeaturesExample
     {
         public async Task main()
         {
@@ -34,12 +34,12 @@ namespace Example
 
             try
             {
-                Dictionary<string, Feature> result = await api.GetFeaturesAsync(user);
+                Dictionary<string, Feature> result = await api.AllFeaturesAsync(user);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.GetFeaturesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVC.AllFeaturesAsync: " + e.Message );
             }
         }
     }
@@ -62,9 +62,9 @@ Server API Key
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-<a name="getvariablebykey"></a>
-# **GetVariableByKey**
-> Variable GetVariableByKey (UserData body, string key)
+<a name="variable"></a>
+# **Variable**
+> Variable Variable (User body, string key, T defaultValue)
 
 Get variable by key for user data
 
@@ -77,7 +77,7 @@ using DevCycle.Model;
 
 namespace Example
 {
-    public class GetVariableByKeyExample
+    public class VariableExample
     {
         public void main()
         {
@@ -88,12 +88,12 @@ namespace Example
             try
             {
                 var key = "YOUR_KEY";
-                Variable result = await api.GetVariableByKeyAsync(user, key);
+                Variable result = await api.VariableAsync(user, key);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.GetFeaturesByKeyAsync: " + e.Message );
+                Debug.Print("Exception when calling DVC.VariableAsync: " + e.Message );
             }
         }
     }
@@ -117,9 +117,9 @@ Server API Key
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-<a name="getvariables"></a>
-# **GetVariables**
-> Dictionary<string, Variable> GetVariables (UserData body)
+<a name="allVariables"></a>
+# **AllVariables**
+> Dictionary<string, Variable> AllVariables (User body)
 
 Get all variables by key for user data
 
@@ -132,7 +132,7 @@ using DevCycle.Model;
 
 namespace Example
 {
-    public class GetVariablesExample
+    public class AllVariablesExample
     {
         public void main()
         {
@@ -142,12 +142,12 @@ namespace Example
 
             try
             {
-                Dictionary<string, Variable> result = await api.GetVariablesAsync(user);
+                Dictionary<string, Variable> result = await api.AllVariablesAsync(user);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.GetVariablesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVC.AllVariablesAsync: " + e.Message );
             }
         }
     }
