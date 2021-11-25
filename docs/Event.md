@@ -1,4 +1,4 @@
-# DevCycle.Model.ModelEvent
+# DevCycle.Model.Event
 ## Properties
 
 Name | Type | Description | Notes
