@@ -1,4 +1,4 @@
-# DevCycle.Api.DevcycleApi
+# DevCycle.Api.DVC
 
 All URIs are relative to *https://bucketing-api.devcycle.com/*
 
