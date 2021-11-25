@@ -11,7 +11,7 @@ Method | HTTP request | Description
 
 <a name="allFeatures"></a>
 # **AllFeatures**
-> Dictionary<string, Feature> AllFeatures (UserData body)
+> Dictionary<string, Feature> AllFeatures (User user)
 
 Get all features by user data
 
@@ -119,7 +119,7 @@ Server API Key
 
 <a name="allVariables"></a>
 # **AllVariables**
-> Dictionary<string, Variable> AllVariables (User body)
+> Dictionary<string, Variable> AllVariables (User user)
 
 Get all variables by key for user data
 
@@ -172,7 +172,7 @@ Server API Key
 
 <a name="track"></a>
 # **Track**
-> DVCResponse TrackAsync (UserAndEvents user)
+> DVCResponse TrackAsync (User user, Event event)
 
 Post events to DevCycle for user
 
