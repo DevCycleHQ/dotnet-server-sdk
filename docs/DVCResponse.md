@@ -1,4 +1,4 @@
-# DevCycle.Model.InlineResponse201
+# DevCycle.Model.DVCResponse
 ## Properties
 
 Name | Type | Description | Notes
