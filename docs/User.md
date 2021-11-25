@@ -1,4 +1,4 @@
-# DevCycle.Model.UserData
+# DevCycle.Model.User
 ## Properties
 
 Name | Type | Description | Notes
