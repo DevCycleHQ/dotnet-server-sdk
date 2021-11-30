@@ -25,6 +25,8 @@ namespace DevCycle.Api
 
         public async Task<Dictionary<string, Feature>> AllFeaturesAsync(User user)
         {
+            ValidateUser(user);
+
             AddDefaults(user);
 
             string urlFragment = "v1/features";
@@ -34,6 +36,18 @@ namespace DevCycle.Api
 
         public async Task<Variable> VariableAsync<T>(User user, string key, T defaultValue)
         {
+            ValidateUser(user);
+
+            if (String.IsNullOrEmpty(key))
+            {
+                throw new ArgumentException("key cannot be null or empty");
+            }
+
+            if (defaultValue == null)
+            {
+                throw new ArgumentNullException("defaultValue cannot be null");
+            }
+
             AddDefaults(user);
 
             string urlFragment = "v1/variables/" + key;
@@ -44,15 +58,17 @@ namespace DevCycle.Api
             {
                 variable = await GetResponseAsync<Variable>(user, urlFragment);
             }
-            catch(DVCException)
+            catch(DVCException e)
             {
-                variable = new Variable(null, key, Variable.TypeEnum.Boolean, defaultValue);
+                variable = new Variable(key, (object)defaultValue, e.Message);
             }
             return variable;
         }
 
         public async Task<Dictionary<string, Variable>> AllVariablesAsync(User user)
         {
+            ValidateUser(user);
+
             AddDefaults(user);
 
             string urlFragment = "v1/variables";
@@ -62,6 +78,8 @@ namespace DevCycle.Api
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
         {
+            ValidateUser(user);
+
             AddDefaults(user);
 
             string urlFragment = "v1/track";
@@ -116,6 +134,18 @@ namespace DevCycle.Api
             if (string.IsNullOrEmpty(user.SdkVersion))
             {
                 user.SdkVersion = DEFAULT_SDK_VERSION;
+            }
+        }
+
+        private void ValidateUser(User user)
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException("User cannot be null");
+            }
+            if (user.UserId == String.Empty)
+            {
+                throw new ArgumentException("userId cannot be empty");
             }
         }
 

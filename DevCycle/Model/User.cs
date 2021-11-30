@@ -70,9 +70,9 @@ namespace DevCycle.Model
             string deviceModel = default, SdkTypeEnum? sdkType = default, string sdkVersion = default)
         {
             // to ensure "userId" is required (not null)
-            if (userId == null)
+            if (String.IsNullOrEmpty(userId))
             {
-                throw new InvalidDataException("userId is a required property for User and cannot be null");
+                throw new ArgumentException("userId is a required property for User and cannot be null or empty");
             }
             else
             {

@@ -105,6 +105,26 @@ namespace DevCycle.Tests
             Assert.AreEqual("Successfully received 1 events", result.Message);
         }
 
+        [Test]
+        public void Variable_NullUser_ThrowsException()
+        {
+            using DVC api = new DVC(Guid.NewGuid().ToString());
+
+            ArgumentNullException ex = Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await api.VariableAsync(null, "some_key", true);
+            });
+        }
+
+        [Test]
+        public void User_NullUserId_ThrowsException()
+        {
+            ArgumentException ex = Assert.Throws<ArgumentException>(() =>
+            {
+                User user = new User();
+            });
+        }
+
         private void AssertUserDefaultsCorrect(User user)
         {
             Assert.AreEqual("C#", user.Platform);

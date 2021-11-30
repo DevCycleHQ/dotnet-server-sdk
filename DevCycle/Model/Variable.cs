@@ -93,6 +93,21 @@ namespace DevCycle.Model
             {
                 Value = value;
             }
+
+            IsDefaulted = false;
+        }
+
+        public Variable(string key, Object defaultValue, String reason)
+        {
+            Key = key;
+            Value = defaultValue;
+            ReasonDefaultValueUsed = reason;
+            IsDefaulted = true;
+        }
+
+        Variable()
+        {
+
         }
         
         /// <summary>
@@ -116,6 +131,10 @@ namespace DevCycle.Model
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
         [DataMember(Name="value", EmitDefaultValue=false)]
         public Object Value { get; set; }
+
+        public bool IsDefaulted { get; set; }
+
+        public String ReasonDefaultValueUsed { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
