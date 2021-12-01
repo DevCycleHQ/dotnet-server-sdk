@@ -27,6 +27,7 @@ namespace DevCycle.Api
 
         public virtual async Task<IRestResponse> SendRequestAsync(Object json, string urlFragment)
         {
+            restClient.IgnoreResponseStatusCode = true;
             var request = new RestRequest(urlFragment, Method.POST);
             request.AddJsonBody(json);
             request.AddHeader("Content-Type", "application/json");
