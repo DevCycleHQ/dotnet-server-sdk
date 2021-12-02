@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle", "DevCycle\DevCycle.csproj", "{1DCCB98A-73CB-45E4-8842-D2C18F8F1BFD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle.DotNet.Server.SDK", "DevCycle\DevCycle.DotNet.Server.SDK.csproj", "{1DCCB98A-73CB-45E4-8842-D2C18F8F1BFD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle.MSTests", "DevCycle.MSTests\DevCycle.MSTests.csproj", "{19D4777E-10B5-46B8-B945-C3C3A6A721D8}"
 EndProject

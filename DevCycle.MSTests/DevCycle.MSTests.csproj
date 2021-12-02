@@ -21,6 +21,6 @@
     <None Remove="RestSharp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DevCycle\DevCycle.csproj" />
+    <ProjectReference Include="..\DevCycle\DevCycle.DotNet.Server.SDK.csproj" />
   </ItemGroup>
 </Project>

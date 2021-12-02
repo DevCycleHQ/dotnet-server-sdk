@@ -124,7 +124,7 @@ namespace DevCycle.MSTests
         {
             Assert.AreEqual("C#", user.Platform);
             Assert.AreEqual(User.SdkTypeEnum.Server, user.SdkType);
-            Assert.AreEqual("1.0.2", user.SdkVersion);
+            Assert.AreEqual("1.0.0", user.SdkVersion);
         }
     }
 }

@@ -3,12 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ReleaseVersion>1.0.2</ReleaseVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="DevCycle" />
+    <None Remove="DevCycle.DotNet.Server.SDK" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DevCycle" Version="1.0.2" />
+    <PackageReference Include="DevCycle.DotNet.Server.SDK" Version="1.0.0" />
   </ItemGroup>
 </Project>

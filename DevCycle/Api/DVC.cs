@@ -6,8 +6,6 @@ using DevCycle.Model;
 using System.Threading.Tasks;
 using DevCycle.Exception;
 using Newtonsoft.Json;
-using System.Diagnostics;
-using System.Net.Http;
 
 namespace DevCycle.Api
 {
@@ -18,7 +16,7 @@ namespace DevCycle.Api
         private static readonly string DEFAULT_PLATFORM = "C#";
         private static readonly string DEFAULT_PLATFORM_VERSION = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
         private static readonly User.SdkTypeEnum DEFAULT_SDK_TYPE = User.SdkTypeEnum.Server;
-        private static readonly string DEFAULT_SDK_VERSION = "1.0.2";
+        private static readonly string DEFAULT_SDK_VERSION = "1.0.0";
 
         public DVC(string serverKey)
         {

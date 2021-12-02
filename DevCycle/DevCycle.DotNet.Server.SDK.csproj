@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3</TargetFrameworks>
-    <AssemblyName>DevCycle</AssemblyName>
-    <PackageId>DevCycle</PackageId>
+    <AssemblyName>DevCycle.DotNet.Server.SDK</AssemblyName>
+    <PackageId>DevCycle.DotNet.Server.SDK</PackageId>
     <OutputType>Library</OutputType>
     <Authors>DevCycle</Authors>
     <Company>DevCycle</Company>
@@ -21,8 +21,9 @@
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>Server SDK</Title>
-    <PackageVersion>1.0.2</PackageVersion>
+    <PackageVersion>1.0.0</PackageVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
+    <PackOnBuild>true</PackOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
