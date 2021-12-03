@@ -1,64 +1,157 @@
-﻿using System;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+
+using DevCycle.Model;
+using System.Threading.Tasks;
+using DevCycle.Exception;
+using Newtonsoft.Json;
 
 namespace DevCycle.Api
 {
-    class DVCClient : IDisposable
+    public sealed class DVCClient : IDisposable
     {
-        private static readonly string BASE_URL = "https://bucketing-api.devcycle.com/";
+        private readonly DVCApiClient apiClient;
 
-        private readonly string serverKey;
-
-        private readonly RestClient restClient = new RestClient(BASE_URL);
-
-        private bool disposedValue;
-
-        public DVCClient()
-        {
-
-        }
+        private static readonly string DEFAULT_PLATFORM = "C#";
+        private static readonly string DEFAULT_PLATFORM_VERSION = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+        private static readonly User.SdkTypeEnum DEFAULT_SDK_TYPE = User.SdkTypeEnum.Server;
+        private static readonly string DEFAULT_SDK_VERSION = "1.0.0";
 
         public DVCClient(string serverKey)
         {
-            this.serverKey = serverKey;
+            apiClient = new DVCApiClient(serverKey);
         }
 
-        public virtual async Task<IRestResponse> SendRequestAsync(Object json, string urlFragment)
+        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(User user)
         {
-            restClient.IgnoreResponseStatusCode = true;
-            var request = new RestRequest(urlFragment, Method.POST);
-            request.AddJsonBody(json);
-            request.AddHeader("Content-Type", "application/json");
-            request.AddHeader("accept", "application/json");
-            request.AddHeader("Authorization", serverKey);
+            ValidateUser(user);
 
-            return await restClient.Execute(request);
+            AddDefaults(user);
+
+            string urlFragment = "v1/features";
+
+            return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment);
         }
 
-        protected virtual void Dispose(bool disposing)
+        public async Task<Variable> VariableAsync<T>(User user, string key, T defaultValue)
         {
-            if (!disposedValue)
+            ValidateUser(user);
+
+            if (String.IsNullOrEmpty(key))
             {
-                if (disposing)
+                throw new ArgumentException("key cannot be null or empty");
+            }
+
+            if (defaultValue == null)
+            {
+                throw new ArgumentNullException("defaultValue cannot be null");
+            }
+
+            AddDefaults(user);
+
+            string urlFragment = "v1/variables/" + key;
+
+            Variable variable;
+
+            try
+            {
+                variable = await GetResponseAsync<Variable>(user, urlFragment);
+            }
+            catch(DVCException e)
+            {
+                variable = new Variable(key, (object)defaultValue, e.Message);
+            }
+            return variable;
+        }
+
+        public async Task<Dictionary<string, Variable>> AllVariablesAsync(User user)
+        {
+            ValidateUser(user);
+
+            AddDefaults(user);
+
+            string urlFragment = "v1/variables";
+
+            return await GetResponseAsync<Dictionary<string, Variable>>(user, urlFragment);
+        }
+
+        public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
+        {
+            ValidateUser(user);
+
+            AddDefaults(user);
+
+            string urlFragment = "v1/track";
+
+            UserAndEvents userAndEvents = new UserAndEvents(new List<Event>() { userEvent }, user);
+
+            return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment);
+        }
+
+        private async Task<T> GetResponseAsync<T>(Object body, string urlFragment)
+        {
+            IRestResponse response = null;
+
+            try
+            {
+                response = await apiClient.SendRequestAsync(body, urlFragment);
+
+                if (!response.IsSuccess)
                 {
-                    restClient.Dispose();
+                    ErrorResponse errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+                    throw new DVCException(response.StatusCode, errorResponse);
                 }
 
-                disposedValue = true;
+                return JsonConvert.DeserializeObject<T>(response.Content);
+            }
+            catch (System.Exception e)
+            {
+                if (e.GetType() == typeof(DVCException))
+                {
+                    throw e;
+                }
+
+                ErrorResponse errorResponse = new ErrorResponse(e.Message);
+                throw new DVCException(response.StatusCode, errorResponse);
             }
         }
 
-        ~DVCClient()
+        private void AddDefaults(User user)
         {
-            Dispose(disposing: false);
+            if (string.IsNullOrEmpty(user.Platform))
+            {
+                user.Platform = DEFAULT_PLATFORM;
+            }
+            if (string.IsNullOrEmpty(user.PlatformVersion))
+            {
+                user.PlatformVersion = DEFAULT_PLATFORM_VERSION;
+            }
+            if (user.SdkType == null)
+            {
+                user.SdkType = DEFAULT_SDK_TYPE;
+            }
+            if (string.IsNullOrEmpty(user.SdkVersion))
+            {
+                user.SdkVersion = DEFAULT_SDK_VERSION;
+            }
+        }
+
+        private void ValidateUser(User user)
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException("User cannot be null");
+            }
+            if (user.UserId == String.Empty)
+            {
+                throw new ArgumentException("userId cannot be empty");
+            }
         }
 
         public void Dispose()
         {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            ((IDisposable)apiClient).Dispose();
         }
     }
 }

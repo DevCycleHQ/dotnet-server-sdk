@@ -13,12 +13,12 @@ namespace DevCycle.MSTests
     [TestClass]
     public class DVCTest
     {
-        private readonly Mock<DVCClient> apiClient = new Mock<DVCClient>();
+        private readonly Mock<DVCApiClient> apiClient = new Mock<DVCApiClient>();
 
         [TestMethod]
         public void GetFeaturesTest()
         {
-            using DVC api = new DVC(Guid.NewGuid().ToString());
+            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -38,7 +38,7 @@ namespace DevCycle.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            using DVC api = new DVC(Guid.NewGuid().ToString());
+            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -58,7 +58,7 @@ namespace DevCycle.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DVC api = new DVC(Guid.NewGuid().ToString());
+            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -76,7 +76,7 @@ namespace DevCycle.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVC api = new DVC(Guid.NewGuid().ToString());
+            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -103,7 +103,7 @@ namespace DevCycle.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVC api = new DVC(Guid.NewGuid().ToString());
+            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {

@@ -1,13 +1,13 @@
-# DevCycle.Api.DVC
+# DevCycle.DotNet.Server.SDK.Api.DVCClient
 
 All URIs are relative to *https://bucketing-api.devcycle.com/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**AllFeaturesAsync**](DVC.md#allFeatures) | **POST** /v1/features | Get all features by key for user data
-[**VariableAsync**](DVC.md#variable) | **POST** /v1/variables/{key} | Get variable by key for user data
-[**AllVariablesAsync**](DVC.md#allVariables) | **POST** /v1/variables | Get all variables by key for user data
-[**TrackAsync**](DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
+[**AllFeaturesAsync**](DVCClient.md#allFeatures) | **POST** /v1/features | Get all features by key for user data
+[**VariableAsync**](DVCClient.md#variable) | **POST** /v1/variables/{key} | Get variable by key for user data
+[**AllVariablesAsync**](DVCClient.md#allVariables) | **POST** /v1/variables | Get all variables by key for user data
+[**TrackAsync**](DVCClient.md#track) | **POST** /v1/track | Post events to DevCycle for user
 
 <a name="allFeatures"></a>
 # **AllFeatures**
@@ -29,17 +29,17 @@ namespace Example
         public async Task main()
         {
             // Ensure REST Client resources are correctly disposed once no longer required
-            using DVC api = new DVC("YOUR_API_KEY");
+            using DVCClient dvcClient = new DVCClient("YOUR_API_KEY");
             var user = new User("user_id"); 
 
             try
             {
-                Dictionary<string, Feature> result = await api.AllFeaturesAsync(user);
+                Dictionary<string, Feature> result = await dvcClient.AllFeaturesAsync(user);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.AllFeaturesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.AllFeaturesAsync: " + e.Message );
             }
         }
     }
@@ -82,18 +82,18 @@ namespace Example
         public void main()
         {
             // Ensure REST Client resources are correctly disposed once no longer required
-            using DVC api = new DVC("YOUR_API_KEY");
+            using DVCClient dvcClient = new DVCClient("YOUR_API_KEY");
             var user = new User("user_id"); 
 
             try
             {
                 var key = "YOUR_KEY";
-                Variable result = await api.VariableAsync(user, key);
+                Variable result = await dvcClient.VariableAsync(user, key);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.VariableAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.VariableAsync: " + e.Message );
             }
         }
     }
@@ -137,17 +137,17 @@ namespace Example
         public void main()
         {
             // Ensure REST Client resources are correctly disposed once no longer required
-            using DVC api = new DVC("YOUR_API_KEY");
+            using DVCClient dvcClient = new DVCClient("YOUR_API_KEY");
             var user = new User("user_id"); 
 
             try
             {
-                Dictionary<string, Variable> result = await api.AllVariablesAsync(user);
+                Dictionary<string, Variable> result = await dvcClient.AllVariablesAsync(user);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.AllVariablesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.AllVariablesAsync: " + e.Message );
             }
         }
     }
@@ -190,7 +190,7 @@ namespace Example
         public void main()
         {
             // Ensure REST Client resources are correctly disposed once no longer required
-            using DVC api = new DVC("YOUR_API_KEY");
+            using DVCClient dvcClient = new DVCClient("YOUR_API_KEY");
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
@@ -202,12 +202,12 @@ namespace Example
 
             try
             {
-                DVCResponse result = await api.TrackAsync(userAndEvents);
+                DVCResponse result = await dvcClient.TrackAsync(userAndEvents);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.GetFeaturesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.GetFeaturesAsync: " + e.Message );
             }
         }
     }
