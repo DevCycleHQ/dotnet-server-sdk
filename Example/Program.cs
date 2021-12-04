@@ -10,7 +10,7 @@ namespace Example
     {
         static async Task Main(string[] args)
         {
-            using DVC api = new DVC("INSERT SDK KEY");
+            using DVCClient api = new DVCClient("INSERT SDK KEY");
             var user = new User("user_id");
 
             try
@@ -24,7 +24,7 @@ namespace Example
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception when calling DVC.AllFeaturesAsync: " + e.Message);
+                Console.WriteLine("Exception when calling DVCClient.AllFeaturesAsync: " + e.Message);
             }
         }
     }
