@@ -1,23 +1,21 @@
-# DevCycle - the dotnet library for the DevCycle Bucketing API
+# DevCycle Dotnet / C# SDK
 
-Documents the DevCycle Bucketing API which provides and API interface to User Bucketing and for generated SDKs.
+Welcome to the DevCycle Dotnet Server SDK, which interfaces with the [DevCycle Bucketing API](https://docs.devcycle.com/bucketing-api/#tag/devcycle). 
 
+## Requirements
 
-<a name="frameworks-supported"></a>
-## Frameworks supported
+### Frameworks supported
 - .NET Core >=1.0
 - .NET Framework >=4.6
 - Mono/Xamarin >=vNext
 - UWP >=10.0
 
-<a name="dependencies"></a>
-## Dependencies
+### Dependencies
 - FubarCoder.RestSharp.Portable.Core >=4.0.8
 - FubarCoder.RestSharp.Portable.HttpClient >=4.0.8
 - JsonSubTypes >=1.8.0
 - Newtonsoft.Json >=13.0.1
 
-<a name="installation"></a>
 ## Installation
 Download the SDK from Nuget - https://nuget.info/packages/DevCycle.DotNet.Server.SDK/1.0.1
 and use the namespaces:
@@ -26,7 +24,6 @@ using DevCycle.Api;
 using DevCycle.Client;
 using DevCycle.Model;
 ```
-<a name="getting-started"></a>
 ## Getting Started
 
 ```csharp
@@ -60,7 +57,6 @@ namespace Example
 }
 ```
 
-<a name="documentation-for-api-endpoints"></a>
 ## Documentation for API Endpoints
 
 Class | Method | HTTP request | Description
@@ -70,7 +66,6 @@ Class | Method | HTTP request | Description
 *DVC* | [**AllVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
 *DVC* | [**TrackAsync**](docs/DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
 
-<a name="documentation-for-models"></a>
 ## Documentation for Models
 
  - [Model.ErrorResponse](docs/ErrorResponse.md)
