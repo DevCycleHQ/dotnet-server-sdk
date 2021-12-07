@@ -19,7 +19,7 @@ Documents the DevCycle Bucketing API which provides and API interface to User Bu
 
 <a name="installation"></a>
 ## Installation
-Download the SDK from Nuget - https://nuget.info/packages/DevCycle/1.0.0
+Download the SDK from Nuget - https://nuget.info/packages/DevCycle.DotNet.Server.SDK/1.0.1
 and use the namespaces:
 ```csharp
 using DevCycle.Api;
@@ -43,7 +43,7 @@ namespace Example
         public void main()
         {
             // Ensure REST Client resources are correctly disposed once no longer required
-            using DVC api = new DVC("YOUR_API_KEY");
+            using DVCClient api = new DVCClient("YOUR_API_KEY");
             var user = new User("a_user_id"); 
 
             try
@@ -53,7 +53,7 @@ namespace Example
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVC.AllFeaturesAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.AllFeaturesAsync: " + e.Message );
             }
         }
     }
@@ -68,7 +68,7 @@ Class | Method | HTTP request | Description
 *DVC* | [**AllFeaturesAsync**](docs/DVC.md#getfeatures) | **POST** /v1/features | Get all features for user
 *DVC* | [**VariableAsync**](docs/DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user
 *DVC* | [**AllVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
-*DVC* | [**TrackAsync**](docs/DVC.md#postevents) | **POST** /v1/track | Post events to DevCycle for user
+*DVC* | [**TrackAsync**](docs/DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
 
 <a name="documentation-for-models"></a>
 ## Documentation for Models

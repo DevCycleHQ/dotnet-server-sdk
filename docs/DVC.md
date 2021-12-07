@@ -1,4 +1,4 @@
-# DevCycle.DotNet.Server.SDK.Api.DVCClient
+# DevCycle.Api.DVCClient
 
 All URIs are relative to *https://bucketing-api.devcycle.com/*
 
@@ -196,13 +196,11 @@ namespace Example
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
             
             var user = new Users("user_id");
-            var events = new List<Event>();
-            events.Add(new Event("test event", "test target", unixTimeMilliseconds, 600));
-            var userAndEvents = new UserAndEvents(events, user); 
+            var event = new Event("test event", "test target", unixTimeMilliseconds, 600);
 
             try
             {
-                DVCResponse result = await dvcClient.TrackAsync(userAndEvents);
+                DVCResponse result = await dvcClient.TrackAsync(user, event);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
@@ -218,7 +216,8 @@ namespace Example
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**UserAndEvents**](UserAndEvents.md)|  | 
+ **user** | [**User**](User.md)|  | 
+ **event** | [**Event**](event.md)|  | 
 
 ### Return type
 
