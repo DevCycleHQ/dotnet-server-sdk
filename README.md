@@ -1,4 +1,4 @@
-# DevCycle Dotnet / C# SDK
+# DevCycle Dotnet Server SDK
 
 Welcome to the DevCycle Dotnet Server SDK, which interfaces with the [DevCycle Bucketing API](https://docs.devcycle.com/bucketing-api/#tag/devcycle). 
 
@@ -61,10 +61,10 @@ namespace Example
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DVC* | [**AllFeaturesAsync**](docs/DVC.md#getfeatures) | **POST** /v1/features | Get all features for user
-*DVC* | [**VariableAsync**](docs/DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user
-*DVC* | [**AllVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
-*DVC* | [**TrackAsync**](docs/DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
+*DVCClient* | [**AllFeaturesAsync**](docs/DVC.md#getfeatures) | **POST** /v1/features | Get all features for user
+*DVCClient* | [**VariableAsync**](docs/DVC.md#getvariablebykey) | **POST** /v1/variables/{key} | Get variable by key for user
+*DVCClient* | [**AllVariablesAsync**](docs/DVC.md#getvariables) | **POST** /v1/variables | Get all variables for user
+*DVCClient* | [**TrackAsync**](docs/DVC.md#track) | **POST** /v1/track | Post events to DevCycle for user
 
 ## Documentation for Models
 
