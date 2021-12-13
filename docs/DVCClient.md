@@ -35,10 +35,7 @@ namespace Example
             try
             {
                 Dictionary<string, Feature> result = await dvcClient.AllFeaturesAsync(user);
-                foreach(KeyValuePair<string, Feature> entry in result)
-                {
-                    Debug.WriteLine(entry.Key + " : " + entry.Value);
-                }
+                Debug.WriteLine(result);
             }
             catch (Exception e)
             {
@@ -91,9 +88,8 @@ namespace Example
             try
             {
                 var key = "YOUR_KEY";
-                var defaultValue = true;
-                Variable result = await dvcClient.VariableAsync(user, key, defaultValue);
-                Debug.WriteLine(result.Value);
+                Variable result = await dvcClient.VariableAsync(user, key);
+                Debug.WriteLine(result);
             }
             catch (Exception e)
             {
@@ -147,10 +143,7 @@ namespace Example
             try
             {
                 Dictionary<string, Variable> result = await dvcClient.AllVariablesAsync(user);
-                foreach(KeyValuePair<string, Variable> entry in result)
-                {
-                    Debug.WriteLine(entry.Key + " : " + entry.Value);
-                }
+                Debug.WriteLine(result);
             }
             catch (Exception e)
             {
@@ -212,7 +205,7 @@ namespace Example
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling DVCClient.TrackAsync: " + e.Message );
+                Debug.Print("Exception when calling DVCClient.GetFeaturesAsync: " + e.Message );
             }
         }
     }
