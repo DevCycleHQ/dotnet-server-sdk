@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DevCycle.Api;
 using DevCycle.Model;
 using Microsoft.Extensions.Logging;
+using Environment = System.Environment;
 
 namespace Example
 {
@@ -13,10 +14,12 @@ namespace Example
         
         static async Task Main(string[] args)
         {
+            
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {

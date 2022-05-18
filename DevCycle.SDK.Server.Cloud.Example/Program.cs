@@ -10,7 +10,9 @@ namespace Example
     {
         static async Task Main(string[] args)
         {
-            using DVCClient api = new DVCClient("INSERT SDK KEY");
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
+
+            using DVCClient api = new DVCClient(SDK_ENV_VAR);
             var user = new User("user_id");
 
             try
