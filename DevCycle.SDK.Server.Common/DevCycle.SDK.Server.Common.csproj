@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>DevCycle.SDK.Server.Common</AssemblyName>
+        <RootNamespace>DevCycle.SDK.Server.Common</RootNamespace>
+        <LangVersion>latest</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>DevCycle</Authors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FubarCoder.RestSharp.Portable.HttpClient" Version="4.0.8" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
+      <PackageReference Include="TypeSupport" Version="1.1.12" />
+      <PackageReference Include="Wasmtime" Version="0.34.0-preview1" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>DevCycle.SDK.Server.Cloud</AssemblyName>
+    <PackageId>DevCycle.SDK.Server.Cloud</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>DevCycle</Authors>
+    <Company>DevCycle</Company>
+    <AssemblyTitle>C# Server SDK</AssemblyTitle>
+    <Description>DotNet Server SDK for DevCycle</Description>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <RootNamespace>DevCycle</RootNamespace>
+    <Version>1.0.0</Version>
+    <ReleaseVersion>1.0.1</ReleaseVersion>
+    <Copyright>2022</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Owners>DevCycle</Owners>
+    <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
+    <Title>Server SDK</Title>
+    <PackageVersion>1.0.2</PackageVersion>
+    <SynchReleaseVersion>false</SynchReleaseVersion>
+    <PackOnBuild>true</PackOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType></DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FubarCoder.RestSharp.Portable.Core" Version="4.0.8" />
+    <PackageReference Include="FubarCoder.RestSharp.Portable.HttpClient" Version="4.0.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
+    <PackageReference Include="JsonSubTypes" Version="1.8.0" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>DevCycle.SDK.Server.Cloud.MSTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="NETStandard.Library" />
+    <None Remove="Exception\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevCycle.SDK.Server.Common\DevCycle.SDK.Server.Common.csproj" />
+  </ItemGroup>
+</Project>

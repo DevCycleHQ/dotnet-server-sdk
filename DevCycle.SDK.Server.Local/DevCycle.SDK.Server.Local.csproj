@@ -1,0 +1,96 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>DevCycle.SDK.Server.Local</AssemblyName>
+    <PackageId>DevCycle.SDK.Server.Local</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>DevCycle</Authors>
+    <Company>DevCycle</Company>
+    <AssemblyTitle>C# Server SDK</AssemblyTitle>
+    <Description>.NET Server Local Bucketing SDK for DevCycle</Description>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <RootNamespace>DevCycle</RootNamespace>
+    <Version>1.1.0</Version>
+    <ReleaseVersion>1.1.0</ReleaseVersion>
+    <Copyright>2022</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Owners>DevCycle</Owners>
+    <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk-local</PackageProjectUrl>
+    <Title>.NET Server Local Bucketing SDK for DevCycle</Title>
+    <PackageVersion>1.1.0</PackageVersion>
+    <SynchReleaseVersion>false</SynchReleaseVersion>
+    <PackOnBuild>true</PackOnBuild>
+    <RepositoryUrl>https://github.com/DevCycleHQ/dotnet-server-sdk-local</RepositoryUrl>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType></DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FubarCoder.RestSharp.Portable.Core" Version="4.0.8" />
+    <PackageReference Include="FubarCoder.RestSharp.Portable.HttpClient" Version="4.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
+    <PackageReference Include="JsonSubTypes" Version="1.8.0" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+    <PackageReference Include="TypeSupport" Version="1.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>DevCycle.SDK.Server.Local.MSTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="NETStandard.Library" />
+    <None Remove="Exception\" />
+    <None Remove="Microsoft.Extensions.Logging" />
+    <None Remove="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Example.cs" />
+    <Compile Update="Api\DVCClient.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Condition=" '$(EnableDefaultCompileItems)' == 'true' " Update="EnvironmentConfigManager\EnvironmentConfigManager.cs">
+      <IncludeInPackage>true</IncludeInPackage>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Wasmtime" Version="0.34.0-preview1" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="bucketing-lib.release.wasm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\README.md">
+      <Link>README.md</Link>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DevCycle.SDK.Server.Common\DevCycle.SDK.Server.Common.csproj" />
+  </ItemGroup>
+</Project>
