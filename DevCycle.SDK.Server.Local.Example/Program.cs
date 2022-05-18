@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DevCycle.Api;
+using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
 using Microsoft.Extensions.Logging;
 using Environment = System.Environment;
@@ -16,7 +16,7 @@ namespace Example
         {
             
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
-            var user = new User("test");
+            var user = new User("testing");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
             api = (DVCClient) apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
@@ -53,6 +53,8 @@ namespace Example
             {
                 Console.WriteLine(entry.Key + " : " + entry.Value);
             }
+
+            Console.WriteLine(api.AllVariables(user));
         }
     }
 }
