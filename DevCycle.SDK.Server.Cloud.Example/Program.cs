@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevCycle.Api;
-using DevCycle.Model;
+using DevCycle.SDK.Server.Common.Model;
 
 namespace Example
 {

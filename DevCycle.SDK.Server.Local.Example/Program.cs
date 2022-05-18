@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevCycle.Api;
-using DevCycle.Model;
+using DevCycle.SDK.Server.Common.Model;
 using Microsoft.Extensions.Logging;
 using Environment = System.Environment;
 
@@ -19,7 +19,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
+            api = (DVCClient) apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {

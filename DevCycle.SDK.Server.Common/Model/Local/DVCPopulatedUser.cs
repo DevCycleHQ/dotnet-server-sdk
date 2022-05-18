@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using DevCycle.SDK.Server.Core.Model;
 using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local

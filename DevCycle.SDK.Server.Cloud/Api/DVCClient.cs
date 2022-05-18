@@ -6,10 +6,9 @@ using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
-using DevCycle.SDK.Server.Core.Model;
 using Newtonsoft.Json;
 
-namespace DevCycle.Api
+namespace DevCycle.SDK.Server.Cloud.Api
 {
     public sealed class DVCClient : IDVCClient
     {

@@ -6,11 +6,10 @@ using System.Reflection;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
-using DevCycle.SDK.Server.Core.Model;
 using Newtonsoft.Json;
 using Module = Wasmtime.Module;
 
-namespace DevCycle.Api
+namespace DevCycle.SDK.Server.Local.Api
 {
     public class LocalBucketing
     {

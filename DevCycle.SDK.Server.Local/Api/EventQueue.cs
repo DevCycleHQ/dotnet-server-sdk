@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
-using DevCycle.SDK.Server.Core.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp.Portable;
 
-namespace DevCycle.Api
+namespace DevCycle.SDK.Server.Local.Api
 {
     internal class EventQueue
     {

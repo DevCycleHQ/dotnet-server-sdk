@@ -1,6 +1,5 @@
 using System.Net;
 using DevCycle.SDK.Server.Common.Model;
-using DevCycle.SDK.Server.Core.Model;
 
 namespace DevCycle.SDK.Server.Common.Exception
 {

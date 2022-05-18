@@ -1,7 +1,6 @@
 ﻿using System;
-using DevCycle.Api;
-using DevCycle.ConfigManager;
-using DevCycle.MSTests;
+using DevCycle.SDK.Server.Local.Api;
+using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;

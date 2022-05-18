@@ -1,12 +1,11 @@
 using System;
-using System.Linq;
-using System.Text;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
-using DevCycle.SDK.Server.Common.Model;
+using System.Text;
 using Newtonsoft.Json;
 
-namespace DevCycle.SDK.Server.Core.Model
+namespace DevCycle.SDK.Server.Common.Model
 {
     [DataContract]
     public partial class UserAndEvents : IEquatable<UserAndEvents>

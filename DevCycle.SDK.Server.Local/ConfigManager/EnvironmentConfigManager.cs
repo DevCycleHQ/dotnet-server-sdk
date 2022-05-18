@@ -4,17 +4,16 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using DevCycle.Api;
+using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
-using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp.Portable;
 using RestSharp.Portable.HttpClient;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
 
-namespace DevCycle.ConfigManager
+namespace DevCycle.SDK.Server.Local.ConfigManager
 {
     public class EnvironmentConfigManager : IDisposable
     {

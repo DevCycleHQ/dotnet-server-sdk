@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace DevCycle.MSTests
+namespace DevCycle.SDK.Server.Local.MSTests
 {
     public static class WhiteBox
     {

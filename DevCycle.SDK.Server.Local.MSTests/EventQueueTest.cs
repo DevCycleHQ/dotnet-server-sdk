@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using DevCycle.Api;
+using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using RestSharp.Portable;
 
-namespace DevCycle.MSTests
+namespace DevCycle.SDK.Server.Local.MSTests
 {
     [TestClass]
     public class EventQueueTest

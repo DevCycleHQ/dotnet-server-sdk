@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DevCycle.ConfigManager;
+using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using DVCResponse = DevCycle.SDK.Server.Common.Model.DVCResponse;
 
-namespace DevCycle.Api
+namespace DevCycle.SDK.Server.Local.Api
 {
     public class DVCClientBuilder : IClientBuilder
     {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using DevCycle.SDK.Server.Core.Model;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {

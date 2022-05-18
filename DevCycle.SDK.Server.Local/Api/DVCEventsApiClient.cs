@@ -5,7 +5,7 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using RestSharp.Portable;
 using RestSharp.Portable.HttpClient;
 
-namespace DevCycle.Api
+namespace DevCycle.SDK.Server.Local.Api
 {
     internal class DVCEventsApiClient : IDVCApiClient
     {

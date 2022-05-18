@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevCycle.DotNet.Server.SDK" Version="1.0.2" />
+    <PackageReference Include="DevCycle.SDK.Server.Cloud" Version="1.0.3" />
+    <PackageReference Include="DevCycle.SDK.Server.Common" Version="1.0.0" />
   </ItemGroup>
 </Project>

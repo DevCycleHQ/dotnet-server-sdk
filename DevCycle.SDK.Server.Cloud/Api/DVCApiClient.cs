@@ -4,7 +4,8 @@ using DevCycle.SDK.Server.Common.API;
 using RestSharp.Portable;
 using RestSharp.Portable.HttpClient;
 
-namespace DevCycle.Api
+// ReSharper disable once CheckNamespace
+namespace DevCycle.SDK.Server.Cloud.Api
 {
     class DVCApiClient : IDVCApiClient
     {

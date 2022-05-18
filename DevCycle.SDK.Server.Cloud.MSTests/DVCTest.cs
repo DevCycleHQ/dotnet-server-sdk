@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DevCycle.Api;
+using DevCycle.SDK.Server.Cloud.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
-using DevCycle.SDK.Server.Core.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 

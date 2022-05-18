@@ -21,13 +21,14 @@
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>.NET Server Local Bucketing SDK for DevCycle</Title>
-    <PackageVersion>1.1.1</PackageVersion>
+    <PackageVersion>1.1.2</PackageVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <RepositoryUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</RepositoryUrl>
-    <AssemblyVersion>1.1.1</AssemblyVersion>
+    <AssemblyVersion>1.1.2</AssemblyVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
+    <FileVersion>1.1.2</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
