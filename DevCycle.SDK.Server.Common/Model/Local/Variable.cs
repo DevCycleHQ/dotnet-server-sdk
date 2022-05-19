@@ -75,7 +75,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
                 returnVariable.Value = variable.Value;
                 returnVariable.Type = variable.Type;
                 returnVariable.EvalReason = variable.EvalReason;
-                returnVariable.IsDefaulted = variable.IsDefaulted;
+                returnVariable.IsDefaulted = false;
             }
             else
             {

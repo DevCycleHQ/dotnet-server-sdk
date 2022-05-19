@@ -111,7 +111,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             var variable =  SDK.Server.Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
 
-            var @event = new Event(type: variable.Value.Equals(variable.DefaultValue)
+            var @event = new Event(type: variable.IsDefaulted
                     ? EventTypes.variableDefaulted
                     : EventTypes.variableEvaluated,
                 target: variable.Key);
