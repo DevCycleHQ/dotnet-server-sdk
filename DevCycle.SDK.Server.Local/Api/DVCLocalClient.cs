@@ -15,23 +15,18 @@ namespace DevCycle.SDK.Server.Local.Api
         private LocalBucketing localBucketing;
        
         
-        protected IClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
+        public IClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
             return this;
         }
 
-        protected IClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
+        public IClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
         {
             localBucketing = localBucketingWrapper;
             return this;
         }
-
-        public IClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
-        {
-            initialized = initializedEventHandler;
-            return this;
-        }
+        
         public override IDVCClient Build()
         {
             localBucketing ??= new LocalBucketing();

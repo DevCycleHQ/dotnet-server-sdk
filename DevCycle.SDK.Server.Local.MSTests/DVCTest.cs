@@ -11,17 +11,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
     // Access the internal method on DVCClientBuilder
     internal class DVCClientBuilderTest : DVCLocalClientBuilder
     {
-        internal new DVCClientBuilderTest SetConfigManager(EnvironmentConfigManager environmentConfigManager)
-        {
-            base.SetConfigManager(environmentConfigManager);
-            return this;
-        }
-        
-        internal new DVCClientBuilderTest SetLocalBucketing(LocalBucketing localBucketing)
-        {
-            base.SetLocalBucketing(localBucketing);
-            return this;
-        }
     }
 
 

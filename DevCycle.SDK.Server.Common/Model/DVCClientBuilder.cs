@@ -29,6 +29,12 @@ namespace DevCycle.SDK.Server.Common.Model
             loggerFactory = loggerFactoryProvider;
             return this;
         }
+        
+        public IClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
+        {
+            initialized = initializedEventHandler;
+            return this;
+        }
 
         public abstract IDVCClient Build();
     }
