@@ -7,13 +7,13 @@ using RestSharp.Portable.HttpClient;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    internal class DVCEventsApiClient : IDVCApiClient
+    internal class DVCEventsApiClient : DVCBaseApiClient
     {
         private const string BaseUrl = "https://events.devcycle.com";
         private const string TrackEventsUrl = "/v1/events/batch";
-        private string _sdkKey { get; set; }
-        private RestClient _client { get; set; }
-        private bool disposed = false;
+        private string SdkKey { get; set; }
+        private RestClient Client { get; set; }
+        private bool _disposed = false;
 
 
         // internal parameterless constructor for testing
@@ -23,19 +23,19 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public DVCEventsApiClient(string environmentKey)
         {
-            _client = new RestClient(BaseUrl);
-            _sdkKey = environmentKey;
+            Client = new RestClient(BaseUrl);
+            SdkKey = environmentKey;
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposed) return;
+            if (_disposed) return;
             if (disposing)
             {
-                _client.Dispose();
+                Client.Dispose();
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         ~DVCEventsApiClient()
@@ -43,37 +43,25 @@ namespace DevCycle.SDK.Server.Local.Api
             Dispose(disposing: false);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
 
-        public virtual async Task<IRestResponse> SendRequestAsync(object json)
-        {
-            _client.IgnoreResponseStatusCode = true;
-            var request = new RestRequest(TrackEventsUrl, Method.POST);
-            request.AddJsonBody(json);
-            request.AddHeader("Content-Type", "application/json");
-            request.AddHeader("accept", "application/json");
-            request.AddHeader("Authorization", _sdkKey);
-
-            return await _client.Execute(request);
-        }
-        
         public virtual async Task<IRestResponse> PublishEvents(BatchOfUserEventsBatch batch)
         {
-            return await SendRequestAsync(batch);
+            return await SendRequestAsync(batch, TrackEventsUrl);
         }
 
-        public string GetServerSDKKey()
+        public override string GetServerSDKKey()
         {
-            return _sdkKey;
+            return SdkKey;
         }
 
-        public RestClient GetRestClient()
+        public override RestClient GetRestClient()
         {
-            return _client;
+            return Client;
         }
     }
 }

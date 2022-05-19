@@ -7,9 +7,9 @@ using RestSharp.Portable.HttpClient;
 // ReSharper disable once CheckNamespace
 namespace DevCycle.SDK.Server.Cloud.Api
 {
-    class DVCApiClient : IDVCApiClient
+    class DVCApiClient : DVCBaseApiClient
     {
-        private static readonly string BASE_URL = "https://bucketing-api.devcycle.com/";
+        private static readonly string BaseUrl = "https://bucketing-api.devcycle.com/";
 
         private readonly string serverKey;
 
@@ -24,42 +24,27 @@ namespace DevCycle.SDK.Server.Cloud.Api
         public DVCApiClient(string serverKey)
         {
             this.serverKey = serverKey;
-            restClient = new RestClient(BASE_URL);
+            restClient = new RestClient(BaseUrl);
         }
 
-        public string GetServerSDKKey()
+        public override string GetServerSDKKey()
         {
             return serverKey;
         }
 
-        public RestClient GetRestClient()
+        public override RestClient GetRestClient()
         {
             return restClient;
         }
-
-        public virtual async Task<IRestResponse> SendRequestAsync(Object json, string urlFragment)
-        {
-            restClient.IgnoreResponseStatusCode = true;
-            var request = new RestRequest(urlFragment, Method.POST);
-            request.AddJsonBody(json);
-            request.AddHeader("Content-Type", "application/json");
-            request.AddHeader("accept", "application/json");
-            request.AddHeader("Authorization", serverKey);
-
-            return await restClient.Execute(request);
-        }
-
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (disposed) return;
+            if (disposing)
             {
-                if (disposing)
-                {
-                    restClient.Dispose();
-                }
-
-                disposed = true;
+                restClient.Dispose();
             }
+
+            disposed = true;
         }
 
         ~DVCApiClient()
@@ -67,7 +52,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             Dispose(disposing: false);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);

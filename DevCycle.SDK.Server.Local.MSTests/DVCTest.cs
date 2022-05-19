@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 namespace DevCycle.SDK.Server.Local.MSTests
 {
     // Access the internal method on DVCClientBuilder
-    internal class DVCClientBuilderTest : DVCClientBuilder
+    internal class DVCClientBuilderTest : DVCLocalClientBuilder
     {
         internal new DVCClientBuilderTest SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
@@ -56,7 +56,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetFeaturesTest()
         {
             DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCClient api = (DVCClient) apiBuilder
+            using DVCLocalClient api = (DVCLocalClient) apiBuilder
                 .SetConfigManager(environmentConfigManager.Object)
                 .SetLocalBucketing(localBucketing)
                 .SetEnvironmentKey(environmentKey)
@@ -74,7 +74,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetVariableByKeyTest()
         {
             DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCClient api = (DVCClient) apiBuilder
+            using DVCLocalClient api = (DVCLocalClient) apiBuilder
                 .SetConfigManager(environmentConfigManager.Object)
                 .SetLocalBucketing(localBucketing)
                 .SetEnvironmentKey(environmentKey)
@@ -92,7 +92,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetJsonVariableByKeyReturnsDefaultTest()
         {
             DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCClient api = (DVCClient) apiBuilder
+            using DVCLocalClient api = (DVCLocalClient) apiBuilder
                 .SetConfigManager(environmentConfigManager.Object)
                 .SetLocalBucketing(localBucketing)
                 .SetEnvironmentKey(environmentKey)
@@ -115,7 +115,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetVariablesTest()
         {
             DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCClient api = (DVCClient) apiBuilder
+            using DVCLocalClient api = (DVCLocalClient) apiBuilder
                 .SetConfigManager(environmentConfigManager.Object)
                 .SetLocalBucketing(localBucketing)
                 .SetEnvironmentKey(environmentKey)
@@ -136,7 +136,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void PostEventsTest()
         {
             DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCClient api = (DVCClient) apiBuilder
+            using DVCLocalClient api = (DVCLocalClient) apiBuilder
                 .SetConfigManager(environmentConfigManager.Object)
                 .SetLocalBucketing(localBucketing)
                 .SetEnvironmentKey(environmentKey)
@@ -162,7 +162,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
                 DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-                using DVCClient api = (DVCClient) apiBuilder
+                using DVCLocalClient api = (DVCLocalClient) apiBuilder
                     .SetConfigManager(environmentConfigManager.Object)
                     .SetEnvironmentKey("INSERT_SDK_KEY")
                     .Build();

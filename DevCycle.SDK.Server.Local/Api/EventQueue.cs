@@ -18,10 +18,10 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly DVCOptions options;
         private readonly DVCEventsApiClient dvcEventsApiClient;
         
-        private static readonly SemaphoreSlim EventQueueSemaphore = new SemaphoreSlim(1,1);
+        private static readonly SemaphoreSlim EventQueueSemaphore = new(1,1);
         
-        private readonly Mutex eventQueueMutex = new Mutex();
-        private readonly Mutex aggregateEventQueueMutex = new Mutex();
+        private readonly Mutex eventQueueMutex = new();
+        private readonly Mutex aggregateEventQueueMutex = new();
 
         private readonly Dictionary<string, UserEventsBatchRecord> eventPayloadsToFlush;
         

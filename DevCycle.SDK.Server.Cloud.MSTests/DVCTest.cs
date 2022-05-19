@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Cloud.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -17,7 +18,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void GetFeaturesTest()
         {
-            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -38,16 +39,16 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
             User user = new User("j_test");
 
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<Object>(), It.IsAny<string>()))
+            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<object>(), It.IsAny<string>()))
                 .ReturnsAsync(TestResponse.GetVariableByKeyAsync());
 
-            string key = "show-quickstart";
+            const string key = "show-quickstart";
             var result = await api.VariableAsync(user, key, true);
 
             AssertUserDefaultsCorrect(user);
@@ -59,7 +60,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -78,7 +79,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -106,7 +107,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVCClient api = new DVCClient(Guid.NewGuid().ToString());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {

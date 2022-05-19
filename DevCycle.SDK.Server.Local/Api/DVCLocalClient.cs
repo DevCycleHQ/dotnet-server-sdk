@@ -6,43 +6,15 @@ using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
-using DVCResponse = DevCycle.SDK.Server.Common.Model.DVCResponse;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    public class DVCClientBuilder : IClientBuilder
+    public class DVCLocalClientBuilder : DVCClientBuilder
     {
-        private string environmentKey;
-        private DVCOptions options;
-        private ILoggerFactory loggerFactory;
         private EnvironmentConfigManager configManager;
         private LocalBucketing localBucketing;
-        private EventHandler<DVCEventArgs> initialized;
-
-        public IClientBuilder SetEnvironmentKey(string key)
-        {
-            environmentKey = key;
-            return this;
-        }
-
-        public IClientBuilder SetOptions(DVCOptions dvcOptions)
-        {
-            options = dvcOptions;
-            return this;
-        }
-
-        public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
-        {
-            loggerFactory = loggerFactoryProvider;
-            return this;
-        }
-
-        public IClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
-        {
-            initialized = initializedEventHandler;
-            return this;
-        }
-
+       
+        
         protected IClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
@@ -55,7 +27,12 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public IDVCClient Build()
+        public IClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
+        {
+            initialized = initializedEventHandler;
+            return this;
+        }
+        public override IDVCClient Build()
         {
             localBucketing ??= new LocalBucketing();
 
@@ -65,13 +42,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
             configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing);
 
-            return new DVCClient(environmentKey, options, loggerFactory, configManager, localBucketing, initialized);
+            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, initialized);
         }
     }
 
-  
-
-    public sealed class DVCClient : IDVCClient
+    public sealed class DVCLocalClient : DVCBaseClient
     {
         private readonly string environmentKey;
         private readonly EnvironmentConfigManager configManager;
@@ -79,7 +54,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly LocalBucketing localBucketing;
         private readonly ILogger logger;
 
-        internal DVCClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
+        internal DVCLocalClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, LocalBucketing localBucketing,
             EventHandler<DVCEventArgs> initialized)
         {
@@ -87,7 +62,7 @@ namespace DevCycle.SDK.Server.Local.Api
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
-            logger = loggerFactory.CreateLogger<DVCClient>();
+            logger = loggerFactory.CreateLogger<DVCLocalClient>();
             Initialized += initialized;
 
             Task.Run(async delegate
@@ -237,9 +212,19 @@ namespace DevCycle.SDK.Server.Local.Api
             _ = eventQueue.FlushEvents();
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             configManager.Dispose();
+        }
+
+        public override string Platform()
+        {
+            return "Local";
+        }
+
+        public override IDVCApiClient GetApiClient()
+        {
+            throw new NotImplementedException();
         }
     }
 }
