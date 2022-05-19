@@ -84,7 +84,7 @@ namespace DevCycle.SDK.Server.Local.Api
             if (!configManager.Initialized)
             {
                 logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
-                return  SDK.Server.Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                return  Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
 
             var requestUser = new DVCPopulatedUser(user);

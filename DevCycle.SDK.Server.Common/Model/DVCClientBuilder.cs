@@ -2,32 +2,34 @@ using System;
 using DevCycle.SDK.Server.Common.API;
 using Microsoft.Extensions.Logging;
 
-namespace DevCycle.SDK.Server.Common.Model;
-
-public abstract class DVCClientBuilder : IClientBuilder
+namespace DevCycle.SDK.Server.Common.Model
 {
-    protected string environmentKey;
-    protected DVCOptions options;
-    protected ILoggerFactory loggerFactory;
-    protected EventHandler<DVCEventArgs> initialized;
 
-    public IClientBuilder SetEnvironmentKey(string key)
+    public abstract class DVCClientBuilder : IClientBuilder
     {
-        environmentKey = key;
-        return this;
-    }
+        protected string environmentKey;
+        protected DVCOptions options;
+        protected ILoggerFactory loggerFactory;
+        protected EventHandler<DVCEventArgs> initialized;
 
-    public IClientBuilder SetOptions(DVCOptions dvcOptions)
-    {
-        options = dvcOptions;
-        return this;
-    }
-    
-    public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
-    {
-        loggerFactory = loggerFactoryProvider;
-        return this;
-    }
+        public IClientBuilder SetEnvironmentKey(string key)
+        {
+            environmentKey = key;
+            return this;
+        }
 
-    public abstract IDVCClient Build();
+        public IClientBuilder SetOptions(DVCOptions dvcOptions)
+        {
+            options = dvcOptions;
+            return this;
+        }
+
+        public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
+        {
+            loggerFactory = loggerFactoryProvider;
+            return this;
+        }
+
+        public abstract IDVCClient Build();
+    }
 }

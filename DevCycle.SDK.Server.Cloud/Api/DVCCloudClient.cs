@@ -113,7 +113,5 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             ((IDisposable) apiClient).Dispose();
         }
-
-    
     }
 }

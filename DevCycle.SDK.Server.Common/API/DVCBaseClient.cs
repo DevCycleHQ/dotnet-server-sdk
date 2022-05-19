@@ -5,9 +5,8 @@ using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json;
 using RestSharp.Portable;
 
-namespace DevCycle.SDK.Server.Common.API;
-
-
+namespace DevCycle.SDK.Server.Common.API
+{
     public abstract class DVCBaseClient : IDVCClient
     {
         private string SdkPlatform => $"C# {Platform()}";
@@ -37,6 +36,7 @@ namespace DevCycle.SDK.Server.Common.API;
                 user.SdkVersion = SdkVersion;
             }
         }
+
         protected void ValidateUser(User user)
         {
             if (user == null)
@@ -49,14 +49,14 @@ namespace DevCycle.SDK.Server.Common.API;
                 throw new ArgumentException("userId cannot be empty");
             }
         }
-        
+
         protected async Task<T> GetResponseAsync<T>(object body, string urlFragment)
         {
             IRestResponse response = null;
             try
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment);
-                
+
                 if (response.IsSuccess)
                 {
                     if (response.Content != null)
@@ -78,3 +78,4 @@ namespace DevCycle.SDK.Server.Common.API;
             }
         }
     }
+}
