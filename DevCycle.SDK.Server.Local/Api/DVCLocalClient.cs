@@ -103,10 +103,17 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             Variable<T> existingVariable = null;
-
+            
             if (config?.Variables != null && config.Variables.ContainsKey(key))
             {
-                existingVariable = config.Variables.Get<T>(key);
+                try
+                {
+                    existingVariable = config.Variables.Get<T>(key);
+                } 
+                catch (InvalidCastException)
+                {
+                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value.");
+                }
             }
 
             var variable =  SDK.Server.Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
