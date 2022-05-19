@@ -183,7 +183,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 userForAggregation[user.UserId] = user;
             }
             
-            var requestEvent = new DVCRequestEvent(eventCopy, user.UserId, config.FeatureVariationMap);
+            var requestEvent = new DVCRequestEvent(
+                eventCopy, 
+                user.UserId, 
+                config == null ? new Dictionary<string, string>() : config.FeatureVariationMap
+            );
             
             AddAggregateEvent(requestEvent, user);
 
