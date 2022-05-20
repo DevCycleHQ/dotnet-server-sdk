@@ -19,17 +19,37 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("user_id")]
         public string UserId { get; }
         
-        private string email;
-        private string name;
-        private string language;
-        private string country;
-        private string appVersion;
-        private string appBuild;
-        private object customData;
-        private object privateCustomData;
+        [DataMember(Name="email", EmitDefaultValue=false)]
+        [JsonProperty("email")]
+        public string Email;
+        [DataMember(Name="name", EmitDefaultValue=false)]
+        [JsonProperty("name")]
+        public string Name;
+        [DataMember(Name = "language", EmitDefaultValue = false)]
+        [JsonProperty("language")]
+        public string Language;
+        [DataMember(Name = "country", EmitDefaultValue = false)]
+        [JsonProperty("country")]
+        public string Country;
+        [DataMember(Name = "appVersion", EmitDefaultValue = false)]
+        [JsonProperty("appVersion")]
+        public string AppVersion;
+        [DataMember(Name = "appBuild", EmitDefaultValue = false)]
+        [JsonProperty("appBuild")]
+        public string AppBuild;
+        [DataMember(Name = "customData", EmitDefaultValue = false)]
+        [JsonProperty("customData")]
+        public object CustomData;
+        [DataMember(Name = "privateCustomData", EmitDefaultValue = false)]
+        [JsonProperty("privateCustomData")]
+        public object PrivateCustomData;
 
-        private readonly long lastSeenDate;
-        private readonly long createdDate;
+        [DataMember(Name = "lastSeenDate", EmitDefaultValue = false)]
+        [JsonProperty("lastSeenDate")]
+        public readonly long LastSeenDate;
+        [DataMember(Name = "createdDate", EmitDefaultValue = false)]
+        [JsonProperty("createdDate")]
+        public readonly long CreatedDate;
         
         [DataMember(Name="platform", EmitDefaultValue=false)]
         [JsonProperty("platform")]
@@ -63,18 +83,18 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             }
 
             UserId = user.UserId;
-            email = user.Email;
-            name = user.Name;
-            language = user.Language;
-            country = user.Country;
-            appVersion = user.AppVersion;
-            appBuild = user.AppBuild;
-            customData = user.CustomData;
-            privateCustomData = user.PrivateCustomData;
-            lastSeenDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Email = user.Email;
+            Name = user.Name;
+            Language = user.Language;
+            Country = user.Country;
+            AppVersion = user.AppVersion;
+            AppBuild = user.AppBuild;
+            CustomData = user.CustomData;
+            PrivateCustomData = user.PrivateCustomData;
+            LastSeenDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             
             // Read only properties initialized once
-            createdDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            CreatedDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             Platform = DefaultPlatform;
             PlatformVersion = DefaultPlatformVersion;
             SdkType = DefaultSdkType.ToString().ToLower();
