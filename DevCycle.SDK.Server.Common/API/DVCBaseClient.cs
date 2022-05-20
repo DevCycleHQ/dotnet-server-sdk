@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
@@ -57,7 +58,7 @@ namespace DevCycle.SDK.Server.Common.API
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment);
 
-                if (response.IsSuccess)
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
                     if (response.Content != null)
                         return JsonConvert.DeserializeObject<T>(response.Content);

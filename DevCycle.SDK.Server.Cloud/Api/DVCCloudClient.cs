@@ -85,7 +85,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return variable;
         }
 
-        public async Task<Dictionary<string, IVariable>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, Variable>> AllVariablesAsync(User user)
         {
             ValidateUser(user);
 
@@ -93,7 +93,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
             string urlFragment = "v1/variables";
 
-            return await GetResponseAsync<Dictionary<string, IVariable>>(user, urlFragment);
+            return await GetResponseAsync<Dictionary<string, Variable>>(user, urlFragment);
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)

@@ -18,7 +18,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void GetFeaturesTest()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
+                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -39,7 +40,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
+                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -60,7 +62,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
+                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 

@@ -11,7 +11,7 @@ namespace DevCycle.SDK.Server.Common.API
         public abstract string GetServerSDKKey();
         public abstract RestClient GetRestClient();
 
-        public async Task<IRestResponse> SendRequestAsync(object json, string urlFragment)
+        public virtual async Task<IRestResponse> SendRequestAsync(object json, string urlFragment)
         {
             var restClient = GetRestClient();
             restClient.IgnoreResponseStatusCode = true;
