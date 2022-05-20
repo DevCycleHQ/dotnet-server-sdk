@@ -55,7 +55,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
         public User(string userId = default, string email = default, string name = default, string language = default,
             string country = default,
-            string appVersion = default, string appBuild = default, Object customData = default,
+            string appVersion = default, int appBuild = default, Object customData = default,
             Object privateCustomData = default,
             long? createdDate = default, long? lastSeenDate = default, string platform = default,
             string platformVersion = default,
@@ -133,7 +133,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>App Build number of the running application</value>
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
-        public string AppBuild { get; set; }
+        public int AppBuild { get; set; }
 
         /// <summary>
         /// User&#x27;s custom data to target the user with, data will be logged to DevCycle for use in dashboard.

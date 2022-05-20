@@ -52,6 +52,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Build();
 
             var user = new User("j_test");
+            user.Country = "CA";
+            user.Language = "en";
+            user.AppBuild = 1;
+            user.Email = "email@gmail.com";
+            user.Name = "name";
             var result = api.AllFeatures(user);
             
             Assert.IsNotNull(result);

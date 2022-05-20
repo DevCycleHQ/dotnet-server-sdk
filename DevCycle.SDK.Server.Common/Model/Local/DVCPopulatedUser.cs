@@ -36,7 +36,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public string AppVersion;
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
         [JsonProperty("appBuild")]
-        public string AppBuild;
+        public int AppBuild;
         [DataMember(Name = "customData", EmitDefaultValue = false)]
         [JsonProperty("customData")]
         public object CustomData;
