@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
@@ -55,8 +56,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
         public User(string userId = default, string email = default, string name = default, string language = default,
             string country = default,
-            string appVersion = default, int appBuild = default, Object customData = default,
-            Object privateCustomData = default,
+            string appVersion = default, int appBuild = default, Dictionary<string, object> customData = default,
+            Dictionary<string, object> privateCustomData = default,
             long? createdDate = default, long? lastSeenDate = default, string platform = default,
             string platformVersion = default,
             string deviceModel = default, SdkTypeEnum? sdkType = default, string sdkVersion = default)
@@ -140,14 +141,14 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>User&#x27;s custom data to target the user with, data will be logged to DevCycle for use in dashboard.</value>
         [DataMember(Name = "customData", EmitDefaultValue = false)]
-        public Object CustomData { get; set; }
+        public Dictionary<string, object> CustomData { get; set; }
 
         /// <summary>
         /// User&#x27;s custom data to target the user with, data will not be logged to DevCycle only used for feature bucketing.
         /// </summary>
         /// <value>User&#x27;s custom data to target the user with, data will not be logged to DevCycle only used for feature bucketing.</value>
         [DataMember(Name = "privateCustomData", EmitDefaultValue = false)]
-        public Object PrivateCustomData { get; set; }
+        public Dictionary<string, object> PrivateCustomData { get; set; }
 
         /// <summary>
         /// Date the user was created, Unix epoch timestamp format
