@@ -7,7 +7,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
     public class UserEventsBatchRecord
     {
         [DataMember(Name="user", EmitDefaultValue=false)]
-        public DVCPopulatedUser User { get; set; }
+        public DVCPopulatedUser User { get; }
         
         [DataMember(Name="events", EmitDefaultValue=false)]
         public List<DVCRequestEvent> Events { get; private set; }

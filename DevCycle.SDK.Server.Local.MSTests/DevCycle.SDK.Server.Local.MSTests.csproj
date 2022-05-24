@@ -5,8 +5,8 @@
     <IsPackable>false</IsPackable>
     <ReleaseVersion>1.0.1</ReleaseVersion>
     <LangVersion>latest</LangVersion>
-    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
     <OutputType>Library</OutputType>
+    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
