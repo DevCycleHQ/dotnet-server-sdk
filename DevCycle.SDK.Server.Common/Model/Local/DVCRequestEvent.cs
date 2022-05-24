@@ -13,33 +13,33 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         private readonly List<string> eventTypes = new List<string> {VariableEvaluated, VariableDefaulted};
         
         [DataMember(Name="type", EmitDefaultValue=false)]
-        public string Type { get; private set; }
+        public string Type { get; }
         
         [DataMember(Name="target", EmitDefaultValue=false)]
-        public string Target { get; private set; }
+        public string Target { get; }
         
         [DataMember(Name="customType", EmitDefaultValue=false)]
-        public string CustomType { get; private set; }
+        public string CustomType { get; }
         
         [DataMember(Name="user_id", EmitDefaultValue=false)]
-        public string UserId { get; private set; }
+        public string UserId { get; }
         
         [DataMember(Name="date", EmitDefaultValue=false)]
-        public long Date { get; private set; }
+        public long Date { get; }
         
         [DataMember(Name="clientDate", EmitDefaultValue=false)]
-        public long? ClientDate { get; private set; }
+        public long? ClientDate { get; }
         
         [DataMember(Name="value", EmitDefaultValue=false)]
         public decimal? Value { get; set; }
         
         [DataMember(Name="featureVars", EmitDefaultValue=false)]
-        public Dictionary<string, string> FeatureVars { get; private set; }
+        public Dictionary<string, string> FeatureVars { get; }
         
         [DataMember(Name="metaData", EmitDefaultValue=false)]
-        public Dictionary<string, object> MetaData { get; private set; }
+        public Dictionary<string, object> MetaData { get; }
         
-        public bool IsCustomEvent { get; private set; }
+        public bool IsCustomEvent { get; }
 
         public DVCRequestEvent(Event @event, string userId, Dictionary<string, string> featureVars)
         {

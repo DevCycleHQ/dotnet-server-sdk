@@ -19,28 +19,28 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         
         [DataMember(Name="email", EmitDefaultValue=false)]
         [JsonProperty("email")]
-        public string Email;
+        public readonly string Email;
         [DataMember(Name="name", EmitDefaultValue=false)]
         [JsonProperty("name")]
-        public string Name;
+        public readonly string Name;
         [DataMember(Name = "language", EmitDefaultValue = false)]
         [JsonProperty("language")]
-        public string Language;
+        public readonly string Language;
         [DataMember(Name = "country", EmitDefaultValue = false)]
         [JsonProperty("country")]
-        public string Country;
+        public readonly string Country;
         [DataMember(Name = "appVersion", EmitDefaultValue = false)]
         [JsonProperty("appVersion")]
-        public string AppVersion;
+        public readonly string AppVersion;
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
         [JsonProperty("appBuild")]
-        public int AppBuild;
+        public readonly int AppBuild;
         [DataMember(Name = "customData", EmitDefaultValue = false)]
         [JsonProperty("customData")]
-        public object CustomData;
+        public readonly object CustomData;
         [DataMember(Name = "privateCustomData", EmitDefaultValue = false)]
         [JsonProperty("privateCustomData")]
-        public object PrivateCustomData;
+        public readonly object PrivateCustomData;
 
         [DataMember(Name = "lastSeenDate", EmitDefaultValue = false)]
         [JsonProperty("lastSeenDate")]

@@ -11,8 +11,92 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp.Portable;
 
+
 namespace DevCycle.SDK.Server.Local.Api
 {
+    internal class UserAndFeatureVars
+    {
+        public readonly DVCPopulatedUser User;
+        private readonly Dictionary<string, string> featureVars;
+
+        public UserAndFeatureVars(DVCPopulatedUser user, Dictionary<string, string> featureVars)
+        {
+            User = user;
+            this.featureVars = featureVars;
+        }
+
+        public override int GetHashCode()
+        {
+            var result = User.GetHashCode() + featureVars.GetHashCode();
+            return result;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return GetHashCode().Equals(obj.GetHashCode());
+        }
+    }
+
+    internal class AggregateEventQueues
+    {
+        private readonly Dictionary<
+            UserAndFeatureVars,
+            Dictionary<string, DVCRequestEvent>> eventQueueMap;
+        
+        public AggregateEventQueues()
+        {
+            eventQueueMap = new Dictionary<UserAndFeatureVars, Dictionary<string, DVCRequestEvent>>();
+        }
+
+        public void AddEvent(UserAndFeatureVars userFeatureVars, DVCRequestEvent requestEvent)
+        {
+            if (!eventQueueMap.ContainsKey(userFeatureVars))
+            {
+                eventQueueMap[userFeatureVars] = new Dictionary<string, DVCRequestEvent>();
+            }
+
+            var eventKey = GetEventMapKey(requestEvent);
+
+            if (!eventQueueMap[userFeatureVars].ContainsKey(eventKey))
+            {
+                eventQueueMap[userFeatureVars][eventKey] = requestEvent;
+            }
+            else
+            {
+                eventQueueMap[userFeatureVars][eventKey].Value += 1;
+            }
+        }
+
+        private string GetEventMapKey(DVCRequestEvent requestEvent)
+        {
+            return requestEvent.Type + requestEvent.Target;
+        }
+
+        public Dictionary<DVCPopulatedUser, UserEventsBatchRecord> GetEventBatches()
+        {
+            // regroup aggregate events into batches by unique user
+            var userEventBatches = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
+            
+            foreach (var entries in eventQueueMap)
+            {
+                var user = entries.Key.User;
+                if (!userEventBatches.ContainsKey(user))
+                {
+                    userEventBatches[user] = new UserEventsBatchRecord(user);
+                }
+                
+                userEventBatches[user].Events.AddRange(entries.Value.Values.ToList());
+            }
+
+            return userEventBatches;
+        }
+
+        public void Clear()
+        {
+            eventQueueMap.Clear();
+        }
+    }
+
     internal class EventQueue
     {
         private readonly DVCOptions options;
@@ -22,11 +106,13 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private readonly Mutex eventQueueMutex = new();
         private readonly Mutex aggregateEventQueueMutex = new();
-
-        private readonly Dictionary<string, UserEventsBatchRecord> eventPayloadsToFlush;
+        private readonly Mutex batchQueueMutex = new();
         
-        private readonly Dictionary<string, DVCPopulatedUser> userForAggregation;
-        private readonly Dictionary<string, Dictionary<string, Dictionary<string, DVCRequestEvent>>> aggregateEvents;
+        private readonly Dictionary<DVCPopulatedUser, UserEventsBatchRecord> eventPayloadsToFlush;
+        
+        private readonly AggregateEventQueues aggregateEvents;
+
+        private readonly List<BatchOfUserEventsBatch> batchQueue = new();
 
         private readonly ILogger logger;
 
@@ -44,9 +130,8 @@ namespace DevCycle.SDK.Server.Local.Api
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy);
             this.options = options;
             
-            eventPayloadsToFlush = new Dictionary<string, UserEventsBatchRecord>();
-            userForAggregation = new Dictionary<string, DVCPopulatedUser>();
-            aggregateEvents = new Dictionary<string, Dictionary<string, Dictionary<string, DVCRequestEvent>>>();
+            eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
+            aggregateEvents = new AggregateEventQueues();
 
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
@@ -70,62 +155,74 @@ namespace DevCycle.SDK.Server.Local.Api
             var eventArgs = new DVCEventArgs();
             try
             {
+                eventQueueMutex.WaitOne();
+                aggregateEventQueueMutex.WaitOne();
+                batchQueueMutex.WaitOne();
+
                 var userEventBatch = CombineUsersEventsToFlush();
-                if (userEventBatch.Count == 0)
+                if (userEventBatch.Count != 0)
+                {
+                    batchQueue.Add(new BatchOfUserEventsBatch(userEventBatch.Values.ToList()));
+                    eventPayloadsToFlush.Clear();
+                    aggregateEvents.Clear();
+                }
+                
+                eventQueueMutex.ReleaseMutex();
+                aggregateEventQueueMutex.ReleaseMutex();
+
+                if (batchQueue.Count == 0)
                 {
                     eventArgs.Success = true;
                     OnFlushedEvents(eventArgs);
                 }
 
-                eventQueueMutex.WaitOne();
-                var localEventPayloadsToFlush = eventPayloadsToFlush.ToDictionary(entry => entry.Key, 
-                    entry => entry.Value);
-                eventPayloadsToFlush.Clear();
-                eventQueueMutex.ReleaseMutex();
-
-                aggregateEventQueueMutex.WaitOne();
-                var localUserForAggregation = userForAggregation.ToDictionary(entry => entry.Key,
-                    entry => entry.Value);
-                var localAggregateEvents = aggregateEvents.ToDictionary(entry => entry.Key,
-                    entry => entry.Value);
-                userForAggregation.Clear();
-                aggregateEvents.Clear();
-                aggregateEventQueueMutex.ReleaseMutex();
-
                 var eventCount = userEventBatch.Sum(u => userEventBatch.Values.Count);
 
                 logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
-
-                var userEvents = userEventBatch.Select(u => u.Value).ToList();
-
+                
                 IRestResponse response = null;
+
+                var successfulRequests = new List<BatchOfUserEventsBatch>();
 
                 try
                 {
-                    BatchOfUserEventsBatch batch = new BatchOfUserEventsBatch(userEvents);
-                    response = await dvcEventsApiClient.PublishEvents(batch);
-
-                    if (response.StatusCode != HttpStatusCode.Created)
+                    foreach (var batch in batchQueue)
                     {
-                        throw new System.Exception(
-                            $"Error publishing events, status {response.StatusCode}, body: {userEvents}");
+                        response = await dvcEventsApiClient.PublishEvents(batch);
+
+                        if (response.StatusCode != HttpStatusCode.Created)
+                        {
+                            throw new System.Exception(
+                                $"Error publishing events, status {response.StatusCode}, body: {batch}");
+                        }
+                        
+                        successfulRequests.Add(batch);
                     }
+
+                    batchQueue.Clear();
+
+                    batchQueue.AddRange(batchQueue.Except(successfulRequests));
                     
-                    logger.LogDebug("DVC Flushed {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
+                    logger.LogDebug("DVC Flushed {EventCount} Events, for {UserEventBatch} Users", eventCount,
+                        userEventBatch.Count);
                     eventArgs.Success = true;
                     OnFlushedEvents(eventArgs);
                 }
                 catch (System.Exception e)
                 {
-                    logger.LogError("DVC Error Flushing Events response message: {Exception}, response data: {Response}", e.Message, response.Content);
-                    
-                    RequeueUserEvents(localEventPayloadsToFlush);
-                    RequeueAggregateEvents(localUserForAggregation, localAggregateEvents);
+                    logger.LogError(
+                        "DVC Error Flushing Events response message: {Exception}, response data: {Response}", e.Message,
+                        response.Content);
+
                     ScheduleFlushWithDelay(true);
                     var dvcException = new DVCException(response.StatusCode, new ErrorResponse(e.Message));
                     eventArgs.Success = false;
                     eventArgs.Error = dvcException;
                     OnFlushedEvents(eventArgs);
+                }
+                finally
+                {
+                    batchQueueMutex.ReleaseMutex();
                 }
             }
             finally
@@ -136,15 +233,17 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
         {
-            if (!eventPayloadsToFlush.ContainsKey(user.UserId))
+            eventQueueMutex.WaitOne();
+            if (!eventPayloadsToFlush.ContainsKey(user))
             {
-                eventPayloadsToFlush.Add(user.UserId, new UserEventsBatchRecord(user));
+                eventPayloadsToFlush.Add(user, new UserEventsBatchRecord(user));
             }
             
-            var userAndEvents = eventPayloadsToFlush[user.UserId];
-            userAndEvents.User = user;
+            var userAndEvents = eventPayloadsToFlush[user];
 
             userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, config.FeatureVariationMap));
+            
+            eventQueueMutex.ReleaseMutex();
             
             logger.LogInformation("{Event} queued successfully", @event);
             
@@ -174,89 +273,37 @@ namespace DevCycle.SDK.Server.Local.Api
             eventCopy.Date = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             eventCopy.Value = 1;
 
-            if (!userForAggregation.ContainsKey(user.UserId))
-            {
-                userForAggregation.Add(user.UserId, user);   
-            }
-            else
-            {
-                userForAggregation[user.UserId] = user;
-            }
-            
             var requestEvent = new DVCRequestEvent(
                 eventCopy, 
                 user.UserId, 
                 config == null ? new Dictionary<string, string>() : config.FeatureVariationMap
             );
             
-            AddAggregateEvent(requestEvent, user);
+            var userAndFeatureVars = new UserAndFeatureVars(user, requestEvent.FeatureVars);
 
+            aggregateEventQueueMutex.WaitOne();
+            aggregateEvents.AddEvent(userAndFeatureVars, requestEvent);
+            aggregateEventQueueMutex.ReleaseMutex();
             ScheduleFlushWithDelay();
         }
 
-        private void AddAggregateEvent(DVCRequestEvent requestEvent, DVCPopulatedUser user)
+        private Dictionary<DVCPopulatedUser, UserEventsBatchRecord> CombineUsersEventsToFlush()
         {
-            var aggregateUser = aggregateEvents.ContainsKey(user.UserId)
-                ? aggregateEvents[user.UserId]
-                : new Dictionary<string, Dictionary<string, DVCRequestEvent>>();
-
-            var aggregateEventType = aggregateUser.ContainsKey(requestEvent.Type)
-                ? aggregateUser[requestEvent.Type]
-                : AddAggregateEventType(user, aggregateUser, requestEvent);
-
-            if (aggregateEventType.ContainsKey(requestEvent.Target))
-            {
-                aggregateEventType[requestEvent.Target].Value += Decimal.One;
-            }
-            else
-            {
-                aggregateEventType.Add(requestEvent.Target, requestEvent);
-            }
-        }
-
-        private Dictionary<string, DVCRequestEvent> AddAggregateEventType(DVCPopulatedUser user,
-            Dictionary<string, Dictionary<string, DVCRequestEvent>> aggregateUser,
-            DVCRequestEvent requestEvent)
-        {
-            aggregateUser.Add(requestEvent.Type, new Dictionary<string, DVCRequestEvent>());
-            aggregateUser[requestEvent.Type].Add(requestEvent.Target, requestEvent);
-            aggregateEvents.Add(user.UserId, aggregateUser);
-
-            return aggregateUser[requestEvent.Type];
-        }
-
-        private Dictionary<string, UserEventsBatchRecord> CombineUsersEventsToFlush()
-        {
-            var userEventsBatchRecords = new Dictionary<string, UserEventsBatchRecord>();
+            var userEventsBatchRecords = aggregateEvents.GetEventBatches();
 
             foreach (var eventPayload in eventPayloadsToFlush)
             {
-                var userId = eventPayload.Key;
+                var user = eventPayload.Key;
                 var userEventsRecord = eventPayload.Value;
 
-                if (userEventsBatchRecords.ContainsKey(userId))
+                if (userEventsBatchRecords.ContainsKey(user))
                 {
-                    userEventsBatchRecords[userId].Events.AddRange(userEventsRecord.Events);
+                    userEventsBatchRecords[user].Events.AddRange(userEventsRecord.Events);
                 }
                 else
                 {
-                    userEventsBatchRecords.Add(userId, userEventsRecord);
+                    userEventsBatchRecords.Add(user, userEventsRecord);
                 }
-            }
-
-            foreach (var userEvent in userForAggregation)
-            {
-                var userId = userEvent.Key;
-                var user = userEvent.Value;
-                var aggUserEventsRecord = aggregateEvents[userId];
-                var events = EventsFromAggregateEvents(aggUserEventsRecord);
-
-                if (!userEventsBatchRecords.ContainsKey(userId))
-                {
-                    var userEventsRecord = new UserEventsBatchRecord(user);
-                    userEventsBatchRecords.Add(userId, userEventsRecord);
-                }
-                userEventsBatchRecords[userId].Events.AddRange(events);
             }
 
             return userEventsBatchRecords;
@@ -266,38 +313,6 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             return (from eventType in aggUserEventsRecord 
                 from eventTarget in eventType.Value select eventTarget.Value).ToList();
-        }
-        
-        private void RequeueAggregateEvents(Dictionary<string,DVCPopulatedUser> localUserForAggregation,
-            Dictionary<string,Dictionary<string,Dictionary<string,DVCRequestEvent>>> localAggregateEvents)
-        {
-            foreach (var localUser in localUserForAggregation)
-            {
-                if (userForAggregation.ContainsKey(localUser.Key))
-                {
-                    var aggregateEvent = localAggregateEvents[localUser.Key];
-
-                    foreach (var @event in EventsFromAggregateEvents(aggregateEvent))
-                    {
-                        AddAggregateEvent(@event, localUser.Value);
-                    } 
-                }
-            }
-        }
-
-        private void RequeueUserEvents(Dictionary<string,UserEventsBatchRecord> localEventPayloadsToFlush)
-        {
-            foreach (var userEventsBatchRecord in localEventPayloadsToFlush)
-            {
-                if (eventPayloadsToFlush.ContainsKey(userEventsBatchRecord.Key))
-                {
-                    eventPayloadsToFlush[userEventsBatchRecord.Key].Events.AddRange(userEventsBatchRecord.Value.Events);
-                }
-                else
-                {
-                    eventPayloadsToFlush.Add(userEventsBatchRecord.Key, userEventsBatchRecord.Value);
-                }
-            }
         }
 
         private void ScheduleFlushWithDelay(bool queueRequest = false)
