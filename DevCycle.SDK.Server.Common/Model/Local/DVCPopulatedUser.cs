@@ -12,9 +12,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         
         private static readonly string DefaultSdkVersion = typeof(DVCPopulatedUser).Assembly.GetName().Version.ToString();
         private static readonly string DefaultPlatformVersion = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
-        
-        private bool isAnonymous;
-        
+
         [DataMember(Name="user_id", EmitDefaultValue=false)]
         [JsonProperty("user_id")]
         public string UserId { get; }
