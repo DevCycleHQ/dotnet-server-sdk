@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using RestSharp.Portable;
@@ -21,10 +22,14 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
         }
 
-        public DVCApiClient(string serverKey)
+        public DVCApiClient(string serverKey, IWebProxy proxy = null)
         {
             this.serverKey = serverKey;
             restClient = new RestClient(BaseUrl);
+            if (proxy != null)
+            {
+                restClient.Proxy = proxy;
+            }
         }
 
         public override string GetServerSDKKey()
@@ -36,6 +41,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             return restClient;
         }
+        
         protected virtual void Dispose(bool disposing)
         {
             if (disposed) return;

@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DevCycle.SDK.Server.Local</AssemblyName>
     <PackageId>DevCycle.SDK.Server.Local</PackageId>
     <OutputType>Library</OutputType>
@@ -29,6 +28,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <FileVersion>1.2.3</FileVersion>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
         <AssemblyName>DevCycle.SDK.Server.Common</AssemblyName>
         <RootNamespace>DevCycle.SDK.Server.Common</RootNamespace>
         <LangVersion>latest</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>DevCycle</Authors>
-        <PackageVersion>1.0.5</PackageVersion>
+        <PackageVersion>1.0.6</PackageVersion>
         <Title>DevCycle.SDK.Server.Common</Title>
         <AssemblyVersion>1.0.5</AssemblyVersion>
         <FileVersion>1.0.5</FileVersion>
+        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,7 +18,6 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
       <PackageReference Include="TypeSupport" Version="1.1.12" />
-      <PackageReference Include="Wasmtime" Version="0.34.0-preview1" />
     </ItemGroup>
 
 </Project>

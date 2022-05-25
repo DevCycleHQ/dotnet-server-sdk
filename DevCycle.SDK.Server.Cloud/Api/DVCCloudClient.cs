@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using RestSharp.Portable;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
@@ -16,7 +17,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
     {
         public override IDVCClient Build()
         {
-            return new DVCCloudClient(environmentKey, loggerFactory);
+            return new DVCCloudClient(environmentKey, loggerFactory, proxy);
         }
     }
     public sealed class DVCCloudClient : DVCBaseClient
@@ -24,9 +25,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
         private readonly DVCApiClient apiClient;
         private readonly ILogger logger;
 
-        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory)
+        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy)
         {
-            apiClient = new DVCApiClient(serverKey);
+            apiClient = new DVCApiClient(serverKey, proxy);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();
         }
         

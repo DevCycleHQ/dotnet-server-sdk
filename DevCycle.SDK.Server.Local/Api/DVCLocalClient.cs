@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
-using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
+using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -42,7 +43,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing);
 
-            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, initialized);
+            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, initialized, proxy);
         }
     }
 
@@ -56,9 +57,9 @@ namespace DevCycle.SDK.Server.Local.Api
 
         internal DVCLocalClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, LocalBucketing localBucketing,
-            EventHandler<DVCEventArgs> initialized)
+            EventHandler<DVCEventArgs> initialized, IWebProxy proxy)
         {
-            eventQueue = new EventQueue(environmentKey, dvcOptions, loggerFactory);
+            eventQueue = new EventQueue(environmentKey, dvcOptions, loggerFactory, proxy);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
@@ -124,7 +125,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
             }
 
-            var variable =  SDK.Server.Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
+            var variable =  Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
 
             var @event = new Event(type: variable.IsDefaulted
                     ? EventTypes.variableDefaulted

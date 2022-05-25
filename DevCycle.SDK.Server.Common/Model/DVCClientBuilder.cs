@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using DevCycle.SDK.Server.Common.API;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,8 @@ namespace DevCycle.SDK.Server.Common.Model
         protected DVCOptions options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
-
+        protected IWebProxy proxy;
+        
         public IClientBuilder SetEnvironmentKey(string key)
         {
             environmentKey = key;
@@ -27,6 +29,12 @@ namespace DevCycle.SDK.Server.Common.Model
         public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
         {
             loggerFactory = loggerFactoryProvider;
+            return this;
+        }
+
+        public IClientBuilder SetWebProxy(IWebProxy proxy)
+        {
+            this.proxy = proxy;
             return this;
         }
 

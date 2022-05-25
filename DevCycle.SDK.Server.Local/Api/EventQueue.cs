@@ -35,13 +35,13 @@ namespace DevCycle.SDK.Server.Local.Api
         private event EventHandler<DVCEventArgs> FlushedEvents;
 
         // Internal parameterless constructor for testing with Moq
-        internal EventQueue() : this("not-a-real-key", new DVCOptions(100, 100), new NullLoggerFactory())
+        internal EventQueue() : this("not-a-real-key", new DVCOptions(100, 100), new NullLoggerFactory(), null)
         {
         }
 
-        public EventQueue(string environmentKey, DVCOptions options, ILoggerFactory loggerFactory)
+        public EventQueue(string environmentKey, DVCOptions options, ILoggerFactory loggerFactory, IWebProxy proxy)
         {
-            dvcEventsApiClient = new DVCEventsApiClient(environmentKey);
+            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy);
             this.options = options;
             
             eventPayloadsToFlush = new Dictionary<string, UserEventsBatchRecord>();

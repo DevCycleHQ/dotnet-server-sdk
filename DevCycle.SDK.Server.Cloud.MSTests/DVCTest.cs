@@ -82,7 +82,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null);
 
             api.SetPrivateFieldValue("apiClient", apiClient.Object);
 
@@ -110,7 +110,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null);
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {

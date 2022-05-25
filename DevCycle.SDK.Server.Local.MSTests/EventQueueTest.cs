@@ -37,7 +37,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
                 .ReturnsAsync(mockResponse.Object);
             
-            eventQueue = new EventQueue("some-key", options, loggerFactory);
+            eventQueue = new EventQueue("some-key", options, loggerFactory, null);
             eventQueue.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
             
             eventQueue.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
