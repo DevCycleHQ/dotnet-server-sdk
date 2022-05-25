@@ -14,100 +14,6 @@ using RestSharp.Portable;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    internal class UserAndFeatureVars
-    {
-        public readonly DVCPopulatedUser User;
-        private readonly Dictionary<string, string> featureVars;
-
-        public UserAndFeatureVars(DVCPopulatedUser user, Dictionary<string, string> featureVars)
-        {
-            User = user;
-            this.featureVars = featureVars;
-        }
-
-        private int FeatureVarsHashCode()
-        {
-            var sum = 0;
-            foreach (var entry in featureVars)
-            {
-                sum += entry.Key.GetHashCode();
-                sum += entry.Value.GetHashCode();
-            }
-
-            return sum;
-        }
-
-        public override int GetHashCode()
-        {
-            return User.GetHashCode() + FeatureVarsHashCode();
-        }
-
-        public override bool Equals(object obj)
-        {
-            return GetHashCode().Equals(obj?.GetHashCode());
-        }
-    }
-
-    internal class AggregateEventQueues
-    {
-        private readonly Dictionary<
-            UserAndFeatureVars,
-            Dictionary<string, DVCRequestEvent>> eventQueueMap;
-        
-        public AggregateEventQueues()
-        {
-            eventQueueMap = new Dictionary<UserAndFeatureVars, Dictionary<string, DVCRequestEvent>>();
-        }
-
-        public void AddEvent(UserAndFeatureVars userFeatureVars, DVCRequestEvent requestEvent)
-        {
-            if (!eventQueueMap.ContainsKey(userFeatureVars))
-            {
-                eventQueueMap[userFeatureVars] = new Dictionary<string, DVCRequestEvent>();
-            }
-
-            var eventKey = GetEventMapKey(requestEvent);
-
-            if (!eventQueueMap[userFeatureVars].ContainsKey(eventKey))
-            {
-                eventQueueMap[userFeatureVars][eventKey] = requestEvent;
-            }
-            else
-            {
-                eventQueueMap[userFeatureVars][eventKey].Value += 1;
-            }
-        }
-
-        private string GetEventMapKey(DVCRequestEvent requestEvent)
-        {
-            return requestEvent.Type + requestEvent.Target;
-        }
-
-        public Dictionary<DVCPopulatedUser, UserEventsBatchRecord> GetEventBatches()
-        {
-            // regroup aggregate events into batches by unique user
-            var userEventBatches = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
-            
-            foreach (var entries in eventQueueMap)
-            {
-                var user = entries.Key.User;
-                if (!userEventBatches.ContainsKey(user))
-                {
-                    userEventBatches[user] = new UserEventsBatchRecord(user);
-                }
-                
-                userEventBatches[user].Events.AddRange(entries.Value.Values.ToList());
-            }
-            
-            return userEventBatches;
-        }
-
-        public void Clear()
-        {
-            eventQueueMap.Clear();
-        }
-    }
-
     internal class EventQueue
     {
         private readonly DVCOptions options;
@@ -303,11 +209,8 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             var userEventsBatchRecords = aggregateEvents.GetEventBatches();
 
-            foreach (var eventPayload in eventPayloadsToFlush)
+            foreach (var (user, userEventsRecord) in eventPayloadsToFlush)
             {
-                var user = eventPayload.Key;
-                var userEventsRecord = eventPayload.Value;
-
                 if (userEventsBatchRecords.ContainsKey(user))
                 {
                     userEventsBatchRecords[user].Events.AddRange(userEventsRecord.Events);
