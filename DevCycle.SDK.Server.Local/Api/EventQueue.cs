@@ -25,15 +25,26 @@ namespace DevCycle.SDK.Server.Local.Api
             this.featureVars = featureVars;
         }
 
+        private int FeatureVarsHashCode()
+        {
+            var sum = 0;
+            foreach (var entry in featureVars)
+            {
+                sum += entry.Key.GetHashCode();
+                sum += entry.Value.GetHashCode();
+            }
+
+            return sum;
+        }
+
         public override int GetHashCode()
         {
-            var result = User.GetHashCode() + featureVars.GetHashCode();
-            return result;
+            return User.GetHashCode() + FeatureVarsHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            return GetHashCode().Equals(obj.GetHashCode());
+            return GetHashCode().Equals(obj?.GetHashCode());
         }
     }
 
@@ -87,7 +98,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 
                 userEventBatches[user].Events.AddRange(entries.Value.Values.ToList());
             }
-
+            
             return userEventBatches;
         }
 
@@ -160,6 +171,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 batchQueueMutex.WaitOne();
 
                 var userEventBatch = CombineUsersEventsToFlush();
+
                 if (userEventBatch.Count != 0)
                 {
                     batchQueue.Add(new BatchOfUserEventsBatch(userEventBatch.Values.ToList()));
@@ -176,7 +188,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     OnFlushedEvents(eventArgs);
                 }
 
-                var eventCount = userEventBatch.Sum(u => userEventBatch.Values.Count);
+                var eventCount = userEventBatch.Sum(u => u.Value.Events.Count);
 
                 logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
                 
