@@ -159,7 +159,9 @@ namespace DevCycle.SDK.Server.Local.Api
             
             var userAndEvents = eventPayloadsToFlush[user];
 
-            userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, config.FeatureVariationMap));
+            var featureVars = config?.FeatureVariationMap ?? new Dictionary<string, string>(); 
+
+            userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, featureVars));
             
             eventQueueMutex.ReleaseMutex();
             

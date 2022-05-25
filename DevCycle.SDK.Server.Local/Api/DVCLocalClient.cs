@@ -187,19 +187,23 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public void Track(User user, Event userEvent)
         {
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("Track called before DVCClient has initialized");
-                return;
-            }
-
+            BucketedUserConfig config = null;
             var requestUser = new DVCPopulatedUser(user);
             var platformData = new PlatformData(requestUser);
 
-            try
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("Track called before DVCClient has initialized");
+            }
+            else
             {
                 localBucketing.SetPlatformData(platformData.ToJson());
-                var config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+                config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+            }
+
+
+            try
+            {
                 eventQueue.QueueEvent(requestUser, userEvent, config);
             }
             catch (Exception e)
