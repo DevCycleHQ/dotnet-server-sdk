@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
@@ -163,7 +161,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
         
         [TestMethod]
-        public async Task QueueTwoAggregateEvents_EventsQueuedSuccessfully()
+        public async Task QueueAggregateEvents_EventsQueuedSuccessfully()
         {
             // Mock EventQueue for verification without mocking any methods
             var mockedQueue = new Mock<EventQueue>
