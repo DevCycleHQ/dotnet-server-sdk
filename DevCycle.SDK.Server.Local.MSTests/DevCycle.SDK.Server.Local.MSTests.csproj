@@ -6,7 +6,7 @@
     <ReleaseVersion>1.0.1</ReleaseVersion>
     <LangVersion>latest</LangVersion>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

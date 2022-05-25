@@ -36,9 +36,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var headersList = new System.Collections.Generic.List<string> {"test etag"};
             headers.Setup(_ => _.GetValues("etag")).Returns(headersList);
 
-            //mock response
-            var response = new Mock<IRestResponse>();
-
             if (shouldThrow)
             {
                 mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).Throws(new DVCException(HttpStatusCode.BadRequest, new ErrorResponse("test exception")));
@@ -46,11 +43,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             
             if (!willSucceedNextTime && shouldThrow) return;
             
-            response.Setup(_ => _.StatusCode).Returns(shouldError ? HttpStatusCode.BadRequest : HttpStatusCode.OK);
-            response.Setup(_ => _.IsSuccess).Returns(!shouldError);
-            response.Setup(_ => _.Content).Returns(config);
-            response.Setup(_ => _.Headers).Returns(headers.Object);
-            mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
+            //mock response
+            
         }
 
         [TestMethod]
@@ -106,6 +100,18 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     if (configCallCount == 1)
                     {
                         Assert.IsFalse(e.Success);
+                        
+                        const string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
+                        // mock headers
+                        var headers = new Mock<IHttpHeaders>();
+                        var headersList = new System.Collections.Generic.List<string> {"test etag"};
+                        headers.Setup(_ => _.GetValues("etag")).Returns(headersList);
+                        var response = new Mock<IRestResponse>();
+                        response.Setup(_ => _.StatusCode).Returns(HttpStatusCode.OK);
+                        response.Setup(_ => _.IsSuccess).Returns(true);
+                        response.Setup(_ => _.Content).Returns(config);
+                        response.Setup(_ => _.Headers).Returns(headers.Object);
+                        mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
                     }
                     else
                     {
@@ -115,6 +121,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             SetupRestClient(shouldThrow: true, willSucceedNextTime: true);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
             await configManager.InitializeConfigAsync();
+            await Task.Delay(2000);
+            
+            Assert.AreEqual(2, configCallCount);
         }
         
         private void DidInitializeSubscriber(object o, DVCEventArgs e)

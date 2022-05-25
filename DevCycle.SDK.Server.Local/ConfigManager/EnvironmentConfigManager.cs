@@ -34,6 +34,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public virtual bool Initialized { get; private set; }
 
         private string configEtag;
+        private bool alreadyCalledHandler;
 
         // internal parameterless constructor for testing
         internal EnvironmentConfigManager() : this("not-a-real-key", new DVCOptions(),
@@ -77,9 +78,16 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             restClient.Dispose();
         }
         
-        private void OnInitialized(DVCEventArgs e) 
+        private void OnInitialized(DVCEventArgs e)
         {
+            if (Initialized && alreadyCalledHandler) return;
+            
             initializedHandler?.Invoke(this, e);
+
+            if (Initialized)
+            {
+                alreadyCalledHandler = true;
+            }
         }
 
         private string GetConfigUrl()
@@ -152,10 +160,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             finally
             {
-                if (!Initialized)
-                {
-                    OnInitialized(dvcEventArgs);
-                }
+                OnInitialized(dvcEventArgs);
             }
         }
         
