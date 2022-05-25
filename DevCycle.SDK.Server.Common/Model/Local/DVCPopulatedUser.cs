@@ -69,6 +69,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("deviceModel")]
         public readonly string DeviceModel;
 
+        private readonly int hashCode;
+
         public DVCPopulatedUser(User user)
         {
             if (user == null)
@@ -79,6 +81,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             {
                 throw new ArgumentException("Must have a UserId set on the user");
             }
+
+            hashCode = user.GetHashCode();
 
             UserId = user.UserId;
             Email = user.Email;
@@ -103,6 +107,16 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public virtual string ToJson()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        public override int GetHashCode()
+        {
+            return hashCode;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return hashCode == obj?.GetHashCode();
         }
     }
 }

@@ -190,6 +190,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
             };
+            
+            var configIdentical = new BucketedUserConfig
+            {
+                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
+            };
 
             var config2 = new BucketedUserConfig
             {
@@ -197,7 +202,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             };
             
             mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, config);
+            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, configIdentical);
             mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
             mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
             mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event3, config);
@@ -233,38 +238,38 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
         private bool AssertAggregateEventsBatch(BatchOfUserEventsBatch b)
         {
-            Debug.Assert(b.UserEventsBatchRecords.Count == 3);
-            Debug.Assert(b.UserEventsBatchRecords[0].User.Name == "User1");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events.Count == 4);
+            Assert.IsTrue(b.UserEventsBatchRecords.Count == 3);
+            Assert.IsTrue(b.UserEventsBatchRecords[0].User.Name == "User1");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events.Count == 4);
             
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[0].Type == "variableEvaluated");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[0].Target == "var1");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[0].Value == 2);
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Type == "variableEvaluated");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Target == "var1");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Value == 2);
             
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[1].Type == "variableEvaluated");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[1].Target == "var2");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[1].Value == 2);
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Type == "variableEvaluated");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Target == "var2");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Value == 2);
             
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[2].Type == "variableDefaulted");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[2].Target == "var2");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[2].Value == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Type == "variableDefaulted");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Target == "var2");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Value == 1);
             
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[3].Type == "variableEvaluated");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[3].Target == "var1");
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[3].Value == 1);
-            Debug.Assert(b.UserEventsBatchRecords[0].Events[3].FeatureVars["feature2"] == "variation2");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Type == "variableEvaluated");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Target == "var1");
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Value == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].FeatureVars["feature2"] == "variation2");
 
-            Debug.Assert(b.UserEventsBatchRecords[1].User.Name == "User2");
-            Debug.Assert(b.UserEventsBatchRecords[1].Events.Count == 1);
-            Debug.Assert(b.UserEventsBatchRecords[1].Events[0].Type == "variableEvaluated");
-            Debug.Assert(b.UserEventsBatchRecords[1].Events[0].Target == "var1");
-            Debug.Assert(b.UserEventsBatchRecords[1].Events[0].Value == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[1].User.Name == "User2");
+            Assert.IsTrue(b.UserEventsBatchRecords[1].Events.Count == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Type == "variableEvaluated");
+            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Target == "var1");
+            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Value == 1);
 
-            Debug.Assert(b.UserEventsBatchRecords[2].User.Name == "User3");
-            Debug.Assert(b.UserEventsBatchRecords[2].Events.Count == 1);
-            Debug.Assert(b.UserEventsBatchRecords[2].Events[0].Type == "variableEvaluated");
-            Debug.Assert(b.UserEventsBatchRecords[2].Events[0].Target == "var1");
-            Debug.Assert(b.UserEventsBatchRecords[2].Events[0].Value == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[2].User.Name == "User3");
+            Assert.IsTrue(b.UserEventsBatchRecords[2].Events.Count == 1);
+            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Type == "variableEvaluated");
+            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Target == "var1");
+            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Value == 1);
 
             return true;
         }
