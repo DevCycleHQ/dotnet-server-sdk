@@ -41,9 +41,9 @@ namespace DevCycle.SDK.Server.Local.Api
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
-            configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing);
+            configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing, initialized);
 
-            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, initialized, proxy);
+            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, proxy);
         }
     }
 
@@ -56,28 +56,18 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, LocalBucketing localBucketing,
-            EventHandler<DVCEventArgs> initialized, IWebProxy proxy)
+            EnvironmentConfigManager configManager, LocalBucketing localBucketing, IWebProxy proxy)
         {
             eventQueue = new EventQueue(environmentKey, dvcOptions, loggerFactory, proxy);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
-            Initialized += initialized;
 
             Task.Run(async delegate
             {
-                var initializedEventArgs = await configManager.InitializeConfigAsync();
-                OnInitialized(initializedEventArgs);
+                await configManager.InitializeConfigAsync();
             });
-        }
-
-        private event EventHandler<DVCEventArgs> Initialized;
-
-        private void OnInitialized(DVCEventArgs e)
-        {
-            Initialized?.Invoke(this, e);
         }
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)

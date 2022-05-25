@@ -28,9 +28,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             localBucketing = new LocalBucketing();
         }
         
-        private void SetupRestClient (bool shouldThrow = false, bool shouldError = false)
+        private void SetupRestClient (bool shouldThrow = false, bool shouldError = false, bool willSucceedNextTime = false)
         {
-            var config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
+            const string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
             // mock headers
             var headers = new Mock<IHttpHeaders>();
             var headersList = new System.Collections.Generic.List<string> {"test etag"};
@@ -38,18 +38,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             //mock response
             var response = new Mock<IRestResponse>();
-            if (!shouldThrow)
-            {
-                response.Setup(_ => _.StatusCode).Returns(shouldError ? HttpStatusCode.BadRequest : HttpStatusCode.OK);
-                response.Setup(_ => _.IsSuccess).Returns(!shouldError);
-                response.Setup(_ => _.Content).Returns(config);
-                response.Setup(_ => _.Headers).Returns(headers.Object);
-                mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
-            }
-            else
+
+            if (shouldThrow)
             {
                 mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).Throws(new DVCException(HttpStatusCode.BadRequest, new ErrorResponse("test exception")));
             }
+            
+            if (!willSucceedNextTime && shouldThrow) return;
+            
+            response.Setup(_ => _.StatusCode).Returns(shouldError ? HttpStatusCode.BadRequest : HttpStatusCode.OK);
+            response.Setup(_ => _.IsSuccess).Returns(!shouldError);
+            response.Setup(_ => _.Content).Returns(config);
+            response.Setup(_ => _.Headers).Returns(headers.Object);
+            mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
         }
 
         [TestMethod]
@@ -64,38 +65,67 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public async Task OnSuccessCallbackTest()
+        public async Task OnSuccessNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory, localBucketing);
+            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory,
+                localBucketing, DidInitializeSubscriber);
             SetupRestClient();
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
-            var initializedEventArgs = await configManager.InitializeConfigAsync();
-
-            Assert.IsTrue(initializedEventArgs.Success);
+            await configManager.InitializeConfigAsync();
         }
 
         [TestMethod]
-        public async Task OnErrorCallbackTest()
+        public async Task OnErrorNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory, localBucketing);
+            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory,
+                localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldError: true);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
-            var initializedEventArgs = await configManager.InitializeConfigAsync();
-
-            Assert.IsFalse(initializedEventArgs.Success);
-            Assert.IsNotNull(initializedEventArgs.Error);
+            await configManager.InitializeConfigAsync();
         }
 
         [TestMethod]
-        public async Task OnExceptionCallbackTest()
+        public async Task OnExceptionNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory, localBucketing);
+            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory,
+                localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldThrow: true);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
-            var initializedEventArgs = await configManager.InitializeConfigAsync();
+            await configManager.InitializeConfigAsync();
+        }
+        
+        [TestMethod]
+        public async Task initializeConfigAsync_configIsNotFetched_thenFetchedOnNextCall_NotificationIsSuccessful()
+        {
+            var configCallCount = 0;
+            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory, localBucketing,
+                ((o, e) =>
+                {
+                    configCallCount++;
 
-            Assert.IsFalse(initializedEventArgs.Success);
-            Assert.IsNotNull(initializedEventArgs.Error);
+                    if (configCallCount == 1)
+                    {
+                        Assert.IsFalse(e.Success);
+                    }
+                    else
+                    {
+                        Assert.IsTrue(e.Success);
+                    }
+                }));
+            SetupRestClient(shouldThrow: true, willSucceedNextTime: true);
+            configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
+            await configManager.InitializeConfigAsync();
+        }
+        
+        private void DidInitializeSubscriber(object o, DVCEventArgs e)
+        {
+            Assert.IsTrue(e.Success);
+        }
+        
+        private void DidNotInitializeSubscriber(object o, DVCEventArgs e)
+        {
+            Assert.IsFalse(e.Success);
+            Assert.IsNotNull(e.Error);
         }
     }
 }

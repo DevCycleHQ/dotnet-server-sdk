@@ -26,6 +26,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly ILogger logger;
         private readonly LocalBucketing localBucketing;
         private readonly DVCEventArgs dvcEventArgs;
+        private readonly EventHandler<DVCEventArgs> initializedHandler;
 
         private Timer pollingTimer;
 
@@ -35,11 +36,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private string configEtag;
 
         // internal parameterless constructor for testing
-        internal EnvironmentConfigManager() : this("not-a-real-key", new DVCOptions(), new NullLoggerFactory(), new LocalBucketing())
+        internal EnvironmentConfigManager() : this("not-a-real-key", new DVCOptions(),
+            new NullLoggerFactory(), new LocalBucketing())
         {
         }
 
-        public EnvironmentConfigManager(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory, LocalBucketing localBucketing)
+        public EnvironmentConfigManager(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
+            LocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
         {
             this.environmentKey = environmentKey;
             
@@ -54,21 +57,29 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             this.logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();
+            
+            if (initializedHandler != null)
+            {
+                this.initializedHandler += initializedHandler;
+            }
         }
 
-        public virtual async Task<DVCEventArgs> InitializeConfigAsync()
+        public virtual async Task InitializeConfigAsync()
         {
             await FetchConfigAsyncWithTask();
             
             pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
-
-            return dvcEventArgs;
         }
 
         public void Dispose()
         {
             pollingTimer?.Dispose();
             restClient.Dispose();
+        }
+        
+        private void OnInitialized(DVCEventArgs e) 
+        {
+            initializedHandler?.Invoke(this, e);
         }
 
         private string GetConfigUrl()
@@ -137,6 +148,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 else
                 {
                     logger.LogError("Error loading config. Using cache etag: {ConfigEtag}. Exception: {Exception}", configEtag, e.Message);
+                }
+            }
+            finally
+            {
+                if (!Initialized)
+                {
+                    OnInitialized(dvcEventArgs);
                 }
             }
         }
