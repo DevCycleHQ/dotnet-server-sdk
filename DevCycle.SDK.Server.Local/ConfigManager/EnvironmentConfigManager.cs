@@ -155,20 +155,18 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             catch (DVCException e)
             {
-                if (Config == null && configEtag == null)
-                {
-                    dvcEventArgs.Error = e;
-                }
-                
+                DVCException finalError;
                 if (!e.IsRetryable())
                 {
                     if ((int)e.HttpStatusCode == 403)
                     {
-                        logger.LogError("Project configuration could not be found. Check your SDK key.");
+                        finalError = new DVCException(e.HttpStatusCode,
+                            new ErrorResponse("Project configuration could not be found. Check your SDK key."));
                     }
                     else
                     {
-                        logger.LogError("Encountered non-retryable error fetching config. Halting polling loop.");
+                        finalError = new DVCException(e.HttpStatusCode,
+                            new ErrorResponse("Encountered non-retryable error fetching config. Halting polling loop."));
                     }
 
                     pollingTimer?.Dispose();
@@ -176,12 +174,20 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 }
                 else if (Config == null && configEtag == null)
                 {
-                    logger.LogError("Error loading initial config. Exception: {Exception}", e.Message);
+                    finalError = new DVCException(e.HttpStatusCode,
+                        new ErrorResponse("Error loading initial config. Exception: " + e.Message));
                 } 
                 else
                 {
-                    logger.LogError("Error loading config. Using cache etag: {ConfigEtag}. Exception: {Exception}", configEtag, e.Message);
+                    finalError = new DVCException(e.HttpStatusCode,
+                        new ErrorResponse(String.Format(
+                            "Error loading config. Using cache etag: {ConfigEtag}. Exception: {Exception}",
+                            configEtag, 
+                            e.Message
+                        )));
                 }
+                logger.LogError(finalError.ErrorResponse.Message);
+                dvcEventArgs.Error = finalError;
             }
             finally
             {
