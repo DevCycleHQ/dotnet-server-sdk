@@ -6,7 +6,7 @@
         <LangVersion>latest</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>DevCycle</Authors>
-        <PackageVersion>1.0.6</PackageVersion>
+        <PackageVersion>1.0.7</PackageVersion>
         <Title>DevCycle.SDK.Server.Common</Title>
         <AssemblyVersion>1.0.5</AssemblyVersion>
         <FileVersion>1.0.5</FileVersion>
