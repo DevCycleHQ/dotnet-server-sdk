@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -146,8 +147,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             // Add a longer delay to the test to ensure FlushEvents is no longer looping
             await Task.Delay(500);
 
-            mockedQueue.Verify(m => m.FlushEvents(), Times.AtMost(2));
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.AtMost(2));
+            mockedQueue.Verify(m => m.FlushEvents(), Times.Once());
+            dvcEventsApiClient.Verify(m => 
+                m.PublishEvents(It.Is<BatchOfUserEventsBatch>(b => b.UserEventsBatchRecords[0].Events.Count == 1)), Times.Once());
             
             // internal event queue should now be empty, flush events manually and check that publish isnt called
             
@@ -158,6 +160,47 @@ namespace DevCycle.SDK.Server.Local.MSTests
             
             mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
             dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Never());
+        }
+        
+        [TestMethod]
+        public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedNonRetryable_VerifyFlushEventsCalledOnce()
+        {
+            // Mock EventQueue for verification without mocking any methods
+            var mockedQueue = new Mock<EventQueue>
+            {
+                CallBase = true
+            };
+            
+            var mockResponse = new Mock<IRestResponse>();
+            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.BadRequest);
+            
+            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
+                .ReturnsAsync(mockResponse.Object);
+            mockedQueue.Object.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
+            
+            mockedQueue.Object.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
+
+            var user = new User(userId: "1");
+
+            var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
+
+            var config = new BucketedUserConfig
+            {
+                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
+            };
+
+            var dvcPopulatedUser = new DVCPopulatedUser(user);
+            mockedQueue.Object.QueueEvent(dvcPopulatedUser, @event, config);
+            
+            await mockedQueue.Object.FlushEvents();
+            
+            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
+            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Once);
+
+            // add delay to make sure we purged events that failed and were non-retryable, thus haven't flushed again
+            await Task.Delay(500);
+            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
+            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Once);
         }
         
         [TestMethod]
