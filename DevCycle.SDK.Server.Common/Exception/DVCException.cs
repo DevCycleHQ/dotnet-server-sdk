@@ -19,5 +19,10 @@ namespace DevCycle.SDK.Server.Common.Exception
         public HttpStatusCode HttpStatusCode { get; set; }
 
         public ErrorResponse ErrorResponse { get; set; }
+
+        public bool IsRetryable()
+        {
+            return (int)HttpStatusCode >= 500;
+        }
     }
 }

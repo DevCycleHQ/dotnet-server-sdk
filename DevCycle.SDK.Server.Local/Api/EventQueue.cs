@@ -67,7 +67,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             // cancel pending queued FlushEvents
             tokenSource.Cancel();
-
+            
             await EventQueueSemaphore.WaitAsync(0);
             var eventArgs = new DVCEventArgs();
             try
@@ -77,7 +77,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 batchQueueMutex.WaitOne();
 
                 var userEventBatch = CombineUsersEventsToFlush();
-
+                
                 if (userEventBatch.Count != 0)
                 {
                     batchQueue.Add(new BatchOfUserEventsBatch(userEventBatch.Values.ToList()));
@@ -87,7 +87,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 
                 eventQueueMutex.ReleaseMutex();
                 aggregateEventQueueMutex.ReleaseMutex();
-
+                
                 if (batchQueue.Count == 0)
                 {
                     eventArgs.Success = true;
@@ -97,10 +97,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 var eventCount = userEventBatch.Sum(u => u.Value.Events.Count);
 
                 logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
-                
+
                 IRestResponse response = null;
 
-                var successfulRequests = new List<BatchOfUserEventsBatch>();
+                var completedRequests = new List<BatchOfUserEventsBatch>();
 
                 try
                 {
@@ -110,36 +110,65 @@ namespace DevCycle.SDK.Server.Local.Api
 
                         if (response.StatusCode != HttpStatusCode.Created)
                         {
-                            throw new System.Exception(
-                                $"Error publishing events, status {response.StatusCode}, body: {batch}");
+                            var error = new DVCException(response.StatusCode,
+                                new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
+
+                            if (!error.IsRetryable())
+                            {
+                                // Add non-retryable payloads to list of "completed" so that they are removed from queue
+                                completedRequests.Add(batch);
+                            }
+
+                            throw error;
                         }
-                        
-                        successfulRequests.Add(batch);
+
                     }
 
                     batchQueue.Clear();
 
-                    batchQueue.AddRange(batchQueue.Except(successfulRequests));
-                    
                     logger.LogDebug("DVC Flushed {EventCount} Events, for {UserEventBatch} Users", eventCount,
                         userEventBatch.Count);
                     eventArgs.Success = true;
                     OnFlushedEvents(eventArgs);
                 }
-                catch (System.Exception e)
+                catch (DVCException e)
+                {
+                    if (e.IsRetryable())
+                    {
+                        logger.LogError(
+                            "Error publishing events, retrying, status {status}, body: {response}", e.HttpStatusCode,
+                            response?.Content);
+                        ScheduleFlushWithDelay(true);
+                    }
+                    else
+                    {
+                        logger.LogError(
+                            "DVC Events were invalid and have been dropped, status {status}, body: {response}",
+                            e.HttpStatusCode,
+                            response?.Content);
+                    }
+
+                    eventArgs.Success = false;
+                    eventArgs.Error = e;
+                    OnFlushedEvents(eventArgs);
+                }
+                catch (Exception e)
                 {
                     logger.LogError(
-                        "DVC Error Flushing Events response message: {Exception}, response data: {Response}", e.Message,
-                        response.Content);
-
+                        "Something went wrong flushing events, retrying, {message}", e.Message);
                     ScheduleFlushWithDelay(true);
-                    var dvcException = new DVCException(response.StatusCode, new ErrorResponse(e.Message));
                     eventArgs.Success = false;
-                    eventArgs.Error = dvcException;
+                    eventArgs.Error = new DVCException(HttpStatusCode.InternalServerError, new ErrorResponse(e.Message));
                     OnFlushedEvents(eventArgs);
                 }
                 finally
                 {
+                    var retryableRequests = batchQueue.Except(completedRequests);
+                    var retryable = retryableRequests.ToList();
+                    batchQueue.Clear();
+                    
+                    batchQueue.AddRange(retryable);
+                    
                     batchQueueMutex.ReleaseMutex();
                 }
             }
@@ -235,7 +264,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private void ScheduleFlushWithDelay(bool queueRequest = false)
         {
             if (schedulerIsRunning && !queueRequest) return;
-
+            
             schedulerIsRunning = true;
             tokenSource = new CancellationTokenSource();
 

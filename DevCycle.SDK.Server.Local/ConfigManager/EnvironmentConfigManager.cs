@@ -33,6 +33,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; private set; }
 
+        private bool PollingEnabled = true;
+
         private string configEtag;
         private bool alreadyCalledHandler;
 
@@ -125,7 +127,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 logger.LogError("Failed to download DevCycle config");
 
-                var exception = new DVCException(HttpStatusCode.InternalServerError,
+                var exception = new DVCException(res.StatusCode,
                     new ErrorResponse("Failed to download DevCycle config."));
                 dvcEventArgs.Error = exception;
 
@@ -135,6 +137,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private async Task FetchConfigAsyncWithTask()
         {
+            if (!PollingEnabled)
+            {
+                return;
+            }
+            
             restClient.IgnoreResponseStatusCode = true;
             var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
@@ -150,8 +157,26 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 if (Config == null && configEtag == null)
                 {
-                    logger.LogError("Error loading initial config. Exception: {Exception}", e.Message);
                     dvcEventArgs.Error = e;
+                }
+                
+                if (!e.IsRetryable())
+                {
+                    if ((int)e.HttpStatusCode == 403)
+                    {
+                        logger.LogError("Project configuration could not be found. Check your SDK key.");
+                    }
+                    else
+                    {
+                        logger.LogError("Encountered non-retryable error fetching config. Halting polling loop.");
+                    }
+
+                    pollingTimer?.Dispose();
+                    PollingEnabled = false;
+                }
+                else if (Config == null && configEtag == null)
+                {
+                    logger.LogError("Error loading initial config. Exception: {Exception}", e.Message);
                 } 
                 else
                 {
