@@ -27,11 +27,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             localBucketing = new LocalBucketing();
             environmentConfigManager = new Mock<EnvironmentConfigManager>();
-            var initializedEventArgs = new DVCEventArgs
-            {
-                Success = true
-            };
-            environmentConfigManager.Setup(m => m.InitializeConfigAsync()).ReturnsAsync(initializedEventArgs);
             environmentConfigManager.Object.SetPrivateFieldValue("localBucketing", localBucketing);
             
             environmentKey = $"server-{Guid.NewGuid()}";
