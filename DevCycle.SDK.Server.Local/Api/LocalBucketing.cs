@@ -15,8 +15,10 @@ namespace DevCycle.SDK.Server.Local.Api
 {
     public class LocalBucketing : ILocalBucketing
     {
+#if !NETSTANDARD2_1
         private static readonly string InvalidVersionMessage =
             "This version of local bucketing is NOT compatible with .NET Standard 2.0. Please use LocalBucketingLegacyCompat for legacy compatibility.";
+#endif
 #if NETSTANDARD2_1
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
@@ -29,7 +31,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
+#else
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
             if (wasmResource == null)
