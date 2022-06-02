@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Local.Api
     public class DVCLocalClientBuilder : DVCClientBuilder
     {
         private EnvironmentConfigManager configManager;
-        private LocalBucketing localBucketing;
+        private ILocalBucketing localBucketing;
        
         
         public DVCLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
@@ -22,7 +22,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public DVCLocalClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
+        public DVCLocalClientBuilder SetLocalBucketing(ILocalBucketing localBucketingWrapper)
         {
             localBucketing = localBucketingWrapper;
             return this;
@@ -52,11 +52,11 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly string environmentKey;
         private readonly EnvironmentConfigManager configManager;
         private readonly EventQueue eventQueue;
-        private readonly LocalBucketing localBucketing;
+        private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, LocalBucketing localBucketing, IWebProxy proxy)
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy)
         {
             eventQueue = new EventQueue(environmentKey, dvcOptions, loggerFactory, proxy);
             this.environmentKey = environmentKey;

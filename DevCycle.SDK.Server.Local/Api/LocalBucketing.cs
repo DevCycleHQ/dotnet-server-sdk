@@ -1,25 +1,22 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Text;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Newtonsoft.Json;
-#if NETSTANDARD2_0
-using WasmerSharp;
-#elif NETSTANDARD2_1
+#if NETSTANDARD2_1
 using Wasmtime;
 using Module = Wasmtime.Module;
 #endif
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    public class LocalBucketing
+    public class LocalBucketing : ILocalBucketing
     {
-        private static Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
-        private static Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
+        private static readonly string InvalidVersionMessage =
+            "This version of local bucketing is NOT compatible with .NET Standard 2.0. Please use LocalBucketingLegacyCompat for legacy compatibility.";
 #if NETSTANDARD2_1
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
@@ -27,10 +24,14 @@ namespace DevCycle.SDK.Server.Local.Api
         private Store WASMStore { get; }
         private Memory WASMMemory { get; }
         private Instance WASMInstance { get; }
-
+#endif
         public LocalBucketing()
         {
-            
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
+            Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
             if (wasmResource == null)
             {
                 throw new ApplicationException("Could not find the bucketing-lib.release.wasm file");
@@ -97,10 +98,14 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             WASMMemory.Grow(WASMStore, 10);
+#endif
         }
 
         public BucketedUserConfig GenerateBucketedConfig(string token, string user)
         {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
             var tokenAddress = GetParameter(token);
             var userAddress = GetParameter(user);
 
@@ -111,24 +116,33 @@ namespace DevCycle.SDK.Server.Local.Api
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.InitializeVariables();
             return config;
+#endif
         }
 
         public void StoreConfig(string token, string config)
         {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
             var tokenAddress = GetParameter(token);
             var configAddress = GetParameter(config);
 
             var setConfigData = GetFunction("setConfigData");
             setConfigData.Invoke(WASMStore, tokenAddress, configAddress);
+#endif
         }
 
         public void SetPlatformData(string platformData)
         {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
             var platformDataAddress = GetParameter(platformData);
             var setPlatformData = GetFunction("setPlatformData");
             setPlatformData.Invoke(WASMStore, platformDataAddress);
+#endif
         }
-
+#if NETSTANDARD2_1
         private Function GetFunction(string name)
         {
             var function = WASMInstance.GetFunction(WASMStore, name);
@@ -161,94 +175,6 @@ namespace DevCycle.SDK.Server.Local.Api
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
             var length = memory.ReadInt32(store, address - 4);
             return Encoding.Unicode.GetString(memory.GetSpan(store).Slice(address, length));
-        }
-#elif NETSTANDARD2_0
-        private Instance inst { get; }
-
-        public LocalBucketing()
-        {
-            // need to find alternative 
-            //WASMLinker.DefineWasi();
-            var abort = new Import("env", "abort",
-                new ImportFunction((Action<InstanceContext, int, int, int, int>) (Env_Abort)));
-            var dateNow = new Import("env", "Date.now",
-                new ImportFunction((Func<InstanceContext, double>) (Date_Now)));
-            var consoleLog = new Import("env", "console.log",
-                new ImportFunction((Action<InstanceContext, int>) (Console_Log)));
-
-            using var memoryStream = new MemoryStream();
-            wasmResource.CopyTo(memoryStream);
-
-            inst = new Instance(memoryStream.ToArray(), abort, dateNow, consoleLog);
-        }
-
-        private static string ReadAssemblyScriptString(InstanceContext ctx, int address)
-        {
-            // The byte length of the string is at offset -4 in AssemblyScript string layout.
-            var memoryBase = ctx.GetMemory(0).Data;
-            var result = "";
-            unsafe
-            {
-                var len = Marshal.ReadInt32(memoryBase + address - 4);
-                result = Encoding.Unicode.GetString((byte*) memoryBase + address, len);
-
-                Console.WriteLine("Received this utf string: [{0}]", result);
-            }
-
-            return result;
-        }
-
-        private static void Env_Abort(InstanceContext context, int messageAddress, int fileNameAddress, int lineNum,
-            int colNum)
-        {
-            var message = ReadAssemblyScriptString(context, messageAddress);
-            var filename = ReadAssemblyScriptString(context, fileNameAddress);
-
-            throw new Exception($"abort: {message} ({filename}:{lineNum}:{colNum})");
-        }
-
-        private static void Console_Log(InstanceContext context, int address)
-        {
-            Console.WriteLine(ReadAssemblyScriptString(context, address));
-        }
-
-        private static double Date_Now(InstanceContext context)
-        {
-            return DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-        }
-
-        public void SetPlatformData(string platformData)
-        {
-            var platformDataAddress = GetParameter(platformData);
-            inst.Call("setPlatformData", platformDataAddress);
-        }
-
-        private int GetParameter(string param)
-        {
-            const int objectIdString = 1;
-
-            var output = inst.Call("__new", Encoding.Unicode.GetByteCount(param), objectIdString);
-            return (int) output[0];
-        }
-
-        public void StoreConfig(string token, string config)
-        {
-            var tokenAddress = GetParameter(token);
-            var configAddress = GetParameter(config);
-
-            inst.Call("setConfigData", tokenAddress, configAddress);
-        }
-
-        public BucketedUserConfig GenerateBucketedConfig(string token, string user)
-        {
-            var tokenAddress = GetParameter(token);
-            var userAddress = GetParameter(user);
-
-            var result = inst.Call("generateBucketedConfigForUser", tokenAddress, userAddress);
-            var stringResp = (string) result[0];
-            var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
-            config?.InitializeVariables();
-            return config;
         }
 #endif
     }
