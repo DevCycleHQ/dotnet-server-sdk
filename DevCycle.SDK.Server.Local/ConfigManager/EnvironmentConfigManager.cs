@@ -24,7 +24,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly int requestTimeoutMs;
         private readonly IRestClient restClient;
         private readonly ILogger logger;
-        private readonly LocalBucketing localBucketing;
+        private readonly ILocalBucketing localBucketing;
         private readonly DVCEventArgs dvcEventArgs;
         private readonly EventHandler<DVCEventArgs> initializedHandler;
 
@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         }
 
         public EnvironmentConfigManager(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
-            LocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
+            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
         {
             this.environmentKey = environmentKey;
             
