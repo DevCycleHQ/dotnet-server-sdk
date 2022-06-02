@@ -22,6 +22,8 @@ public class LocalBucketingLegacyCompat : ILocalBucketing
 #if !NETSTANDARD2_0
         throw new NotImplementedException(InvalidVersionMessage);
 #else
+        Console.WriteLine("Initializing .NETStandard2.0 Local Bucketing");
+
         Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
         Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
         // need to find alternative 

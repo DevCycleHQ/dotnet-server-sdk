@@ -29,9 +29,11 @@ namespace DevCycle.SDK.Server.Local.Api
 #endif
         public LocalBucketing()
         {
+            
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #else
+            Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
             if (wasmResource == null)
