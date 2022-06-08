@@ -10,17 +10,16 @@ namespace Example
 {
     class Program
     {
-        private static DVCClient api;
+        private static DVCLocalClient api;
         
         static async Task Main(string[] args)
         {
-            
-            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
+
+            var SDK_ENV_VAR = "server-72871795-27ea-44ca-835b-17a2345d70be";
             var user = new User("testing");
 
-            DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = (DVCClient) apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
-                .SetOptions(new DVCOptions(1000, 5000))
+            DVCLocalClientBuilder apiBuilder = new DVCLocalClientBuilder();
+            api = (DVCLocalClient) apiBuilder
                 .SetInitializedSubscriber((o, e) =>
                 {
                     if (e.Success)
@@ -32,6 +31,8 @@ namespace Example
                         Console.WriteLine($"Client did not initialize. Error: {e.Error}");
                     }
                 })
+                .SetEnvironmentKey(SDK_ENV_VAR)
+                .SetOptions(new DVCOptions(1000, 5000))
                 .SetLogger(LoggerFactory.Create(builder => builder.AddConsole()))
                 .Build();
 

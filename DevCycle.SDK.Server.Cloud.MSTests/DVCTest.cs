@@ -35,6 +35,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
             Assert.IsNotNull(result["show-feature-history"]);
+            Assert.IsFalse(string.IsNullOrEmpty(result["show-feature-history"].VariationKey));
+            Assert.IsFalse(string.IsNullOrEmpty(result["show-feature-history"].VariationName));
         }
 
         [TestMethod]
