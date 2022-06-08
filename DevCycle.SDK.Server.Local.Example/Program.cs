@@ -15,7 +15,7 @@ namespace Example
         static async Task Main(string[] args)
         {
 
-            var SDK_ENV_VAR = "server-72871795-27ea-44ca-835b-17a2345d70be";
+            var SDK_ENV_VAR = "NOT_A_KEY";
             var user = new User("testing");
 
             DVCLocalClientBuilder apiBuilder = new DVCLocalClientBuilder();
