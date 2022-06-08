@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevCycle.SDK.Server.Cloud" Version="1.0.3" />
-    <PackageReference Include="DevCycle.SDK.Server.Common" Version="1.0.0" />
+    <PackageReference Include="DevCycle.SDK.Server.Cloud" Version="1.1.1" />
+    <PackageReference Include="DevCycle.SDK.Server.Common" Version="1.0.7" />
   </ItemGroup>
 </Project>

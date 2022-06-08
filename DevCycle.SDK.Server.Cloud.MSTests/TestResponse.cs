@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             {
                 {
                     "show-feature-history",
-                    new Feature(Guid.NewGuid().ToString(), "show-feature-history", Feature.TypeEnum.Release, "variation1", "reason")
+                    new Feature(Guid.NewGuid().ToString(), "show-feature-history", Feature.TypeEnum.Release, "variation1", "reason", "Reason Name")
                 }
             };
 

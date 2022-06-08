@@ -240,8 +240,10 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             var userEventsBatchRecords = aggregateEvents.GetEventBatches();
 
-            foreach (var (user, userEventsRecord) in eventPayloadsToFlush)
+            foreach (var kvp in eventPayloadsToFlush)
             {
+                var user = kvp.Key;
+                var userEventsRecord = kvp.Value;
                 if (userEventsBatchRecords.ContainsKey(user))
                 {
                     userEventsBatchRecords[user].Events.AddRange(userEventsRecord.Events);
