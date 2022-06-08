@@ -58,6 +58,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
             Assert.IsNotNull(result["test"]);
+            Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationKey));
+            Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationName));
         }
 
         [TestMethod]

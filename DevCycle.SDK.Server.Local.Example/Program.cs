@@ -10,7 +10,7 @@ namespace Example
 {
     class Program
     {
-        private static DVCClient api;
+        private static DVCLocalClient api;
         
         static async Task Main(string[] args)
         {
@@ -18,10 +18,12 @@ namespace Example
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
             var user = new User("testing");
 
-            DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = (DVCClient) apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
+            DVCClientBuilder apiBuilder = new DVCLocalClientBuilder();
+            
+            
+            api = (DVCLocalClient) ( (DVCLocalClientBuilder) apiBuilder.SetEnvironmentKey(SDK_ENV_VAR)
                 .SetOptions(new DVCOptions(1000, 5000))
-                .SetInitializedSubscriber((o, e) =>
+                ).SetInitializedSubscriber((o, e) =>
                 {
                     if (e.Success)
                     {
