@@ -51,9 +51,11 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="id">unique database id (required).</param>
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Feature type (required).</param>
-        /// <param name="variation">Bucketed feature variation (required).</param>
+        /// <param name="variation">Bucketed feature variation ID (required).</param>
+        /// <param name="variationKey">Bucketed feature variation key (required).</param>
+        /// <param name="variationName">Bucketed feature variation name (required).</param>
         /// <param name="evalReason">Evaluation reasoning.</param>
-        public Feature(string id = default, string key = default, TypeEnum type = default, string variation = default, string evalReason = default)
+        public Feature(string id = default, string key = default, TypeEnum type = default, string variation = default, string variationKey = default, string variationName = default, string evalReason = default)
         {
             // to ensure "id" is required (not null)
             if (id == null)
@@ -85,6 +87,26 @@ namespace DevCycle.SDK.Server.Common.Model
             {
                 this.Variation = variation;
             }
+
+            // to ensure "variationKey" is required (not null)
+            if (variationKey == null)
+            {
+                throw new InvalidDataException("variationKey is a required property for Feature and cannot be null");
+            }
+            else
+            {
+                this.VariationKey = variationKey;
+            }
+
+            // to ensure "variationName" is required (not null)
+            if (variationName == null)
+            {
+                throw new InvalidDataException("variationName is a required property for Feature and cannot be null");
+            }
+            else
+            {
+                this.VariationName = variationName;
+            }
             this.EvalReason = evalReason;
         }
         
@@ -104,11 +126,26 @@ namespace DevCycle.SDK.Server.Common.Model
 
 
         /// <summary>
-        /// Bucketed feature variation
+        /// Bucketed feature variation ID
         /// </summary>
         /// <value>Bucketed feature variation</value>
         [DataMember(Name="_variation", EmitDefaultValue=false)]
         public string Variation { get; set; }
+
+        /// <summary>
+        /// Bucketed feature variation key
+        /// </summary>
+        /// <value>Bucketed feature variation key</value>
+        [DataMember(Name="variationKey", EmitDefaultValue=false)]
+        public string VariationKey { get; set; }
+
+        /// <summary>
+        /// Bucketed feature variation name
+        /// </summary>
+        /// <value>Bucketed feature variation name</value>
+        [DataMember(Name="variationName", EmitDefaultValue=false)]
+        public string VariationName { get; set; }
+
 
         /// <summary>
         /// Evaluation reasoning
@@ -129,6 +166,8 @@ namespace DevCycle.SDK.Server.Common.Model
             sb.Append("  Key: ").Append(Key).Append("\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Variation: ").Append(Variation).Append("\n");
+            sb.Append("  VariationKey: ").Append(VariationKey).Append("\n");
+            sb.Append("  VariationName: ").Append(VariationName).Append("\n");
             sb.Append("  EvalReason: ").Append(EvalReason).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
@@ -186,6 +225,16 @@ namespace DevCycle.SDK.Server.Common.Model
                     this.Variation.Equals(input.Variation))
                 ) && 
                 (
+                    this.VariationKey == input.VariationKey ||
+                    (this.VariationKey != null &&
+                    this.VariationKey.Equals(input.VariationKey))
+                ) && 
+                (
+                    this.VariationName == input.VariationName ||
+                    (this.VariationName != null &&
+                    this.VariationName.Equals(input.VariationName))
+                ) && 
+                (
                     this.EvalReason == input.EvalReason ||
                     (this.EvalReason != null &&
                     this.EvalReason.Equals(input.EvalReason))
@@ -216,6 +265,17 @@ namespace DevCycle.SDK.Server.Common.Model
                 {
                     hashCode = hashCode * 59 + this.Variation.GetHashCode();
                 }
+
+                if (this.VariationKey != null)
+                {
+                    hashCode = hashCode * 59 + this.VariationKey.GetHashCode();
+                }
+
+                if (this.VariationName != null)
+                {
+                    hashCode = hashCode * 59 + this.VariationName.GetHashCode();
+                }
+                
                 if (this.EvalReason != null)
                 {
                     hashCode = hashCode * 59 + this.EvalReason.GetHashCode();
