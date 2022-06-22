@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Cloud.Api;
 using DevCycle.SDK.Server.Common.Model;
+using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Example
@@ -14,6 +15,7 @@ namespace Example
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
 
             DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder().SetEnvironmentKey(SDK_ENV_VAR).SetLogger(new NullLoggerFactory()).Build();
+            
             var user = new User("user_id");
 
             try
