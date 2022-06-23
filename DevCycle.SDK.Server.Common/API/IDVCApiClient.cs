@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using RestSharp.Portable;
 using RestSharp.Portable.HttpClient;
@@ -10,6 +11,6 @@ namespace DevCycle.SDK.Server.Common.API
         public string GetServerSDKKey();
         public RestClient GetRestClient();
 
-        public Task<IRestResponse> SendRequestAsync(object json, string urlFragment);
+        public Task<IRestResponse> SendRequestAsync(object json, string urlFragment, Dictionary<string, string> queryParams = null);
     }
 }

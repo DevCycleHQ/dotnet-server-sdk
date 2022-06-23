@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
+using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp.Portable;
@@ -39,24 +40,24 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private bool alreadyCalledHandler;
 
         // internal parameterless constructor for testing
-        internal EnvironmentConfigManager() : this("not-a-real-key", new DVCOptions(),
+        internal EnvironmentConfigManager() : this("not-a-real-key", new DVCLocalOptions(),
             new NullLoggerFactory(), new LocalBucketing())
         {
         }
 
-        public EnvironmentConfigManager(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
+        public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
             ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
         {
             this.environmentKey = environmentKey;
             
-            pollingIntervalMs = dvcOptions.ConfigPollingIntervalMs >= MinimumPollingIntervalMs
-                ? dvcOptions.ConfigPollingIntervalMs
+            pollingIntervalMs = dvcLocalOptions.ConfigPollingIntervalMs >= MinimumPollingIntervalMs
+                ? dvcLocalOptions.ConfigPollingIntervalMs
                 : MinimumPollingIntervalMs;
-            requestTimeoutMs = dvcOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
+            requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
-                : dvcOptions.ConfigPollingTimeoutMs;
+                : dvcLocalOptions.ConfigPollingTimeoutMs;
 
-            restClient = new RestClient(dvcOptions.CdnUri);
+            restClient = new RestClient(dvcLocalOptions.CdnUri);
             this.logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();

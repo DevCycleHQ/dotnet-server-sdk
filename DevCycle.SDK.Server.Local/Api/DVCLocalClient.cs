@@ -14,6 +14,7 @@ namespace DevCycle.SDK.Server.Local.Api
     {
         private EnvironmentConfigManager configManager;
         private ILocalBucketing localBucketing;
+        private DVCLocalOptions localOptions;
        
         
         public DVCLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
@@ -37,13 +38,13 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             localBucketing ??= new LocalBucketing();
 
-            options ??= new DVCOptions();
+            localOptions ??= new DVCLocalOptions();
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
-            configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing, initialized);
+            configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing, initialized);
 
-            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing, proxy);
+            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy);
         }
     }
 
@@ -55,10 +56,10 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
 
-        internal DVCLocalClient(string environmentKey, DVCOptions dvcOptions, ILoggerFactory loggerFactory,
+        internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy)
         {
-            eventQueue = new EventQueue(environmentKey, dvcOptions, loggerFactory, proxy);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;

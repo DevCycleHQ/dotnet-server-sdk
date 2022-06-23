@@ -8,7 +8,7 @@ namespace DevCycle.SDK.Server.Common.Model
     public interface IClientBuilder
     {
         IClientBuilder SetEnvironmentKey(string key);
-        IClientBuilder SetOptions(DVCOptions options);
+        IClientBuilder SetOptions(IDVCOptions options);
         IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider);
         IClientBuilder SetWebProxy(IWebProxy proxy);
         IDVCClient Build();
