@@ -4,6 +4,7 @@ using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
+using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -16,7 +17,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     {
         private Mock<IRestClient> mockRestClient;
         private ILoggerFactory loggerFactory;
-        private DVCOptions options;
+        private DVCLocalOptions localOptions;
         private LocalBucketing localBucketing;
 
         [TestInitialize]
@@ -24,7 +25,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             mockRestClient = new Mock<IRestClient>();
             loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            options = new DVCOptions();
+            localOptions = new DVCLocalOptions();
             localBucketing = new LocalBucketing();
         }
         
@@ -66,7 +67,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory, localBucketing);
+            var configManager = new EnvironmentConfigManager("server-key", new DVCLocalOptions(), loggerFactory, localBucketing);
             SetupRestClient();
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
             await configManager.InitializeConfigAsync();
@@ -77,7 +78,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigNonRetryableTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory, localBucketing, DidNotInitializeSubscriber);
+            var configManager = new EnvironmentConfigManager("server-key", new DVCLocalOptions(), loggerFactory, localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldError: true, errorStatus: HttpStatusCode.BadRequest);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
             await configManager.InitializeConfigAsync();
@@ -90,7 +91,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigRetryableTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory, localBucketing, DidNotInitializeSubscriber);
+            var configManager = new EnvironmentConfigManager("server-key", new DVCLocalOptions(), loggerFactory, localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldError: true, errorStatus: HttpStatusCode.InternalServerError);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
             await configManager.InitializeConfigAsync();
@@ -102,7 +103,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task OnSuccessNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", new DVCOptions(), loggerFactory,
+            var configManager = new EnvironmentConfigManager("server-key", new DVCLocalOptions(), loggerFactory,
                 localBucketing, DidInitializeSubscriber);
             SetupRestClient();
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
@@ -112,7 +113,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task OnErrorNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory,
+            var configManager = new EnvironmentConfigManager("server-key", localOptions, loggerFactory,
                 localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldError: true);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
@@ -122,7 +123,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task OnExceptionNotificationTest()
         {
-            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory,
+            var configManager = new EnvironmentConfigManager("server-key", localOptions, loggerFactory,
                 localBucketing, DidNotInitializeSubscriber);
             SetupRestClient(shouldThrow: true);
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
@@ -133,7 +134,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task initializeConfigAsync_configIsNotFetched_thenFetchedOnNextCall_NotificationIsSuccessful()
         {
             var configCallCount = 0;
-            var configManager = new EnvironmentConfigManager("server-key", options, loggerFactory, localBucketing,
+            var configManager = new EnvironmentConfigManager("server-key", localOptions, loggerFactory, localBucketing,
                 ((o, e) =>
                 {
                     configCallCount++;

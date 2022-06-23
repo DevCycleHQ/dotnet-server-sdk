@@ -9,7 +9,7 @@ namespace DevCycle.SDK.Server.Common.Model
     public abstract class DVCClientBuilder : IClientBuilder
     {
         protected string environmentKey;
-        protected DVCOptions options;
+        protected IDVCOptions options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
         protected IWebProxy proxy;
@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Common.Model
             return this;
         }
 
-        public IClientBuilder SetOptions(DVCOptions dvcOptions)
+        public IClientBuilder SetOptions(IDVCOptions dvcOptions)
         {
             options = dvcOptions;
             return this;

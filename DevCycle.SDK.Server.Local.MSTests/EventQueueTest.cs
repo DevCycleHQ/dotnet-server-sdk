@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     {
         private Mock<DVCEventsApiClient> dvcEventsApiClient;
 
-        private DVCOptions options;
+        private DVCLocalOptions localOptions;
         private EventQueue eventQueue;
         private ILoggerFactory loggerFactory;
         
@@ -25,7 +25,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void BeforeEachTest()
         {
             dvcEventsApiClient = new Mock<DVCEventsApiClient>();
-            options = new DVCOptions(10, 10);
+            localOptions = new DVCLocalOptions(10, 10);
             loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         }
         
@@ -38,7 +38,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
                 .ReturnsAsync(mockResponse.Object);
             
-            eventQueue = new EventQueue("some-key", options, loggerFactory, null);
+            eventQueue = new EventQueue("some-key", localOptions, loggerFactory, null);
             eventQueue.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
             
             eventQueue.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);

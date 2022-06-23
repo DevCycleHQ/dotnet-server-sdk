@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
@@ -51,12 +52,12 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        protected async Task<T> GetResponseAsync<T>(object body, string urlFragment)
+        protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null)
         {
             IRestResponse response = null;
             try
             {
-                response = await GetApiClient().SendRequestAsync(body, urlFragment);
+                response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {

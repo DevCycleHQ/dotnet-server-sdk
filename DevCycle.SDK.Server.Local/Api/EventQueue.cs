@@ -16,7 +16,7 @@ namespace DevCycle.SDK.Server.Local.Api
 {
     internal class EventQueue
     {
-        private readonly DVCOptions options;
+        private readonly DVCLocalOptions localOptions;
         private readonly DVCEventsApiClient dvcEventsApiClient;
         
         private static readonly SemaphoreSlim EventQueueSemaphore = new(1,1);
@@ -38,14 +38,14 @@ namespace DevCycle.SDK.Server.Local.Api
         private event EventHandler<DVCEventArgs> FlushedEvents;
 
         // Internal parameterless constructor for testing with Moq
-        internal EventQueue() : this("not-a-real-key", new DVCOptions(100, 100), new NullLoggerFactory(), null)
+        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory(), null)
         {
         }
 
-        public EventQueue(string environmentKey, DVCOptions options, ILoggerFactory loggerFactory, IWebProxy proxy)
+        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, IWebProxy proxy)
         {
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy);
-            this.options = options;
+            this.localOptions = localOptions;
             
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
             aggregateEvents = new AggregateEventQueues();
@@ -278,7 +278,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     tokenSource.Token.ThrowIfCancellationRequested();
                 }
                 
-                await Task.Delay(options.ConfigPollingIntervalMs);
+                await Task.Delay(localOptions.ConfigPollingIntervalMs);
                 if (tokenSource.IsCancellationRequested)
                 {
                     schedulerIsRunning = false;

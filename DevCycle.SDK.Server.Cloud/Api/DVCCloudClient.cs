@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
     {
         public override IDVCClient Build()
         {
-            return new DVCCloudClient(environmentKey, loggerFactory, proxy);
+            return new DVCCloudClient(environmentKey, loggerFactory, proxy, options);
         }
     }
     public sealed class DVCCloudClient : DVCBaseClient
@@ -25,15 +25,18 @@ namespace DevCycle.SDK.Server.Cloud.Api
         private readonly DVCApiClient apiClient;
         private readonly ILogger logger;
 
-        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy)
+        private readonly DVCCloudOptions options;
+
+        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy, IDVCOptions options=null)
         {
             apiClient = new DVCApiClient(serverKey, proxy);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();
+            this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();
         }
         
         public override string Platform()
         {
-            return "Cloud";
+            return "Cloud"; 
         }
 
         public override IDVCApiClient GetApiClient()
@@ -48,8 +51,10 @@ namespace DevCycle.SDK.Server.Cloud.Api
             AddDefaults(user);
 
             string urlFragment = "v1/features";
-
-            return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment);
+            var queryParams = new Dictionary<string, string>();
+            if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
+            
+            return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
         }
 
         public async Task<IVariable> VariableAsync<T>(User user, string key, T defaultValue)
@@ -71,12 +76,14 @@ namespace DevCycle.SDK.Server.Cloud.Api
             string lowerKey = key.ToLower();
 
             string urlFragment = "v1/variables/" + lowerKey;
+            var queryParams = new Dictionary<string, string>();
+            if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
             Variable variable;
 
             try
             {
-                variable = await GetResponseAsync<Variable>(user, urlFragment);
+                variable = await GetResponseAsync<Variable>(user, urlFragment, queryParams);
             }
             catch (DVCException e)
             {
@@ -93,8 +100,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
             AddDefaults(user);
 
             string urlFragment = "v1/variables";
+            var queryParams = new Dictionary<string, string>();
+            if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            return await GetResponseAsync<Dictionary<string, Variable>>(user, urlFragment);
+
+            return await GetResponseAsync<Dictionary<string, Variable>>(user, urlFragment, queryParams);
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
@@ -104,10 +114,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
             AddDefaults(user);
 
             string urlFragment = "v1/track";
+            var queryParams = new Dictionary<string, string>();
+            if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
             UserAndEvents userAndEvents = new UserAndEvents(new List<Event>() {userEvent}, user);
 
-            return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment);
+            return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment, queryParams);
         }
 
         public override void Dispose()
