@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
+using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Environment = System.Environment;
 
@@ -32,7 +33,7 @@ namespace Example
                     }
                 })
                 .SetEnvironmentKey(SDK_ENV_VAR)
-                .SetOptions(new DVCOptions(1000, 5000))
+                .SetOptions(new DVCLocalOptions(1000, 5000))
                 .SetLogger(LoggerFactory.Create(builder => builder.AddConsole()))
                 .Build();
 
