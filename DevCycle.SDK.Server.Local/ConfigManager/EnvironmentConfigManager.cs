@@ -46,7 +46,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         }
 
         public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
+            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null, RestClient restClientOverride = null)
         {
             this.environmentKey = environmentKey;
             
@@ -56,9 +56,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
-
-            restClient = new RestClient(dvcLocalOptions.CdnUri);
-            this.logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
+            
+            restClient = restClientOverride ?? new RestClient(dvcLocalOptions.CdnUri);
+            logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();
             

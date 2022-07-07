@@ -9,6 +9,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using RestSharp.Portable.HttpClient;
 
 namespace DevCycle.SDK.Server.Cloud.Api
 {
@@ -27,9 +28,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         private readonly DVCCloudOptions options;
 
-        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy, IDVCOptions options=null)
+        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy, IDVCOptions options=null, RestClient restClient = null)
         {
-            apiClient = new DVCApiClient(serverKey, proxy);
+            apiClient = new DVCApiClient(serverKey, proxy, restClient);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();
             this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();
         }

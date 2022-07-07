@@ -22,10 +22,10 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, IWebProxy proxy)
+        public DVCEventsApiClient(string environmentKey, IWebProxy proxy, RestClient restClientOverride = null)
         {
-            Client = new RestClient(BaseUrl);
-            if (proxy != null)
+            Client = restClientOverride ?? new RestClient(BaseUrl);
+            if (proxy != null && restClientOverride != null)
             {
                 Client.Proxy = proxy;
             }

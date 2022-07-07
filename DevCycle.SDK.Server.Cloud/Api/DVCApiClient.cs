@@ -22,11 +22,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
         }
 
-        public DVCApiClient(string serverKey, IWebProxy proxy = null)
+        public DVCApiClient(string serverKey, IWebProxy proxy = null, RestClient restClientOverride = null)
         {
             this.serverKey = serverKey;
-            restClient = new RestClient(BaseUrl);
-            if (proxy != null)
+            restClient = restClientOverride ?? new RestClient(BaseUrl);
+            if (proxy != null && restClientOverride == null)
             {
                 restClient.Proxy = proxy;
             }
@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             return restClient;
         }
-        
+
         protected virtual void Dispose(bool disposing)
         {
             if (disposed) return;

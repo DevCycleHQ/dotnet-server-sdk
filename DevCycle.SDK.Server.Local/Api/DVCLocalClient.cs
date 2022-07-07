@@ -7,6 +7,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
+using RestSharp.Portable.HttpClient;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
@@ -57,9 +58,9 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy)
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClient restClient = null)
         {
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy, restClient);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
