@@ -7,8 +7,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
-using RestSharp.Portable.HttpClient;
-
+using RestSharp;
 namespace DevCycle.SDK.Server.Local.Api
 {
     public class DVCLocalClientBuilder : DVCClientBuilder
@@ -45,7 +44,9 @@ namespace DevCycle.SDK.Server.Local.Api
 
             configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing, initialized);
 
-            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy);
+            restClientOptions ??= new RestClientOptions();
+
+            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy, restClientOptions);
         }
     }
 
@@ -58,9 +59,9 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClient restClient = null)
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy, restClient);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy, restClientOptions);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;

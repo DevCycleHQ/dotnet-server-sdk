@@ -8,7 +8,7 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using RestSharp.Portable;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
@@ -32,7 +32,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task FlushEvents_EventQueuedAndFlushed_OnCallBackIsSuccessful()
         {
-            var mockResponse = new Mock<IRestResponse>();
+            var mockResponse = new Mock<RestResponse>();
             mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
 
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
@@ -68,7 +68,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 CallBase = true
             };
             
-            var mockResponse = new Mock<IRestResponse>();
+            var mockResponse = new Mock<RestResponse>();
             mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
             
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
@@ -105,7 +105,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 CallBase = true
             };
             
-            var mockResponse = new Mock<IRestResponse>();
+            var mockResponse = new Mock<RestResponse>();
             mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.InternalServerError);
             
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
@@ -171,7 +171,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 CallBase = true
             };
             
-            var mockResponse = new Mock<IRestResponse>();
+            var mockResponse = new Mock<RestResponse>();
             mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.BadRequest);
             
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
@@ -212,7 +212,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 CallBase = true
             };
             
-            var mockResponse = new Mock<IRestResponse>();
+            var mockResponse = new Mock<RestResponse>();
             mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
             
             dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))

@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using DevCycle.SDK.Server.Common.API;
 using Microsoft.Extensions.Logging;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
@@ -13,6 +14,7 @@ namespace DevCycle.SDK.Server.Common.Model
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
         protected IWebProxy proxy;
+        protected RestClientOptions restClientOptions;
         
         public IClientBuilder SetEnvironmentKey(string key)
         {
@@ -35,6 +37,12 @@ namespace DevCycle.SDK.Server.Common.Model
         public IClientBuilder SetWebProxy(IWebProxy proxy)
         {
             this.proxy = proxy;
+            return this;
+        }
+
+        public IClientBuilder SetRestClientOptions(RestClientOptions options)
+        {
+            this.restClientOptions = options;
             return this;
         }
 

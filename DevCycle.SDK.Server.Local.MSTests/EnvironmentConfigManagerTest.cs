@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System.Collections.ObjectModel;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
@@ -6,16 +8,17 @@ using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using RestSharp.Portable;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
     [TestClass]
     public class EnvironmentConfigManagerTest
     {
-        private Mock<IRestClient> mockRestClient;
+        private Mock<RestClient> mockRestClient;
         private ILoggerFactory loggerFactory;
         private DVCLocalOptions localOptions;
         private LocalBucketing localBucketing;
@@ -23,7 +26,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestInitialize]
         public void BeforeEachTest()
         {
-            mockRestClient = new Mock<IRestClient>();
+            mockRestClient = new Mock<RestClient>();
             loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             localOptions = new DVCLocalOptions();
             localBucketing = new LocalBucketing();
@@ -33,13 +36,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             const string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
             // mock headers
-            var headers = new Mock<IHttpHeaders>();
+            var headers = new Mock<HttpHeaders>();
             var headersList = new System.Collections.Generic.List<string> {"test etag"};
             headers.Setup(_ => _.GetValues("etag")).Returns(headersList);
 
             if (shouldThrow)
             {
-                mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()))
+                mockRestClient.Setup(_ => _.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()))
                     .Throws(new DVCException(errorStatus, new ErrorResponse("test exception")));
             }
             else
@@ -53,15 +56,17 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             const string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
             // mock headers
-            var headers = new Mock<IHttpHeaders>();
+            var headers = new Mock<HttpHeaders>();
             var headersList = new System.Collections.Generic.List<string> { "test etag" };
+            var headersResp = new Collection<HeaderParameter>(){new ("test etag", null)};
             headers.Setup(_ => _.GetValues("etag")).Returns(headersList);
-            var response = new Mock<IRestResponse>();
+            var response = new Mock<RestResponse>();
             response.Setup(_ => _.StatusCode).Returns(shouldError ? errorStatus : HttpStatusCode.OK);
-            response.Setup(_ => _.IsSuccess).Returns(!shouldError);
+            response.Setup(_ => _.IsSuccessful).Returns(!shouldError);
             response.Setup(_ => _.Content).Returns(config);
-            response.Setup(_ => _.Headers).Returns(headers.Object);
-            mockRestClient.Setup(_ => _.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
+            // This test needs to be fixed.
+            response.Setup(_ => _.ContentHeaders).Returns(headersResp);
+            mockRestClient.Setup(_ => _.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>())).ReturnsAsync(response.Object);
         }
 
         [TestMethod]
@@ -72,7 +77,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             configManager.SetPrivateFieldValue("restClient", mockRestClient.Object);
             await configManager.InitializeConfigAsync();
             await Task.Delay(2000);
-            mockRestClient.Verify(v => v.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(3));
+            mockRestClient.Verify(v => v.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(3));
         }
         
         [TestMethod]
@@ -84,7 +89,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             await configManager.InitializeConfigAsync();
             await Task.Delay(2000);
             // expect only one request since it failed in a non-retryable way
-            mockRestClient.Verify(v => v.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(1));
+            mockRestClient.Verify(v => v.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(1));
         }
         
         
@@ -97,7 +102,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             await configManager.InitializeConfigAsync();
             await Task.Delay(2000);
             // expect several retry requests
-            mockRestClient.Verify(v => v.Execute(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(3));
+            mockRestClient.Verify(v => v.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<System.Threading.CancellationToken>()), Times.Exactly(3));
         }
 
         [TestMethod]

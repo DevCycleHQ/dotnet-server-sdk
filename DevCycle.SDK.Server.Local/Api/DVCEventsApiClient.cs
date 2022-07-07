@@ -3,8 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model.Local;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
@@ -13,7 +12,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private const string BaseUrl = "https://events.devcycle.com";
         private const string TrackEventsUrl = "/v1/events/batch";
         private string SdkKey { get; set; }
-        private RestClient Client { get; set; }
+        private RestClient restClient { get; set; }
         private bool _disposed = false;
 
 
@@ -22,13 +21,10 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, IWebProxy proxy, RestClient restClientOverride = null)
+        public DVCEventsApiClient(string environmentKey, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            Client = restClientOverride ?? new RestClient(BaseUrl);
-            if (proxy != null && restClientOverride != null)
-            {
-                Client.Proxy = proxy;
-            }
+            restClientOptions ??= new RestClientOptions();
+            restClient = new RestClient(restClientOptions);
             SdkKey = environmentKey;
         }
 
@@ -37,7 +33,7 @@ namespace DevCycle.SDK.Server.Local.Api
             if (_disposed) return;
             if (disposing)
             {
-                Client.Dispose();
+                restClient.Dispose();
             }
 
             _disposed = true;
@@ -54,7 +50,7 @@ namespace DevCycle.SDK.Server.Local.Api
             GC.SuppressFinalize(this);
         }
 
-        public virtual async Task<IRestResponse> PublishEvents(BatchOfUserEventsBatch batch)
+        public virtual async Task<RestResponse> PublishEvents(BatchOfUserEventsBatch batch)
         {
             return await SendRequestAsync(batch, TrackEventsUrl);
         }
@@ -66,7 +62,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public override RestClient GetRestClient()
         {
-            return Client;
+            return restClient;
         }
     }
 }

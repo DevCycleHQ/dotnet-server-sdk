@@ -9,8 +9,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+using RestSharp;
 
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -43,9 +42,9 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, IWebProxy proxy, RestClient restClient = null)
+        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy, restClient);
+            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy, restClientOptions);
             this.localOptions = localOptions;
             
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
@@ -99,7 +98,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
 
-                IRestResponse response = null;
+                RestResponse response = null;
 
                 var completedRequests = new List<BatchOfUserEventsBatch>();
 

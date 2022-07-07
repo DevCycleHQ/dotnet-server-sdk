@@ -2,8 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+using RestSharp;
 
 // ReSharper disable once CheckNamespace
 namespace DevCycle.SDK.Server.Cloud.Api
@@ -22,14 +21,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
         }
 
-        public DVCApiClient(string serverKey, IWebProxy proxy = null, RestClient restClientOverride = null)
+        public DVCApiClient(string serverKey, RestClientOptions restClientOptions = null)
         {
             this.serverKey = serverKey;
-            restClient = restClientOverride ?? new RestClient(BaseUrl);
-            if (proxy != null && restClientOverride == null)
-            {
-                restClient.Proxy = proxy;
-            }
+
+            restClientOptions ??= new RestClientOptions();
+            restClient = new RestClient(restClientOptions);
         }
 
         public override string GetServerSDKKey()

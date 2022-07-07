@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json;
-using RestSharp.Portable;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
@@ -54,7 +54,7 @@ namespace DevCycle.SDK.Server.Common.API
 
         protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null)
         {
-            IRestResponse response = null;
+            RestResponse response = null;
             try
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
