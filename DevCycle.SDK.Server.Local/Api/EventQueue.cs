@@ -38,13 +38,13 @@ namespace DevCycle.SDK.Server.Local.Api
         private event EventHandler<DVCEventArgs> FlushedEvents;
 
         // Internal parameterless constructor for testing with Moq
-        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory(), null)
+        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory())
         {
         }
 
-        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, IWebProxy proxy, RestClientOptions restClientOptions = null)
+        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, RestClientOptions restClientOptions = null)
         {
-            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy, restClientOptions);
+            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, restClientOptions);
             this.localOptions = localOptions;
             
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
@@ -108,19 +108,17 @@ namespace DevCycle.SDK.Server.Local.Api
                     {
                         response = await dvcEventsApiClient.PublishEvents(batch);
 
-                        if (response.StatusCode != HttpStatusCode.Created)
+                        if (response.StatusCode == HttpStatusCode.Created) continue;
+                        var error = new DVCException(response.StatusCode,
+                            new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
+
+                        if (!error.IsRetryable())
                         {
-                            var error = new DVCException(response.StatusCode,
-                                new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
-
-                            if (!error.IsRetryable())
-                            {
-                                // Add non-retryable payloads to list of "completed" so that they are removed from queue
-                                completedRequests.Add(batch);
-                            }
-
-                            throw error;
+                            // Add non-retryable payloads to list of "completed" so that they are removed from queue
+                            completedRequests.Add(batch);
                         }
+
+                        throw error;
 
                     }
 

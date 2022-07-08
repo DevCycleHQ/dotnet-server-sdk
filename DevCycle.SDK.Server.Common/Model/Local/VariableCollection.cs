@@ -23,6 +23,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public Variable<T> Get<T>(string key)
         {
             Variable<T> existingVariable = null;
+
+            if (!variables.ContainsKey(key))
+                throw new KeyNotFoundException(key);
             
             var variable = variables[key];
             

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
@@ -18,9 +20,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class DVCTest
     {
-        private ILocalBucketing localBucketing;
-        private string environmentKey;
-        private EnvironmentConfigManager configManager;
+
 
         private const string Config =
             "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
@@ -32,12 +32,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
             mockHttp.When("https://config-cdn*")
                 .Respond(HttpStatusCode.OK, "application/json",
                     Config);
-
-
-            localBucketing = new LocalBucketing();
-            environmentKey = $"server-{Guid.NewGuid()}";
+            mockHttp.When("https://events*")
+                .Respond(HttpStatusCode.Created, mediaType: "application/json",
+                    "{}");
+            var localBucketing = new LocalBucketing();
+            var environmentKey = $"server-{Guid.NewGuid()}";
             localBucketing.StoreConfig(environmentKey, Config);
-            configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
+            var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
                 localBucketing, restClientOptions: new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
             DVCLocalClient api = (DVCLocalClient) new DVCLocalClientBuilder()
@@ -78,6 +79,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new User("j_test");
             string key = "test";
             var result = api.Variable(user, key, false);
+            Task.Delay(1000);
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Value);
         }
@@ -104,13 +106,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetVariablesTest()
         {
             using DVCLocalClient api = getTestClient();
-
+            Task.Delay(1000);
             User user = new User("j_test");
 
             var result = api.AllVariables(user);
-
+            // Bucketing needs time to work.
+            Task.Delay(1000);
+            
             Assert.IsNotNull(result);
-
             var variable =result.Get<bool>("test");
             Assert.IsNotNull(variable);
             Assert.IsTrue(result.ContainsKey("test"));

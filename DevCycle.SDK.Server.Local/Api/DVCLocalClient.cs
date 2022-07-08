@@ -61,7 +61,7 @@ namespace DevCycle.SDK.Server.Local.Api
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy, restClientOptions);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;

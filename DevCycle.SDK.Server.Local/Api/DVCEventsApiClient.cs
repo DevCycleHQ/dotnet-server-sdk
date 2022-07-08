@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -21,7 +20,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, IWebProxy proxy, RestClientOptions restClientOptions = null)
+        public DVCEventsApiClient(string environmentKey, RestClientOptions restClientOptions = null)
         {
             restClientOptions ??= new RestClientOptions()
             {
