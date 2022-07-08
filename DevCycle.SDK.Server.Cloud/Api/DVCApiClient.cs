@@ -9,7 +9,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 {
     class DVCApiClient : DVCBaseApiClient
     {
-        private static readonly string BaseUrl = "https://bucketing-api.devcycle.com/";
+        private static readonly string BaseURL = "https://bucketing-api.devcycle.com/";
 
         private readonly string serverKey;
 
@@ -25,7 +25,14 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             this.serverKey = serverKey;
 
-            restClientOptions ??= new RestClientOptions();
+            restClientOptions ??= new RestClientOptions()
+            {
+                BaseUrl = new Uri(BaseURL)
+            };
+
+            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
+                restClientOptions.BaseUrl = new Uri(BaseURL);
+            
             restClient = new RestClient(restClientOptions);
         }
 

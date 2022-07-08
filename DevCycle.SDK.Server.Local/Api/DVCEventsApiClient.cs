@@ -23,7 +23,12 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public DVCEventsApiClient(string environmentKey, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            restClientOptions ??= new RestClientOptions();
+            restClientOptions ??= new RestClientOptions()
+            {
+                BaseUrl = new Uri(BaseUrl)
+            };
+            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
+                restClientOptions.BaseUrl = new Uri(BaseUrl);
             restClient = new RestClient(restClientOptions);
             SdkKey = environmentKey;
         }

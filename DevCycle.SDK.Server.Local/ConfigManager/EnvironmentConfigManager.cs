@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private Timer pollingTimer;
 
         public virtual string Config { get; private set; }
-        public virtual bool Initialized { get; private set; }
+        public virtual bool Initialized { get; internal set; }
 
         private bool PollingEnabled = true;
 
@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         }
 
         public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null, RestClientOptions restOptions = null)
+            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null, RestClientOptions restClientOptions = null)
         {
             this.environmentKey = environmentKey;
             
@@ -55,12 +55,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
-            restOptions ??= new RestClientOptions
+            restClientOptions ??= new RestClientOptions
             {
                 BaseUrl = new Uri(dvcLocalOptions.CdnUri)
             };
-
-            restClient = new RestClient(restOptions);
+            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
+                restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
+            restClient = new RestClient(restClientOptions);
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();

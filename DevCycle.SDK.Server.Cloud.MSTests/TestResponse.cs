@@ -23,36 +23,25 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             };
         }
 
-        public static RestResponse GetVariableByKeyAsync()
+        public static Variable GetVariableByKeyAsync()
         {
-            var variable = new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
-
-            return GenerateResponse(variable);
+            return new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
         }
 
-        public static RestResponse GetVariablesAsync()
+        public static Dictionary<string, Variable> GetVariablesAsync()
         {
-            var features = new Dictionary<string, Variable>
+            return new Dictionary<string, Variable>
             {
                 {
                     "test-false",
                     new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false)
                 }
             };
-
-            return GenerateResponse(features);
         }
 
-        public static RestResponse GetTrackResponseAsync(int count)
+        public static DVCResponse GetTrackResponseAsync(int count)
         {
-            var response = new DVCResponse($"Successfully received {count} events");
-
-            return GenerateResponse(response);
-        }
-
-        private static RestResponse GenerateResponse<T>(T objectToSerialize)
-        {
-            return null;
+            return new DVCResponse($"Successfully received {count} events");
         }
     }
 }

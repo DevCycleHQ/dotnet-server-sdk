@@ -1,52 +1,60 @@
 ﻿using System;
+using System.Net;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
+using DevCycle.SDK.Server.Common.Model.Cloud;
+using DevCycle.SDK.Server.Common.Model.Local;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RestSharp;
+using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
-    // Access the internal method on DVCClientBuilder
-    internal class DVCClientBuilderTest : DVCLocalClientBuilder
-    {
-    }
-
-
     [TestClass]
     public class DVCTest
     {
-        private Mock<EnvironmentConfigManager> environmentConfigManager;
         private ILocalBucketing localBucketing;
         private string environmentKey;
-        private const string Config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
+        private EnvironmentConfigManager configManager;
 
-        [TestInitialize]
-        public void BeforeEachTest()
+        private const string Config =
+            "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
+
+        private DVCLocalClient getTestClient(DVCLocalOptions options = null)
         {
-            localBucketing = new LocalBucketing();
+            var mockHttp = new MockHttpMessageHandler();
 
-            environmentConfigManager = new Mock<EnvironmentConfigManager>();
-            environmentConfigManager.Object.SetPrivateFieldValue("localBucketing", localBucketing);
-            
+            mockHttp.When("https://config-cdn*")
+                .Respond(HttpStatusCode.OK, "application/json",
+                    Config);
+
+
+            localBucketing = new LocalBucketing();
             environmentKey = $"server-{Guid.NewGuid()}";
-            environmentConfigManager.SetupGet(m => m.Config).Returns(Config);
-            environmentConfigManager.SetupGet(m => m.Initialized).Returns(true);
-            
             localBucketing.StoreConfig(environmentKey, Config);
+            configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
+                localBucketing, restClientOptions: new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
+            configManager.Initialized = true;
+            DVCLocalClient api = (DVCLocalClient) new DVCLocalClientBuilder()
+                .SetLocalBucketing(localBucketing)
+                .SetConfigManager(configManager)
+                .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetOptions(options ?? new DVCLocalOptions())
+                .SetEnvironmentKey(environmentKey)
+                .SetLogger(new NullLoggerFactory())
+                .Build();
+            return api;
         }
-        
+
         [TestMethod]
         public void GetFeaturesTest()
         {
-            DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                .SetConfigManager(environmentConfigManager.Object)
-                .SetLocalBucketing(localBucketing)
-                .SetEnvironmentKey(environmentKey)
-                .Build();
-
+            var api = getTestClient();
             var user = new User("j_test");
             user.Country = "CA";
             user.Language = "en";
@@ -54,7 +62,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             user.Email = "email@gmail.com";
             user.Name = "name";
             var result = api.AllFeatures(user);
-            
+
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
             Assert.IsNotNull(result["test"]);
@@ -65,34 +73,23 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void GetVariableByKeyTest()
         {
-            DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                .SetConfigManager(environmentConfigManager.Object)
-                .SetLocalBucketing(localBucketing)
-                .SetEnvironmentKey(environmentKey)
-                .Build();
+            using DVCLocalClient api = getTestClient();
 
             var user = new User("j_test");
             string key = "test";
             var result = api.Variable(user, key, false);
-
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Value);
         }
-        
+
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultTest()
         {
-            DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                .SetConfigManager(environmentConfigManager.Object)
-                .SetLocalBucketing(localBucketing)
-                .SetEnvironmentKey(environmentKey)
-                .Build();
+            using DVCLocalClient api = getTestClient();
 
             var user = new User("j_test");
             string key = "json";
-            
+
             string json = "['Small','Medium','Large']";
             var expectedValue = JArray.Parse(json);
 
@@ -106,12 +103,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void GetVariablesTest()
         {
-            DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                .SetConfigManager(environmentConfigManager.Object)
-                .SetLocalBucketing(localBucketing)
-                .SetEnvironmentKey(environmentKey)
-                .Build();
+            using DVCLocalClient api = getTestClient();
 
             User user = new User("j_test");
 
@@ -119,20 +111,16 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.IsNotNull(result);
 
-            var variable = result.Get<bool>("test");
+            var variable =result.Get<bool>("test");
             Assert.IsNotNull(variable);
+            Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsTrue(variable.Value);
         }
 
         [TestMethod]
         public void PostEventsTest()
         {
-            DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-            using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                .SetConfigManager(environmentConfigManager.Object)
-                .SetLocalBucketing(localBucketing)
-                .SetEnvironmentKey(environmentKey)
-                .Build();
+            using DVCLocalClient api = getTestClient();
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
@@ -153,12 +141,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
-                DVCClientBuilderTest apiBuilder = new DVCClientBuilderTest();
-                using DVCLocalClient api = (DVCLocalClient) apiBuilder
-                    .SetConfigManager(environmentConfigManager.Object)
-                    .SetEnvironmentKey("INSERT_SDK_KEY")
-                    .Build();
-                
+                using DVCLocalClient api = getTestClient();
+
                 api.Variable(null, "some_key", true);
             });
         }
@@ -166,10 +150,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void User_NullUserId_ThrowsException()
         {
-            Assert.ThrowsException<ArgumentException>(() =>
-            {
-                _ = new User();
-            });
+            Assert.ThrowsException<ArgumentException>(() => { _ = new User(); });
         }
     }
 }
