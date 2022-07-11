@@ -7,6 +7,7 @@ using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using DevCycle.SDK.Server.Common.Model.Local;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -36,6 +37,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Respond(HttpStatusCode.Created, mediaType: "application/json",
                     "{}");
             var localBucketing = new LocalBucketing();
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var environmentKey = $"server-{Guid.NewGuid()}";
             localBucketing.StoreConfig(environmentKey, Config);
             var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
@@ -47,7 +49,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCLocalOptions())
                 .SetEnvironmentKey(environmentKey)
-                .SetLogger(new NullLoggerFactory())
+                .SetLogger(loggerFactory)
                 .Build();
             return api;
         }
@@ -132,11 +134,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
 
             api.Track(user, userEvent);
-        }
-
-        private void MyCallback(object sender, DVCEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         [TestMethod]

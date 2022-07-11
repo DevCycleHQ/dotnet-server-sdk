@@ -7,7 +7,6 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Newtonsoft.Json;
 using RestSharp;
 using RichardSzalay.MockHttp;
@@ -26,6 +25,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     JsonConvert.SerializeObject(
                         bodyResponse
                     ));
+            
             DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
                 .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
