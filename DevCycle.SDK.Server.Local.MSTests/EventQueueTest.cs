@@ -16,7 +16,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class EventQueueTest
     {
-        private static EventQueue EventQueue;
+        
         private Tuple<EventQueue, MockHttpMessageHandler, MockedRequest> getTestQueue(bool isError = false,
             bool isRetryableError = false)
         {
@@ -27,20 +27,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     ? isRetryableError
                         ? HttpStatusCode.InternalServerError
                         : HttpStatusCode.BadRequest
-                    : HttpStatusCode.OK;
+                    : HttpStatusCode.Created;
             MockedRequest
                 req = mockHttp.When("https://*")
                     .Respond(statusCode,
-                        new List<KeyValuePair<string, string>>() {new("test etag", "test etag value")},
                         "application/json",
                         "{}");
             var localOptions = new DVCLocalOptions(10, 10);
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 
             
-            EventQueue ??= new EventQueue(environmentKey, localOptions, loggerFactory,
+            var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
                 new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
-            return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(EventQueue, mockHttp, req);
+            return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
 
         [TestMethod]
@@ -87,7 +86,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             await eventQueue.Item1.FlushEvents();
 
-            await Task.Delay(100);
+            await Task.Delay(1000);
 
             Assert.AreEqual(1, eventQueue.Item2.GetMatchCount(eventQueue.Item3));
         }
@@ -117,11 +116,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             // add delay so the queue should still be looping trying to flush
             await Task.Delay(100);
-            Assert.IsTrue(eventsQueue.Item2.GetMatchCount(eventsQueue.Item3) >= 1);
+            var retryCount = eventsQueue.Item2.GetMatchCount(eventsQueue.Item3);
+
+            Assert.IsTrue(retryCount >= 1);
 
             // ensure the queue can now be flushed
 
-            eventsQueue.Item3.Respond(HttpStatusCode.OK);
+            eventsQueue.Item3.Respond(HttpStatusCode.Created);
 
             eventsQueue.Item1.RemoveFlushedEventsSubscriber(AssertFalseFlushedEvents);
             eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
@@ -129,11 +130,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             // Add a longer delay to the test to ensure FlushEvents is no longer looping
             await Task.Delay(500);
 
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+            Assert.AreEqual(retryCount, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
 
             // internal event queue should now be empty, flush events manually and check that publish isnt called
-
-
             await eventsQueue.Item1.FlushEvents();
             await Task.Delay(20);
             Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
