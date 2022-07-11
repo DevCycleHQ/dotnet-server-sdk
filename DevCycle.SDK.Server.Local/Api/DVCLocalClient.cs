@@ -114,7 +114,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 } 
                 catch (InvalidCastException)
                 {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value.");
+                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
                 }
             }
 

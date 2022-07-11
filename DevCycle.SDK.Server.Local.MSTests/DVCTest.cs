@@ -21,25 +21,20 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class DVCTest
     {
-
-
-        private const string Config =
-            "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
-
-        private DVCLocalClient getTestClient(DVCLocalOptions options = null)
+        private DVCLocalClient getTestClient(DVCLocalOptions options = null, string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}")
         {
             var mockHttp = new MockHttpMessageHandler();
 
             mockHttp.When("https://config-cdn*")
                 .Respond(HttpStatusCode.OK, "application/json",
-                    Config);
+                    config);
             mockHttp.When("https://events*")
                 .Respond(HttpStatusCode.Created, mediaType: "application/json",
                     "{}");
             var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var environmentKey = $"server-{Guid.NewGuid()}";
-            localBucketing.StoreConfig(environmentKey, Config);
+            localBucketing.StoreConfig(environmentKey, config);
             var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
                 localBucketing, restClientOptions: new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
@@ -105,25 +100,25 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetVariablesTest()
+        public async void GetVariablesTest()
         {
             using DVCLocalClient api = getTestClient();
-            Task.Delay(1000);
+            await Task.Delay(1000);
             User user = new User("j_test");
 
             var result = api.AllVariables(user);
             // Bucketing needs time to work.
-            Task.Delay(1000);
+            await Task.Delay(5000);
             
             Assert.IsNotNull(result);
-            var variable =result.Get<bool>("test");
+            var variable = result.Get<bool>("test");
             Assert.IsNotNull(variable);
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsTrue(variable.Value);
         }
 
         [TestMethod]
-        public void PostEventsTest()
+        public async void PostEventsTest()
         {
             using DVCLocalClient api = getTestClient();
 
@@ -133,7 +128,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             User user = new User("j_test");
             Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
 
+            await Task.Delay(1000);
             api.Track(user, userEvent);
+            await Task.Delay(1000);
         }
 
         [TestMethod]
@@ -142,7 +139,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
                 using DVCLocalClient api = getTestClient();
-
+                
                 api.Variable(null, "some_key", true);
             });
         }
