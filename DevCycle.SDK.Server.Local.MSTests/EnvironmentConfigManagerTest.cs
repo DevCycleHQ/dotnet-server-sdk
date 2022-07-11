@@ -53,7 +53,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var configManager = getTestConfigManager();
             await configManager.Item1.InitializeConfigAsync();
             await Task.Delay(2000);
-            Assert.AreEqual(3, configManager.Item2.GetMatchCount(configManager.Item3));
+            Assert.IsTrue(configManager.Item2.GetMatchCount(configManager.Item3) >= 2);
         }
 
         [TestMethod]
