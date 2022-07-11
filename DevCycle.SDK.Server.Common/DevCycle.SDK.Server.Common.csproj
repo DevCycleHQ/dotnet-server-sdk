@@ -14,9 +14,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="FubarCoder.RestSharp.Portable.HttpClient" Version="4.0.8" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
+      <PackageReference Include="RestSharp" Version="108.0.1" />
       <PackageReference Include="TypeSupport" Version="1.1.12" />
     </ItemGroup>
 

@@ -2,15 +2,14 @@
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+using RestSharp;
 
 // ReSharper disable once CheckNamespace
 namespace DevCycle.SDK.Server.Cloud.Api
 {
     class DVCApiClient : DVCBaseApiClient
     {
-        private static readonly string BaseUrl = "https://bucketing-api.devcycle.com/";
+        private static readonly string BaseURL = "https://bucketing-api.devcycle.com/";
 
         private readonly string serverKey;
 
@@ -22,14 +21,19 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
         }
 
-        public DVCApiClient(string serverKey, IWebProxy proxy = null)
+        public DVCApiClient(string serverKey, RestClientOptions restClientOptions = null)
         {
             this.serverKey = serverKey;
-            restClient = new RestClient(BaseUrl);
-            if (proxy != null)
+
+            restClientOptions ??= new RestClientOptions()
             {
-                restClient.Proxy = proxy;
-            }
+                BaseUrl = new Uri(BaseURL)
+            };
+
+            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
+                restClientOptions.BaseUrl = new Uri(BaseURL);
+            
+            restClient = new RestClient(restClientOptions);
         }
 
         public override string GetServerSDKKey()
@@ -41,7 +45,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             return restClient;
         }
-        
+
         protected virtual void Dispose(bool disposing)
         {
             if (disposed) return;

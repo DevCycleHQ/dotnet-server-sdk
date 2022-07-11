@@ -5,60 +5,43 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Moq;
 using Newtonsoft.Json;
-using RestSharp.Portable;
+using RestSharp;
+using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {
     public static class TestResponse
     {
-        public static IRestResponse GetFeaturesAsync()
+        public static Dictionary<string, Feature> GetFeaturesAsync()
         {
-            var features = new Dictionary<string, Feature>
+            return new Dictionary<string, Feature>
             {
                 {
                     "show-feature-history",
                     new Feature(Guid.NewGuid().ToString(), "show-feature-history", Feature.TypeEnum.Release, "variation1", "reason", "Reason Name")
                 }
             };
-
-            return GenerateResponse(features);
         }
 
-        public static IRestResponse GetVariableByKeyAsync()
+        public static Variable GetVariableByKeyAsync()
         {
-            var variable = new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
-
-            return GenerateResponse(variable);
+            return new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
         }
 
-        public static IRestResponse GetVariablesAsync()
+        public static Dictionary<string, Variable> GetVariablesAsync()
         {
-            var features = new Dictionary<string, Variable>
+            return new Dictionary<string, Variable>
             {
                 {
                     "test-false",
                     new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false)
                 }
             };
-
-            return GenerateResponse(features);
         }
 
-        public static IRestResponse GetTrackResponseAsync(int count)
+        public static DVCResponse GetTrackResponseAsync(int count)
         {
-            var response = new DVCResponse($"Successfully received {count} events");
-
-            return GenerateResponse(response);
-        }
-
-        private static IRestResponse GenerateResponse<T>(T objectToSerialize)
-        {
-            var response = new Mock<IRestResponse>();
-            
-            response.Setup(_ => _.StatusCode).Returns(HttpStatusCode.OK);
-            response.Setup(_ => _.Content).Returns(JsonConvert.SerializeObject(objectToSerialize));
-
-            return response.Object;
+            return new DVCResponse($"Successfully received {count} events");
         }
     }
 }

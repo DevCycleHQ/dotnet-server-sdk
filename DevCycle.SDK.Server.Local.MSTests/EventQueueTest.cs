@@ -8,42 +8,47 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using RestSharp.Portable;
+using RestSharp;
+using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
     [TestClass]
     public class EventQueueTest
     {
-        private Mock<DVCEventsApiClient> dvcEventsApiClient;
-
-        private DVCLocalOptions localOptions;
-        private EventQueue eventQueue;
-        private ILoggerFactory loggerFactory;
         
-        [TestInitialize]
-        public void BeforeEachTest()
+        private Tuple<EventQueue, MockHttpMessageHandler, MockedRequest> getTestQueue(bool isError = false,
+            bool isRetryableError = false)
         {
-            dvcEventsApiClient = new Mock<DVCEventsApiClient>();
-            localOptions = new DVCLocalOptions(10, 10);
-            loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var mockHttp = new MockHttpMessageHandler();
+            var environmentKey = $"server-{Guid.NewGuid()}";
+            var statusCode =
+                isError
+                    ? isRetryableError
+                        ? HttpStatusCode.InternalServerError
+                        : HttpStatusCode.BadRequest
+                    : HttpStatusCode.Created;
+            MockedRequest
+                req = mockHttp.When("https://*")
+                    .Respond(statusCode,
+                        "application/json",
+                        "{}");
+            var localOptions = new DVCLocalOptions(10, 10);
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+
+            
+            var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
+                new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
+            return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
-        
+
         [TestMethod]
         public async Task FlushEvents_EventQueuedAndFlushed_OnCallBackIsSuccessful()
         {
-            var mockResponse = new Mock<IRestResponse>();
-            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
+            var eventQueue = getTestQueue();
+            eventQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
 
-            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
-                .ReturnsAsync(mockResponse.Object);
-            
-            eventQueue = new EventQueue("some-key", localOptions, loggerFactory, null);
-            eventQueue.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
-            
-            eventQueue.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
-
-            var user = new User(userId: "1");
+            var user = new User("1");
 
             var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
 
@@ -53,9 +58,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventQueue.QueueEvent(dvcPopulatedUser, @event, config);
+            eventQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
 
-            await eventQueue.FlushEvents();
+            await eventQueue.Item1.FlushEvents();
 
             await Task.Delay(20);
         }
@@ -63,19 +68,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task FlushEvents_EventQueuedAndFlushed_OnCallBackIsSuccessful_VerifyFlushEventsCalledOnce()
         {
-            var mockedQueue = new Mock<EventQueue>
-            {
-                CallBase = true
-            };
-            
-            var mockResponse = new Mock<IRestResponse>();
-            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
-            
-            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
-                .ReturnsAsync(mockResponse.Object);
-            mockedQueue.Object.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
-            
-            mockedQueue.Object.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
+            var eventQueue = getTestQueue();
+
+            eventQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
 
             var user = new User(userId: "1");
 
@@ -87,32 +82,22 @@ namespace DevCycle.SDK.Server.Local.MSTests
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            mockedQueue.Object.QueueEvent(dvcPopulatedUser, @event, config);
-            
-            await mockedQueue.Object.FlushEvents();
+            eventQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
 
-            await Task.Delay(100);
-            
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
+            await eventQueue.Item1.FlushEvents();
+
+            await Task.Delay(1000);
+
+            Assert.AreEqual(1, eventQueue.Item2.GetMatchCount(eventQueue.Item3));
         }
 
         [TestMethod]
+        // This test may not be able to replicate because of how we assign the response code once at the beginning of the test.
         public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedOnFirstAttempt_VerifyFlushEventsCalledTwice()
         {
-            // Mock EventQueue for verification without mocking any methods
-            var mockedQueue = new Mock<EventQueue>
-            {
-                CallBase = true
-            };
-            
-            var mockResponse = new Mock<IRestResponse>();
-            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.InternalServerError);
-            
-            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
-                .ReturnsAsync(mockResponse.Object);
-            mockedQueue.Object.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
-            
-            mockedQueue.Object.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
+            var eventsQueue = getTestQueue(true, true);
+
+            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
 
             var user = new User(userId: "1");
 
@@ -124,61 +109,47 @@ namespace DevCycle.SDK.Server.Local.MSTests
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            mockedQueue.Object.QueueEvent(dvcPopulatedUser, @event, config);
-            
-            await mockedQueue.Object.FlushEvents();
-            
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
-            
+            eventsQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
+
+            await eventsQueue.Item1.FlushEvents();
+
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+
             // add delay so the queue should still be looping trying to flush
             await Task.Delay(100);
-            mockedQueue.Verify(m => m.FlushEvents(), Times.AtLeastOnce);
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.AtLeastOnce);
+            var retryCount = eventsQueue.Item2.GetMatchCount(eventsQueue.Item3);
+
+            Assert.IsTrue(retryCount >= 1);
 
             // ensure the queue can now be flushed
-            mockResponse.SetupGet( _ => _.StatusCode).Returns(HttpStatusCode.Created);
+
+            eventsQueue.Item2.Clear();
             
-            mockedQueue.Invocations.Clear();
-            dvcEventsApiClient.Invocations.Clear();
-            
-            mockedQueue.Object.RemoveFlushedEventsSubscriber(AssertFalseFlushedEvents);
-            mockedQueue.Object.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
+            var newReq = eventsQueue.Item2.When("https://*")
+                .Respond(HttpStatusCode.Created,
+                    "application/json",
+                    "{}");
+            eventsQueue.Item1.RemoveFlushedEventsSubscriber(AssertFalseFlushedEvents);
+            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
 
             // Add a longer delay to the test to ensure FlushEvents is no longer looping
-            await Task.Delay(500);
+            await Task.Delay(50);
 
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once());
-            dvcEventsApiClient.Verify(m => 
-                m.PublishEvents(It.Is<BatchOfUserEventsBatch>(b => b.UserEventsBatchRecords[0].Events.Count == 1)), Times.Once());
-            
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
+
             // internal event queue should now be empty, flush events manually and check that publish isnt called
-            
-            mockedQueue.Invocations.Clear();
-            dvcEventsApiClient.Invocations.Clear();
-            await mockedQueue.Object.FlushEvents();
+            await eventsQueue.Item1.FlushEvents();
             await Task.Delay(20);
-            
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Never());
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
         }
-        
+
         [TestMethod]
         public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedNonRetryable_VerifyFlushEventsCalledOnce()
         {
-            // Mock EventQueue for verification without mocking any methods
-            var mockedQueue = new Mock<EventQueue>
-            {
-                CallBase = true
-            };
-            
-            var mockResponse = new Mock<IRestResponse>();
-            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.BadRequest);
-            
-            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
-                .ReturnsAsync(mockResponse.Object);
-            mockedQueue.Object.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
-            
-            mockedQueue.Object.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
+            var eventsQueue = getTestQueue(true);
+
+
+            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
 
             var user = new User(userId: "1");
 
@@ -190,34 +161,22 @@ namespace DevCycle.SDK.Server.Local.MSTests
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            mockedQueue.Object.QueueEvent(dvcPopulatedUser, @event, config);
-            
-            await mockedQueue.Object.FlushEvents();
-            
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Once);
+            eventsQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
+
+            await eventsQueue.Item1.FlushEvents();
+
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
 
             // add delay to make sure we purged events that failed and were non-retryable, thus haven't flushed again
             await Task.Delay(500);
-            mockedQueue.Verify(m => m.FlushEvents(), Times.Once);
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()), Times.Once);
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
         }
-        
+
         [TestMethod]
         public async Task QueueAggregateEvents_EventsQueuedSuccessfully()
         {
             // Mock EventQueue for verification without mocking any methods
-            var mockedQueue = new Mock<EventQueue>
-            {
-                CallBase = true
-            };
-            
-            var mockResponse = new Mock<IRestResponse>();
-            mockResponse.SetupGet(_ => _.StatusCode).Returns(HttpStatusCode.Created);
-            
-            dvcEventsApiClient.Setup(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>()))
-                .ReturnsAsync(mockResponse.Object);
-            mockedQueue.Object.SetPrivateFieldValue("dvcEventsApiClient", dvcEventsApiClient.Object);
+            var eventsQueue = getTestQueue();
 
             var dvcPopulatedUser = new DVCPopulatedUser(new User(userId: "1", name: "User1"));
             var dvcPopulatedUser2 = new DVCPopulatedUser(new User(userId: "2", name: "User2"));
@@ -231,7 +190,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
             };
-            
+
             var configIdentical = new BucketedUserConfig
             {
                 FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
@@ -239,39 +198,38 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             var config2 = new BucketedUserConfig
             {
-                FeatureVariationMap = new Dictionary<string, string> { { "feature2", "variation2" } }
+                FeatureVariationMap = new Dictionary<string, string> {{"feature2", "variation2"}}
             };
-            
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, configIdentical);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event3, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser, @event, config2);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser2, @event, config);
-            mockedQueue.Object.QueueAggregateEvent(dvcPopulatedUser3, @event, config);
 
-            mockedQueue.Object.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, config);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, configIdentical);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event3, config);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, config2);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser2, @event, config);
+            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser3, @event, config);
 
-            await mockedQueue.Object.FlushEvents();
+            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
+
+            await eventsQueue.Item1.FlushEvents();
             await Task.Delay(20);
 
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.Is<BatchOfUserEventsBatch>(b =>
-               AssertAggregateEventsBatch(b)
-            )), Times.Once());
-            
-            await mockedQueue.Object.FlushEvents();
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+
+            await eventsQueue.Item1.FlushEvents();
             await Task.Delay(20);
             // verify that it hasn't been called again because there should be nothing in the queue
-            dvcEventsApiClient.Verify(m => m.PublishEvents(It.IsAny<BatchOfUserEventsBatch>(
-            )), Times.Once());
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+
         }
-        
+
         private void AssertTrueFlushedEvents(object sender, DVCEventArgs e)
         {
+            Assert.IsNull(e.Error);
             Assert.IsTrue(e.Success);
         }
-        
+
         private void AssertFalseFlushedEvents(object sender, DVCEventArgs e)
         {
             Assert.IsFalse(e.Success);
@@ -282,19 +240,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsTrue(b.UserEventsBatchRecords.Count == 3);
             Assert.IsTrue(b.UserEventsBatchRecords[0].User.Name == "User1");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events.Count == 4);
-            
+
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Type == "variableEvaluated");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Target == "var1");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Value == 2);
-            
+
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Type == "variableEvaluated");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Target == "var2");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Value == 2);
-            
+
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Type == "variableDefaulted");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Target == "var2");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Value == 1);
-            
+
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Type == "variableEvaluated");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Target == "var1");
             Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Value == 1);

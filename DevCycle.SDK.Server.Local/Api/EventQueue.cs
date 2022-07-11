@@ -9,7 +9,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RestSharp.Portable;
+using RestSharp;
 
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -21,9 +21,9 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private static readonly SemaphoreSlim EventQueueSemaphore = new(1,1);
         
-        private readonly Mutex eventQueueMutex = new();
-        private readonly Mutex aggregateEventQueueMutex = new();
-        private readonly Mutex batchQueueMutex = new();
+        private readonly SemaphoreSlim eventQueueMutex = new(1,1);
+        private readonly SemaphoreSlim aggregateEventQueueMutex = new(1,1);
+        private readonly SemaphoreSlim batchQueueMutex = new(1,1);
         
         private readonly Dictionary<DVCPopulatedUser, UserEventsBatchRecord> eventPayloadsToFlush;
         
@@ -33,20 +33,19 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private readonly ILogger logger;
 
-        private CancellationTokenSource tokenSource = new CancellationTokenSource();
+        private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
         private event EventHandler<DVCEventArgs> FlushedEvents;
 
         // Internal parameterless constructor for testing with Moq
-        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory(), null)
+        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory())
         {
         }
 
-        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, IWebProxy proxy)
+        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory, RestClientOptions restClientOptions = null)
         {
-            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, proxy);
+            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, restClientOptions);
             this.localOptions = localOptions;
-            
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
             aggregateEvents = new AggregateEventQueues();
 
@@ -72,9 +71,9 @@ namespace DevCycle.SDK.Server.Local.Api
             var eventArgs = new DVCEventArgs();
             try
             {
-                eventQueueMutex.WaitOne();
-                aggregateEventQueueMutex.WaitOne();
-                batchQueueMutex.WaitOne();
+                await eventQueueMutex.WaitAsync();
+                await aggregateEventQueueMutex.WaitAsync();
+                await batchQueueMutex.WaitAsync();
 
                 var userEventBatch = CombineUsersEventsToFlush();
                 
@@ -85,8 +84,8 @@ namespace DevCycle.SDK.Server.Local.Api
                     aggregateEvents.Clear();
                 }
                 
-                eventQueueMutex.ReleaseMutex();
-                aggregateEventQueueMutex.ReleaseMutex();
+                eventQueueMutex.Release();
+                aggregateEventQueueMutex.Release();
                 
                 if (batchQueue.Count == 0)
                 {
@@ -98,7 +97,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount, userEventBatch.Count);
 
-                IRestResponse response = null;
+                RestResponse response = null;
 
                 var completedRequests = new List<BatchOfUserEventsBatch>();
 
@@ -108,20 +107,17 @@ namespace DevCycle.SDK.Server.Local.Api
                     {
                         response = await dvcEventsApiClient.PublishEvents(batch);
 
-                        if (response.StatusCode != HttpStatusCode.Created)
+                        if (response.StatusCode == HttpStatusCode.Created) continue;
+                        var error = new DVCException(response.StatusCode,
+                            new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
+
+                        if (!error.IsRetryable())
                         {
-                            var error = new DVCException(response.StatusCode,
-                                new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
-
-                            if (!error.IsRetryable())
-                            {
-                                // Add non-retryable payloads to list of "completed" so that they are removed from queue
-                                completedRequests.Add(batch);
-                            }
-
-                            throw error;
+                            // Add non-retryable payloads to list of "completed" so that they are removed from queue
+                            completedRequests.Add(batch);
                         }
 
+                        throw error;
                     }
 
                     batchQueue.Clear();
@@ -168,8 +164,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     batchQueue.Clear();
                     
                     batchQueue.AddRange(retryable);
-                    
-                    batchQueueMutex.ReleaseMutex();
+                    batchQueueMutex.Release();
                 }
             }
             finally
@@ -180,7 +175,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
         {
-            eventQueueMutex.WaitOne();
+            eventQueueMutex.Wait();
             if (!eventPayloadsToFlush.ContainsKey(user))
             {
                 eventPayloadsToFlush.Add(user, new UserEventsBatchRecord(user));
@@ -192,7 +187,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, featureVars));
             
-            eventQueueMutex.ReleaseMutex();
+            eventQueueMutex.Release();
             
             logger.LogInformation("{Event} queued successfully", @event);
             
@@ -230,9 +225,9 @@ namespace DevCycle.SDK.Server.Local.Api
             
             var userAndFeatureVars = new UserAndFeatureVars(user, requestEvent.FeatureVars);
 
-            aggregateEventQueueMutex.WaitOne();
+            aggregateEventQueueMutex.Wait();
             aggregateEvents.AddEvent(userAndFeatureVars, requestEvent);
-            aggregateEventQueueMutex.ReleaseMutex();
+            aggregateEventQueueMutex.Release();
             ScheduleFlushWithDelay();
         }
 

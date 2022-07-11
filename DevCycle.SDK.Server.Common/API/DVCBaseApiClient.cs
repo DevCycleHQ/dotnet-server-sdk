@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
 using System.Collections.Generic;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
@@ -12,21 +11,21 @@ namespace DevCycle.SDK.Server.Common.API
         public abstract string GetServerSDKKey();
         public abstract RestClient GetRestClient();
 
-        public virtual async Task<IRestResponse> SendRequestAsync(object json, string urlFragment, Dictionary<string, string> queryParams = null)
+        public virtual async Task<RestResponse> SendRequestAsync(object json, string urlFragment, Dictionary<string, string> queryParams = null)
         {
             var restClient = GetRestClient();
-            restClient.IgnoreResponseStatusCode = true;
-            var request = new RestRequest(urlFragment, Method.POST);
+            var request = new RestRequest(urlFragment, Method.Post);
             request.AddJsonBody(json);
             request.AddHeader("Content-Type", "application/json");
             request.AddHeader("accept", "application/json");
             request.AddHeader("Authorization", GetServerSDKKey());
 
-            if (queryParams != null )
-                foreach (KeyValuePair<string, string> kvp in queryParams)
-                    request.AddQueryParameter(kvp.Key, kvp.Value);
+            if (queryParams == null) return await restClient.ExecuteAsync(request);
+            
+            foreach (var kvp in queryParams)
+                request.AddQueryParameter(kvp.Key, kvp.Value);
 
-            return await restClient.Execute(request);
+            return await restClient.ExecuteAsync(request);
         }
     }
 }

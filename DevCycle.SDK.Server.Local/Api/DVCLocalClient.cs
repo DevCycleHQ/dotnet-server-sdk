@@ -7,7 +7,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
-
+using RestSharp;
 namespace DevCycle.SDK.Server.Local.Api
 {
     public class DVCLocalClientBuilder : DVCClientBuilder
@@ -44,7 +44,9 @@ namespace DevCycle.SDK.Server.Local.Api
 
             configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing, initialized);
 
-            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy);
+            restClientOptions ??= new RestClientOptions();
+
+            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy, restClientOptions);
         }
     }
 
@@ -57,9 +59,9 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy)
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClientOptions restClientOptions = null)
         {
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, proxy);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
@@ -112,7 +114,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 } 
                 catch (InvalidCastException)
                 {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value.");
+                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
                 }
             }
 

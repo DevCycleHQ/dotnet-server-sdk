@@ -1,34 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Cloud.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
+using Newtonsoft.Json;
+using RestSharp;
+using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {
     [TestClass]
     public class DVCTest
     {
-        private readonly Mock<DVCApiClient> apiClient = new();
+        private DVCCloudClient getTestClient(object bodyResponse, DVCCloudOptions options = null)
+        {
+            var mockHttp = new MockHttpMessageHandler();
+
+            mockHttp.When("https://*")
+                .Respond(HttpStatusCode.OK, "application/json",
+                    JsonConvert.SerializeObject(
+                        bodyResponse
+                    ));
+            
+            DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
+                .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetOptions(options ?? new DVCCloudOptions())
+                .SetEnvironmentKey($"server-{Guid.NewGuid().ToString()}")
+                .SetLogger(new NullLoggerFactory())
+                .Build();
+            return api;
+        }
 
         [TestMethod]
-        public void GetFeaturesTest()
+        public async Task GetFeaturesTest()
         {
-            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
-                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
-
-            api.SetPrivateFieldValue("apiClient", apiClient.Object);
-
+            DVCCloudClient api = getTestClient(TestResponse.GetFeaturesAsync());
             User user = new User("j_test");
 
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()))
-                .ReturnsAsync(TestResponse.GetFeaturesAsync());
-
-            var result = api.AllFeaturesAsync(user).Result;
+            var result = await api.AllFeaturesAsync(user);
 
             AssertUserDefaultsCorrect(user);
 
@@ -42,15 +55,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
-                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
-
-            api.SetPrivateFieldValue("apiClient", apiClient.Object);
+            DVCCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync());
 
             User user = new User("j_test");
-
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()))
-                .ReturnsAsync(TestResponse.GetVariableByKeyAsync());
 
             const string key = "show-quickstart";
             var result = await api.VariableAsync(user, key, true);
@@ -64,15 +71,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
-                .SetEnvironmentKey(Guid.NewGuid().ToString()).SetLogger(new NullLoggerFactory()).Build();
-
-            api.SetPrivateFieldValue("apiClient", apiClient.Object);
+            DVCCloudClient api = getTestClient(TestResponse.GetVariablesAsync());
 
             User user = new User("j_test");
-
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<Object>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()))
-                .ReturnsAsync(TestResponse.GetVariablesAsync());
 
             var result = await api.AllVariablesAsync(user);
 
@@ -84,9 +85,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null);
-
-            api.SetPrivateFieldValue("apiClient", apiClient.Object);
+            using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1));
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
@@ -96,9 +95,6 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
-
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<Object>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()))
-                .ReturnsAsync(TestResponse.GetTrackResponseAsync(1));
 
             var result = await api.TrackAsync(user, userEvent);
 
@@ -113,9 +109,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         public async Task EdgeDBTest()
         {
             DVCCloudOptions options = new DVCCloudOptions(true);
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null, options);
-
-            api.SetPrivateFieldValue("apiClient", apiClient.Object);
+            using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1), options);
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
@@ -126,25 +120,20 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
-            apiClient.Setup(m => m.SendRequestAsync(It.IsAny<Object>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()))
-                .ReturnsAsync(TestResponse.GetTrackResponseAsync(1));
-
             var result = await api.TrackAsync(user, userEvent);
-            apiClient.Verify( m => 
-                m.SendRequestAsync(It.IsAny<Object>(), It.IsAny<string>(), It.Is<Dictionary<string, string>>(q => q["enableEdgeDB"] == "true")), Times.Once());
         }
-
+        
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
             using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null);
-
+        
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {
                 await api.VariableAsync(null, "some_key", true);
             });
         }
-
+        
         [TestMethod]
         public void User_NullUserId_ThrowsException()
         {

@@ -10,8 +10,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RestSharp.Portable;
-using RestSharp.Portable.HttpClient;
+using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
@@ -23,7 +22,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly string environmentKey;
         private readonly int pollingIntervalMs;
         private readonly int requestTimeoutMs;
-        private readonly IRestClient restClient;
+        private readonly RestClient restClient;
         private readonly ILogger logger;
         private readonly ILocalBucketing localBucketing;
         private readonly DVCEventArgs dvcEventArgs;
@@ -32,7 +31,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private Timer pollingTimer;
 
         public virtual string Config { get; private set; }
-        public virtual bool Initialized { get; private set; }
+        public virtual bool Initialized { get; internal set; }
 
         private bool PollingEnabled = true;
 
@@ -46,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         }
 
         public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null)
+            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null, RestClientOptions restClientOptions = null)
         {
             this.environmentKey = environmentKey;
             
@@ -56,9 +55,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
-
-            restClient = new RestClient(dvcLocalOptions.CdnUri);
-            this.logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
+            restClientOptions ??= new RestClientOptions
+            {
+                BaseUrl = new Uri(dvcLocalOptions.CdnUri)
+            };
+            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
+                restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
+            restClient = new RestClient(restClientOptions);
+            logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();
             
@@ -98,7 +102,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             return $"/config/v1/server/{environmentKey}.json";
         }
         
-        private void SetConfig(IRestResponse res)
+        private void SetConfig(RestResponse res)
         {
             if (res.StatusCode == HttpStatusCode.NotModified)
             {
@@ -110,8 +114,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 Config = res.Content;
                 localBucketing.StoreConfig(environmentKey, Config);
 
-                IEnumerable<string> headerValues = res.Headers.GetValues("etag");
-                configEtag = new List<string>(headerValues).FirstOrDefault();
+                
+                IEnumerable<HeaderParameter> headerValues = res.ContentHeaders.Where(e => e.Name == "etag");
+                configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
                 logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}", configEtag);
 
@@ -143,15 +148,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 return;
             }
             
-            restClient.IgnoreResponseStatusCode = true;
             var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
-            var request = new RestRequest(GetConfigUrl(), Method.GET);
+            var request = new RestRequest(GetConfigUrl());
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
 
             try
             {
-                IRestResponse res = await restClient.Execute(request, cts.Token);
+                RestResponse res = await restClient.ExecuteAsync(request, cts.Token);
                 SetConfig(res);
             }
             catch (DVCException e)
