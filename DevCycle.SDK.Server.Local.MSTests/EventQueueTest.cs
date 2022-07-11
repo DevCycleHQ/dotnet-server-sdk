@@ -92,6 +92,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
+        // This test may not be able to replicate because of how we assign the response code once at the beginning of the test.
         public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedOnFirstAttempt_VerifyFlushEventsCalledTwice()
         {
             var eventsQueue = getTestQueue(true, true);
@@ -122,20 +123,24 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             // ensure the queue can now be flushed
 
-            eventsQueue.Item3.Respond(HttpStatusCode.Created);
-
+            eventsQueue.Item2.Clear();
+            
+            var newReq = eventsQueue.Item2.When("https://*")
+                .Respond(HttpStatusCode.Created,
+                    "application/json",
+                    "{}");
             eventsQueue.Item1.RemoveFlushedEventsSubscriber(AssertFalseFlushedEvents);
             eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
 
             // Add a longer delay to the test to ensure FlushEvents is no longer looping
-            await Task.Delay(500);
+            await Task.Delay(50);
 
-            Assert.AreEqual(retryCount, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
 
             // internal event queue should now be empty, flush events manually and check that publish isnt called
             await eventsQueue.Item1.FlushEvents();
             await Task.Delay(20);
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
         }
 
         [TestMethod]
@@ -221,6 +226,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
         private void AssertTrueFlushedEvents(object sender, DVCEventArgs e)
         {
+            Assert.IsNull(e.Error);
             Assert.IsTrue(e.Success);
         }
 

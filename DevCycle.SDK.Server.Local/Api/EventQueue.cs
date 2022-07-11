@@ -46,7 +46,6 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, restClientOptions);
             this.localOptions = localOptions;
-            
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
             aggregateEvents = new AggregateEventQueues();
 
@@ -119,7 +118,6 @@ namespace DevCycle.SDK.Server.Local.Api
                         }
 
                         throw error;
-
                     }
 
                     batchQueue.Clear();
