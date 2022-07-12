@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Net;
-using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using RestSharp;
 
@@ -25,10 +23,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             this.serverKey = serverKey;
 
-            restClientOptions ??= new RestClientOptions()
-            {
-                BaseUrl = new Uri(BaseURL)
-            };
+            if (restClientOptions == null)
+                restClientOptions = new RestClientOptions()
+                {
+                    BaseUrl = new Uri(BaseURL)
+                };
 
             if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
                 restClientOptions.BaseUrl = new Uri(BaseURL);
