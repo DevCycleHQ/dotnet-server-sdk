@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using DevCycle.SDK.Server.Common.API;
 using Microsoft.Extensions.Logging;
+using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
@@ -11,6 +12,7 @@ namespace DevCycle.SDK.Server.Common.Model
         IClientBuilder SetOptions(IDVCOptions options);
         IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider);
         IClientBuilder SetWebProxy(IWebProxy proxy);
+        IClientBuilder SetRestClientOptions(RestClientOptions options);
         IDVCClient Build();
     }
 }
