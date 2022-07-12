@@ -8,6 +8,7 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
 using RestSharp;
+
 namespace DevCycle.SDK.Server.Local.Api
 {
     public class DVCLocalClientBuilder : DVCClientBuilder
@@ -15,8 +16,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private EnvironmentConfigManager configManager;
         private ILocalBucketing localBucketing;
         private DVCLocalOptions localOptions;
-       
-        
+
+
         public DVCLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
@@ -28,12 +29,13 @@ namespace DevCycle.SDK.Server.Local.Api
             localBucketing = localBucketingWrapper;
             return this;
         }
+
         public DVCLocalClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
         {
             initialized = initializedEventHandler;
             return this;
         }
-        
+
         public override IDVCClient Build()
         {
             localBucketing ??= new LocalBucketing();
@@ -42,11 +44,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
-            configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing, initialized);
+            configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing,
+                initialized);
 
-            restClientOptions ??= new RestClientOptions();
-
-            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy, restClientOptions);
+            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy,
+                restClientOptions);
         }
     }
 
@@ -59,7 +61,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy, RestClientOptions restClientOptions = null)
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy,
+            RestClientOptions restClientOptions = null)
         {
             eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
             this.environmentKey = environmentKey;
@@ -67,10 +70,7 @@ namespace DevCycle.SDK.Server.Local.Api
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
 
-            Task.Run(async delegate
-            {
-                await configManager.InitializeConfigAsync();
-            });
+            Task.Run(async delegate { await configManager.InitializeConfigAsync(); });
         }
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)
@@ -82,11 +82,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
 
                 eventQueue.QueueAggregateEvent(
-                    requestUser, 
-                    new Event(type: EventTypes.variableDefaulted, target: key), 
+                    requestUser,
+                    new Event(type: EventTypes.variableDefaulted, target: key),
                     null
                 );
-                
+
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
 
@@ -105,26 +105,26 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             Variable<T> existingVariable = null;
-            
+
             if (config?.Variables != null && config.Variables.ContainsKey(key))
             {
                 try
                 {
                     existingVariable = config.Variables.Get<T>(key);
-                } 
+                }
                 catch (InvalidCastException)
                 {
                     logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
                 }
             }
 
-            var variable =  Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
+            var variable = Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
 
             var @event = new Event(type: variable.IsDefaulted
                     ? EventTypes.variableDefaulted
                     : EventTypes.variableEvaluated,
                 target: variable.Key);
-            
+
             eventQueue.QueueAggregateEvent(requestUser, @event, config);
 
             return variable;
@@ -203,7 +203,6 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 logger.LogError("Unexpected exception generating bucketed config: {Exception}", e.Message);
             }
-            
         }
 
         public void AddFlushedEventSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)

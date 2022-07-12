@@ -15,13 +15,16 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using RichardSzalay.MockHttp;
+using Environment = System.Environment;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
     [TestClass]
     public class DVCTest
     {
-        private DVCLocalClient getTestClient(DVCLocalOptions options = null, string config = "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}")
+        private DVCLocalClient getTestClient(DVCLocalOptions options = null,
+            string config =
+                "{\"project\":{\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}")
         {
             var mockHttp = new MockHttpMessageHandler();
 
@@ -35,7 +38,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var environmentKey = $"server-{Guid.NewGuid()}";
             localBucketing.StoreConfig(environmentKey, config);
-            var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(), new NullLoggerFactory(),
+            var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(),
+                new NullLoggerFactory(),
                 localBucketing, restClientOptions: new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
             DVCLocalClient api = (DVCLocalClient) new DVCLocalClientBuilder()
@@ -47,6 +51,34 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .SetLogger(loggerFactory)
                 .Build();
             return api;
+        }
+
+        [TestMethod]
+        public async Task GetProductionAllVariables()
+        {
+            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
+            if (string.IsNullOrEmpty(sdkKey))
+            {
+                Console.WriteLine(
+                    "DEVCYCLE_SDK_KEY is not set in the environment variables - skipping production features test.");
+                return;
+            }
+
+            var api = (DVCLocalClient) new DVCLocalClientBuilder()
+                .SetInitializedSubscriber(((sender, args) =>
+                {
+                    Console.WriteLine($"Success? : {args.Success}");
+                }))
+                .SetEnvironmentKey(sdkKey)
+                .Build();
+
+            await Task.Delay(5000);
+            var resp = api.AllFeatures(new User("test"));
+            Assert.IsTrue(resp.Count > 0);
+            foreach (var (key, value) in resp)
+            {
+                Console.WriteLine(key, value);    
+            }
         }
 
         [TestMethod]
@@ -100,7 +132,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public async void GetVariablesTest()
+        public async Task GetVariablesTest()
         {
             using DVCLocalClient api = getTestClient();
             await Task.Delay(1000);
@@ -109,7 +141,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var result = api.AllVariables(user);
             // Bucketing needs time to work.
             await Task.Delay(5000);
-            
+
             Assert.IsNotNull(result);
             var variable = result.Get<bool>("test");
             Assert.IsNotNull(variable);
@@ -118,7 +150,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public async void PostEventsTest()
+        public async Task PostEventsTest()
         {
             using DVCLocalClient api = getTestClient();
 
@@ -139,7 +171,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
                 using DVCLocalClient api = getTestClient();
-                
+
                 api.Variable(null, "some_key", true);
             });
         }

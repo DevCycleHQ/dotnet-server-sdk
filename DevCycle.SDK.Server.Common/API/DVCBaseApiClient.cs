@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
@@ -15,7 +16,8 @@ namespace DevCycle.SDK.Server.Common.API
         {
             var restClient = GetRestClient();
             var request = new RestRequest(urlFragment, Method.Post);
-            request.AddJsonBody(json);
+            var body = JsonConvert.SerializeObject(json);
+            request.AddStringBody(body, "application/json");
             request.AddHeader("Content-Type", "application/json");
             request.AddHeader("accept", "application/json");
             request.AddHeader("Authorization", GetServerSDKKey());

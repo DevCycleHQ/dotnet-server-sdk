@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Exception;
@@ -18,9 +17,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
     {
         public override IDVCClient Build()
         {
-            restClientOptions ??= new RestClientOptions();
-
-            return new DVCCloudClient(environmentKey, loggerFactory, proxy, options, restClientOptions);
+            return new DVCCloudClient(environmentKey, loggerFactory, options, restClientOptions);
         }
     }
     public sealed class DVCCloudClient : DVCBaseClient
@@ -30,7 +27,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         private readonly DVCCloudOptions options;
 
-        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IWebProxy proxy, IDVCOptions options=null, RestClientOptions restClientOptions = null)
+        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IDVCOptions options=null, RestClientOptions restClientOptions = null)
         {
             apiClient = new DVCApiClient(serverKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();

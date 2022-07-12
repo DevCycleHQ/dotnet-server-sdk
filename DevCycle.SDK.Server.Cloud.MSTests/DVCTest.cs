@@ -10,6 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using RestSharp;
 using RichardSzalay.MockHttp;
+using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {
@@ -25,7 +26,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     JsonConvert.SerializeObject(
                         bodyResponse
                     ));
-            
+
             DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
                 .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
@@ -33,6 +34,30 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                 .SetLogger(new NullLoggerFactory())
                 .Build();
             return api;
+        }
+
+        [TestMethod]
+        public async Task GetProductionAllFeatures()
+        {
+            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
+            if (string.IsNullOrEmpty(sdkKey))
+            {
+                Console.WriteLine(
+                    "DEVCYCLE_SDK_KEY is not set in the environment variables - skipping production features test.");
+                return;
+            }
+
+            DVCCloudClient api = (DVCCloudClient)
+                new DVCCloudClientBuilder()
+                    .SetEnvironmentKey(Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY"))
+                    .SetLogger(new NullLoggerFactory())
+                    .Build();
+            var resp = await api.AllFeaturesAsync(new User("test"));
+            Assert.IsTrue(resp.Count > 0);
+            foreach (var (key, value) in resp)
+            {
+                Console.WriteLine(key, value);    
+            }
         }
 
         [TestMethod]
@@ -122,18 +147,18 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             var result = await api.TrackAsync(user, userEvent);
         }
-        
+
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory(), null);
-        
+            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {
                 await api.VariableAsync(null, "some_key", true);
             });
         }
-        
+
         [TestMethod]
         public void User_NullUserId_ThrowsException()
         {
