@@ -13,7 +13,6 @@ namespace DevCycle.SDK.Server.Common.Model
         protected IDVCOptions options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
-        protected IWebProxy proxy;
         protected RestClientOptions restClientOptions;
         
         public IClientBuilder SetEnvironmentKey(string key)
@@ -31,12 +30,6 @@ namespace DevCycle.SDK.Server.Common.Model
         public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
         {
             loggerFactory = loggerFactoryProvider;
-            return this;
-        }
-
-        public IClientBuilder SetWebProxy(IWebProxy proxy)
-        {
-            this.proxy = proxy;
             return this;
         }
 

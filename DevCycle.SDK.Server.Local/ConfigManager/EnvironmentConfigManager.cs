@@ -55,12 +55,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
-            restClientOptions ??= new RestClientOptions
-            {
-                BaseUrl = new Uri(dvcLocalOptions.CdnUri)
-            };
-            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
-                restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
+            restClientOptions ??= new RestClientOptions();
+            // Explicitly override the base URL to use the one in local bucketing options. This allows the normal 
+            // rest client options to override the Events api endpoint url; while sharing certificate and other information.
+            restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
+            
             restClient = new RestClient(restClientOptions);
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;

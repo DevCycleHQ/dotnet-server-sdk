@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
@@ -45,9 +44,9 @@ namespace DevCycle.SDK.Server.Local.Api
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
             configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing,
-                initialized);
+                initialized, restClientOptions);
 
-            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing, proxy,
+            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing,
                 restClientOptions);
         }
     }
@@ -61,7 +60,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing, IWebProxy proxy,
+            EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
             RestClientOptions restClientOptions = null)
         {
             eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
