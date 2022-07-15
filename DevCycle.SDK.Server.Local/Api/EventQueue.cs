@@ -178,7 +178,8 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
         {
-            if (localOptions.DisableEvents)
+            if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
+                localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
                 return;
 
             if (IsOverMaxQueue())
@@ -212,7 +213,8 @@ namespace DevCycle.SDK.Server.Local.Api
          */
         public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
         {
-            if (localOptions.DisableEvents)
+            if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
+                localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
                 return;
             
             if (IsOverMaxQueue())
