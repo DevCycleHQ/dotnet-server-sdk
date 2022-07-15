@@ -67,6 +67,10 @@ namespace DevCycle.SDK.Server.Common.Model
             {
                 throw new ArgumentException("userId is a required property for User and cannot be null or empty");
             }
+            if (userId.Length > 200)
+            {
+                throw new ArgumentException("userId cannot be greater than 200 characters");
+            }
 
             UserId = userId;
 
