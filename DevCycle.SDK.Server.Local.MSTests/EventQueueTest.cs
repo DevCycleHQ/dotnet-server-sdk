@@ -51,13 +51,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task TestQueueLimit_OneUserAggregate()
         {
             var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue( 
+            var eventQueue = getTestQueue(
                 localOptions: localOptions);
             var user = new User("user1");
             eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
             {
                 Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
             var loopsCompleted = 0;
 
@@ -66,7 +66,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 for (int i = 0; i < 10000; i++)
                 {
                     eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, ""+i, metaData: new Dictionary<string, object> {{"test", "value"}}),
+                        new Event("testEvent" + i, "" + i,
+                            metaData: new Dictionary<string, object> {{"test", "value"}}),
                         new BucketedUserConfig()
                         {
                             FeatureVariationMap = new Dictionary<string, string>
@@ -83,22 +84,22 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Console.WriteLine(matches + " matches");
             Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
         }
-        
-        
+
+
         [TestMethod]
         public async Task TestDisableEvents()
         {
             var localOptions = new DVCLocalOptions(1000, 1000, disableEvents: true);
-            var eventQueue = getTestQueue( 
+            var eventQueue = getTestQueue(
                 localOptions: localOptions);
             var user = new User("user1");
             eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
             {
                 Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
             eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                new Event("testEvent" , "target", metaData: new Dictionary<string, object> {{"test", "value"}}),
+                new Event("testEvent", "target", metaData: new Dictionary<string, object> {{"test", "value"}}),
                 new BucketedUserConfig()
                 {
                     FeatureVariationMap = new Dictionary<string, string>
@@ -114,12 +115,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task TestQueueLimit_MultiUserAggregate()
         {
             var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue( 
+            var eventQueue = getTestQueue(
                 localOptions: localOptions);
             eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
             {
                 Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
             var loopsCompleted = 0;
 
@@ -127,9 +128,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 for (int i = 0; i < 10000; i++)
                 {
-                    var user = new User("user"+i);
+                    var user = new User("user" + i);
                     eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, ""+i, metaData: new Dictionary<string, object> {{"test", "value"}}),
+                        new Event("testEvent" + i, "" + i,
+                            metaData: new Dictionary<string, object> {{"test", "value"}}),
                         new BucketedUserConfig()
                         {
                             FeatureVariationMap = new Dictionary<string, string>
@@ -151,13 +153,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task TestQueueLimit_OneUser()
         {
             var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue( 
+            var eventQueue = getTestQueue(
                 localOptions: localOptions);
             var user = new User("user1");
             eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
             {
                 Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
             var loopsCompleted = 0;
 
@@ -170,7 +172,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         new BucketedUserConfig()
                         {
                             FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id"+i, "some-variation-id"+i}}
+                                {{"some-feature-id" + i, "some-variation-id" + i}}
                         });
                     loopsCompleted = i;
                 }
@@ -183,16 +185,18 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Console.WriteLine(matches + " matches");
             Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
         }
+
         [TestMethod]
-        public async Task TestQueueLimit_MultiUser()
+        public async Task TestQueueLimit_OneUser_Flushed()
         {
             var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue( 
+            var eventQueue = getTestQueue(
                 localOptions: localOptions);
+            var user = new User("user1");
             eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
             {
                 Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
             var loopsCompleted = 0;
 
@@ -200,7 +204,64 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 for (int i = 0; i < 10000; i++)
                 {
-                    var user = new User("user"+i);
+                    eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
+                        new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
+                        new BucketedUserConfig()
+                        {
+                            FeatureVariationMap = new Dictionary<string, string>
+                                {{"some-feature-id" + i, "some-variation-id" + i}}
+                        });
+                    loopsCompleted = i + 1;
+                }
+
+                return loopsCompleted;
+            });
+            //await eventQueue.Item1.FlushEvents();
+            await Task.Delay(5000);
+            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
+            Console.WriteLine(matches + " matches");
+            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
+            Assert.AreEqual(1, matches);
+
+
+            // These events should be fine to add as the queue is flushed after hitting the limit
+            loopsCompleted = 0;
+            for (int i = 0; i < localOptions.MaxEventsInQueue / 2; i++)
+            {
+                eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
+                    new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
+                    new BucketedUserConfig()
+                    {
+                        FeatureVariationMap = new Dictionary<string, string>
+                            {{"some-feature-id" + i, "some-variation-id" + i}}
+                    });
+                loopsCompleted = i +1 ;
+            }
+            Assert.AreEqual( localOptions.MaxEventsInQueue / 2,loopsCompleted);
+            await Task.Delay(5000);
+            matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
+            Console.WriteLine(matches + " matches");
+            Assert.AreEqual(2, matches);
+        }
+
+        [TestMethod]
+        public async Task TestQueueLimit_MultiUser()
+        {
+            var localOptions = new DVCLocalOptions(1000, 1000);
+            var eventQueue = getTestQueue(
+                localOptions: localOptions);
+            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
+            {
+                Console.WriteLine("Error?: " + args.Error);
+                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
+            });
+            var loopsCompleted = 0;
+
+            Assert.ThrowsException<DVCException>(() =>
+            {
+                for (int i = 0; i < 10000; i++)
+                {
+                    var user = new User("user" + i);
 
                     eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
                         new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),

@@ -284,7 +284,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private bool IsOverMaxQueue()
         {
-            return  CombineUsersEventsToFlush().Sum(u => u.Value.Events.Count)+ batchQueue.Count > localOptions.MaxEventsInQueue;
+            return  CombineUsersEventsToFlush().Sum(u => u.Value.Events.Count)+ batchQueue.Count >= localOptions.MaxEventsInQueue;
         }
 
         private void ScheduleFlushWithDelay(bool queueRequest = false)
