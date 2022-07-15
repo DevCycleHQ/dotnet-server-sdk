@@ -84,6 +84,32 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
         }
         
+        
+        [TestMethod]
+        public async Task TestDisableEvents()
+        {
+            var localOptions = new DVCLocalOptions(1000, 1000, disableEvents: true);
+            var eventQueue = getTestQueue( 
+                localOptions: localOptions);
+            var user = new User("user1");
+            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
+            {
+                Console.WriteLine("Error?: " + args.Error);
+                Console.WriteLine("Flushed events: " +(args.Success ? "true" : "false"));
+            });
+            eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
+                new Event("testEvent" , "target", metaData: new Dictionary<string, object> {{"test", "value"}}),
+                new BucketedUserConfig()
+                {
+                    FeatureVariationMap = new Dictionary<string, string>
+                        {{"some-feature-id", "some-variation-id"}}
+                });
+
+            await Task.Delay(5000);
+            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
+            Assert.AreEqual(0, matches);
+        }
+
         [TestMethod]
         public async Task TestQueueLimit_MultiUserAggregate()
         {
