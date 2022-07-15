@@ -181,5 +181,16 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             Assert.ThrowsException<ArgumentException>(() => { _ = new User(); });
         }
+
+        [TestMethod]
+        public void User_InvalidUserIdLength_ThrowsException()
+        {
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                _ = new User("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
+                                + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
+                                + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
+            });
+        }
     }
 }
