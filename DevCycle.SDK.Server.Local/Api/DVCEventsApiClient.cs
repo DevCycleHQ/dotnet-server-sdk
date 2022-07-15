@@ -13,6 +13,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private string SdkKey { get; set; }
         private RestClient restClient { get; set; }
         private bool _disposed = false;
+        private DVCLocalOptions sdkOptions { get; set; }
 
 
         // internal parameterless constructor for testing
@@ -20,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, RestClientOptions restClientOptions = null)
+        public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, RestClientOptions restClientOptions = null)
         {
             restClientOptions ??= new RestClientOptions()
             {
@@ -30,6 +31,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 restClientOptions.BaseUrl = new Uri(BaseUrl);
             restClient = new RestClient(restClientOptions);
             SdkKey = environmentKey;
+            sdkOptions = options;
         }
 
         private void Dispose(bool disposing)
