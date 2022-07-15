@@ -50,6 +50,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestQueueLimit_OneUserAggregate()
         {
+            // Goal here is to check whether or not the queue limit is imposed for one user when using queueaggregateevent
+
             var localOptions = new DVCLocalOptions(1000, 1000);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
@@ -89,6 +91,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestDisableEvents()
         {
+            // Ensure no events are sent when events are disabled.
             var localOptions = new DVCLocalOptions(1000, 1000, disableCustomEvents: true, disableAutomaticEvents: true);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
@@ -114,6 +117,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestQueueLimit_MultiUserAggregate()
         {
+            // Goal here is to check whether or not the queue limit is imposed for multiple users when using queueaggregateevent
             var localOptions = new DVCLocalOptions(1000, 1000);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
@@ -152,6 +156,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestQueueLimit_OneUser()
         {
+            // Goal here is to check whether or not the queue limit is imposed for multiple users when using queueevent
+
             var localOptions = new DVCLocalOptions(1000, 1000);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
@@ -189,6 +195,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestQueueLimit_OneUser_Flushed()
         {
+            // Goal here is to check whether or not the queue limit is imposed for one user when using queueevent
+            // and that the forced flush happens successfully; and that more events can be queued afterwards.
+
             var localOptions = new DVCLocalOptions(1000, 1000);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
