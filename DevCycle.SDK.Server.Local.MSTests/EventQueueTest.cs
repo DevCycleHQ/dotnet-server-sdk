@@ -89,7 +89,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestDisableEvents()
         {
-            var localOptions = new DVCLocalOptions(1000, 1000, disableEvents: true);
+            var localOptions = new DVCLocalOptions(1000, 1000, disableCustomEvents: true, disableAutomaticEvents: true);
             var eventQueue = getTestQueue(
                 localOptions: localOptions);
             var user = new User("user1");
