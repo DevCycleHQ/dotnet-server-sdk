@@ -65,7 +65,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.ThrowsException<DVCException>(() =>
             {
-                for (int i = 0; i < 10000; i++)
+                for (int i = 1; i < 10000; i++)
                 {
                     eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
                         new Event("testEvent" + i, "" + i,
@@ -130,7 +130,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.ThrowsException<DVCException>(() =>
             {
-                for (int i = 0; i < 10000; i++)
+                for (int i = 1; i < 10000; i++)
                 {
                     var user = new User("user" + i);
                     eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
@@ -233,7 +233,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             // These events should be fine to add as the queue is flushed after hitting the limit
             i = 0;
-            for (i = 0; i < localOptions.MaxEventsInQueue / 2; i++)
+            for (i = 1; i < localOptions.MaxEventsInQueue / 2; i++)
             {
                 eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
                     new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
@@ -261,11 +261,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 Console.WriteLine("Error?: " + args.Error);
                 Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
-            var loopsCompleted = 0;
+            var i = 0;
 
             Assert.ThrowsException<DVCException>(() =>
             {
-                for (int i = 0; i < 10000; i++)
+                for ( i = 0; i < 10000; i++)
                 {
                     var user = new User("user" + i);
 
@@ -276,16 +276,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id", "some-variation-id"}}
                         }, true);
-                    loopsCompleted = i;
                 }
 
-                return loopsCompleted;
+                return i;
             });
 
             await Task.Delay(5000);
             var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
             Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
+            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
         }
 
         [TestMethod]
