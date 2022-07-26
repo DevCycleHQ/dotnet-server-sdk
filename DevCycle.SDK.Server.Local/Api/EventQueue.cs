@@ -184,10 +184,14 @@ namespace DevCycle.SDK.Server.Local.Api
 
             if (IsOverMaxQueue())
             {
-                logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}. Triggering a forced flush", @event, localOptions.MaxEventsInQueue);
+                logger.LogWarning(
+                    "{Event} failed to be queued; events in queue exceed {Max}. Triggering a forced flush", @event,
+                    localOptions.MaxEventsInQueue);
                 ScheduleFlushWithDelay();
-                throw new DVCException(new ErrorResponse("Could not add event to queue. Max queue size reached"));
+                logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
+                return;
             }
+
             eventQueueMutex.Wait();
             if (!eventPayloadsToFlush.ContainsKey(user))
             {
@@ -195,7 +199,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             var userAndEvents = eventPayloadsToFlush[user];
-            
+
             var featureVars = config?.FeatureVariationMap ?? new Dictionary<string, string>();
 
             userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, featureVars));
@@ -216,14 +220,16 @@ namespace DevCycle.SDK.Server.Local.Api
             if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
                 localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
                 return;
-            
+
             if (IsOverMaxQueue())
             {
-                logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event, localOptions.MaxEventsInQueue);
+                logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
+                    localOptions.MaxEventsInQueue);
                 ScheduleFlushWithDelay();
-                throw new DVCException(new ErrorResponse("Could not add event to queue. Max queue size reached"));
+                logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
+                return;
             }
-            
+
             if (string.IsNullOrEmpty(user.UserId))
             {
                 throw new ArgumentException("UserId must be set");
@@ -286,7 +292,8 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private bool IsOverMaxQueue()
         {
-            return  CombineUsersEventsToFlush().Sum(u => u.Value.Events.Count)+ batchQueue.Count >= localOptions.MaxEventsInQueue;
+            return CombineUsersEventsToFlush().Sum(u => u.Value.Events.Count) + batchQueue.Count >=
+                   localOptions.MaxEventsInQueue;
         }
 
         private void ScheduleFlushWithDelay(bool queueRequest = false)
