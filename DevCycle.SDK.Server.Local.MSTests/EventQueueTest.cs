@@ -74,7 +74,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         {
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id", "some-variation-id"}}
-                        });
+                        }, true);
                     loopsCompleted = i;
                 }
 
@@ -140,7 +140,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         {
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id", "some-variation-id"}}
-                        });
+                        }, true);
                     loopsCompleted = i;
                 }
 
@@ -179,7 +179,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         {
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id" + i, "some-variation-id" + i}}
-                        });
+                        }, true);
                     loopsCompleted = i;
                 }
 
@@ -219,7 +219,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         {
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id" + i, "some-variation-id" + i}}
-                        });
+                        }, true);
                     loopsCompleted = i + 1;
                 }
 
@@ -278,7 +278,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         {
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id", "some-variation-id"}}
-                        });
+                        }, true);
                     loopsCompleted = i;
                 }
 

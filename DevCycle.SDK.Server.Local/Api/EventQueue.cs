@@ -176,7 +176,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
+        public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
             if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
                 localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
@@ -188,6 +188,9 @@ namespace DevCycle.SDK.Server.Local.Api
                     "{Event} failed to be queued; events in queue exceed {Max}. Triggering a forced flush", @event,
                     localOptions.MaxEventsInQueue);
                 ScheduleFlushWithDelay();
+                if (throwOnQueueMax)
+                    throw new DVCException(
+                        new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
             }
@@ -215,7 +218,7 @@ namespace DevCycle.SDK.Server.Local.Api
          * Queue Event that can be aggregated together, where multiple calls are aggregated
          * by incrementing the 'value' field.
          */
-        public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config)
+        public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
             if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
                 localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
@@ -226,8 +229,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
                     localOptions.MaxEventsInQueue);
                 ScheduleFlushWithDelay();
+                if (throwOnQueueMax)
+                    throw new DVCException(
+                        new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
-                return;
+                return;                return;
             }
 
             if (string.IsNullOrEmpty(user.UserId))
