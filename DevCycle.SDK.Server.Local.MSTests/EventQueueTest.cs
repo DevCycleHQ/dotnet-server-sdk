@@ -167,11 +167,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 Console.WriteLine("Error?: " + args.Error);
                 Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
-            var loopsCompleted = 0;
+            var i = 0;
 
             Assert.ThrowsException<DVCException>(() =>
             {
-                for (int i = 0; i < 10000; i++)
+                for ( i = 0; i < 10000; i++)
                 {
                     eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
                         new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
@@ -180,16 +180,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id" + i, "some-variation-id" + i}}
                         }, true);
-                    loopsCompleted = i;
                 }
 
-                return loopsCompleted;
+                return i;
             });
 
             await Task.Delay(5000);
             var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
             Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
+            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
         }
 
         [TestMethod]
@@ -207,11 +206,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 Console.WriteLine("Error?: " + args.Error);
                 Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
             });
-            var loopsCompleted = 0;
+            var i = 0;
 
             Assert.ThrowsException<DVCException>(() =>
             {
-                for (int i = 0; i < 10000; i++)
+                for (i = 0; i < 10000; i++)
                 {
                     eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
                         new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
@@ -220,22 +219,21 @@ namespace DevCycle.SDK.Server.Local.MSTests
                             FeatureVariationMap = new Dictionary<string, string>
                                 {{"some-feature-id" + i, "some-variation-id" + i}}
                         }, true);
-                    loopsCompleted = i + 1;
                 }
 
-                return loopsCompleted;
+                return i;
             });
             //await eventQueue.Item1.FlushEvents();
             await Task.Delay(5000);
             var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
             Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
+            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
             Assert.AreEqual(1, matches);
 
 
             // These events should be fine to add as the queue is flushed after hitting the limit
-            loopsCompleted = 0;
-            for (int i = 0; i < localOptions.MaxEventsInQueue / 2; i++)
+            i = 0;
+            for (i = 0; i < localOptions.MaxEventsInQueue / 2; i++)
             {
                 eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
                     new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
@@ -244,9 +242,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         FeatureVariationMap = new Dictionary<string, string>
                             {{"some-feature-id" + i, "some-variation-id" + i}}
                     });
-                loopsCompleted = i +1 ;
             }
-            Assert.AreEqual( localOptions.MaxEventsInQueue / 2,loopsCompleted);
+            Assert.AreEqual( localOptions.MaxEventsInQueue / 2,i);
             await Task.Delay(5000);
             matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
             Console.WriteLine(matches + " matches");
