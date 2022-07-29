@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -8,7 +9,6 @@ namespace DevCycle.SDK.Server.Local.Api
 {
     internal class DVCEventsApiClient : DVCBaseApiClient
     {
-        private const string BaseUrl = "https://events.devcycle.com";
         private const string TrackEventsUrl = "/v1/events/batch";
         private string SdkKey { get; set; }
         private RestClient restClient { get; set; }
@@ -23,13 +23,16 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, RestClientOptions restClientOptions = null)
         {
+            options ??= new DVCLocalOptions();
             restClientOptions ??= new RestClientOptions()
             {
-                BaseUrl = new Uri(BaseUrl)
+                BaseUrl = new Uri(options.EventsApiUri)
             };
+            options.EventsApiCustomHeaders ??= new Dictionary<string, string>();
             if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
-                restClientOptions.BaseUrl = new Uri(BaseUrl);
+                restClientOptions.BaseUrl = new Uri(options.EventsApiUri);
             restClient = new RestClient(restClientOptions);
+            restClient.AddDefaultHeaders(options.EventsApiCustomHeaders);
             SdkKey = environmentKey;
             sdkOptions = options;
         }
