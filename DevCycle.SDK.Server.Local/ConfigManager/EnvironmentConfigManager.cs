@@ -27,7 +27,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly ILocalBucketing localBucketing;
         private readonly DVCEventArgs dvcEventArgs;
         private readonly EventHandler<DVCEventArgs> initializedHandler;
-
+        private readonly DVCLocalOptions localOptions;
         private Timer pollingTimer;
 
         public virtual string Config { get; private set; }
@@ -38,17 +38,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private string configEtag;
         private bool alreadyCalledHandler;
 
-        // internal parameterless constructor for testing
-        internal EnvironmentConfigManager() : this("not-a-real-key", new DVCLocalOptions(),
-            new NullLoggerFactory(), new LocalBucketing())
+        public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions,
+            ILoggerFactory loggerFactory,
+            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null,
+            RestClientOptions restClientOptions = null)
         {
-        }
-
-        public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null, RestClientOptions restClientOptions = null)
-        {
+            localOptions = dvcLocalOptions;
             this.environmentKey = environmentKey;
-            
+
             pollingIntervalMs = dvcLocalOptions.ConfigPollingIntervalMs >= MinimumPollingIntervalMs
                 ? dvcLocalOptions.ConfigPollingIntervalMs
                 : MinimumPollingIntervalMs;
@@ -56,15 +53,17 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
             restClientOptions ??= new RestClientOptions();
+            dvcLocalOptions.CdnCustomHeaders ??= new Dictionary<string, string>();
             // Explicitly override the base URL to use the one in local bucketing options. This allows the normal 
             // rest client options to override the Events api endpoint url; while sharing certificate and other information.
             restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
-            
+
             restClient = new RestClient(restClientOptions);
+            restClient.AddDefaultHeaders(dvcLocalOptions.CdnCustomHeaders);
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();
-            
+
             if (initializedHandler != null)
             {
                 this.initializedHandler += initializedHandler;
@@ -74,7 +73,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public virtual async Task InitializeConfigAsync()
         {
             await FetchConfigAsyncWithTask();
-            
+
             pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
         }
 
@@ -83,11 +82,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             pollingTimer?.Dispose();
             restClient.Dispose();
         }
-        
+
         private void OnInitialized(DVCEventArgs e)
         {
             if (Initialized && alreadyCalledHandler) return;
-            
+
             initializedHandler?.Invoke(this, e);
 
             if (Initialized)
@@ -98,45 +97,53 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private string GetConfigUrl()
         {
-            return $"/config/v1/server/{environmentKey}.json";
+            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{environmentKey}.json";
         }
-        
+
         private void SetConfig(RestResponse res)
         {
-            if (res.StatusCode == HttpStatusCode.NotModified)
+            switch (res.StatusCode)
             {
-                logger.LogInformation("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
-            }
-            else if (res.StatusCode == HttpStatusCode.OK)
-            {
-                var isInitialFetch = Config == null;
-                Config = res.Content;
-                localBucketing.StoreConfig(environmentKey, Config);
+                case HttpStatusCode.NotModified:
+                    logger.LogInformation("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
+                    break;
+                case HttpStatusCode.OK:
+                {
+                    var isInitialFetch = Config == null;
+                    Config = res.Content;
+                    localBucketing.StoreConfig(environmentKey, Config);
 
-                
-                IEnumerable<HeaderParameter> headerValues = res.ContentHeaders.Where(e => e.Name == "etag");
-                configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
-                logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}", configEtag);
+                    IEnumerable<HeaderParameter> headerValues = res.ContentHeaders.Where(e => e.Name == "etag");
+                    configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
-                if (!isInitialFetch) return;
-                
-                Initialized = true;
-                dvcEventArgs.Success = true;
-            }
-            else if (Config != null)
-            {
-                logger.LogError("Failed to download config, using cached version: {ConfigEtag}", configEtag);
-            }
-            else
-            {
-                logger.LogError("Failed to download DevCycle config");
+                    logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}", configEtag);
 
-                var exception = new DVCException(res.StatusCode,
-                    new ErrorResponse("Failed to download DevCycle config."));
-                dvcEventArgs.Error = exception;
+                    if (!isInitialFetch) return;
 
-                throw exception;
+                    Initialized = true;
+                    dvcEventArgs.Success = true;
+                    break;
+                }
+                default:
+                {
+                    if (Config != null)
+                    {
+                        logger.LogError("Failed to download config, using cached version: {ConfigEtag}", configEtag);
+                    }
+                    else
+                    {
+                        logger.LogError("Failed to download DevCycle config");
+
+                        var exception = new DVCException(res.StatusCode,
+                            new ErrorResponse("Failed to download DevCycle config."));
+                        dvcEventArgs.Error = exception;
+
+                        throw exception;
+                    }
+
+                    break;
+                }
             }
         }
 
@@ -146,7 +153,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 return;
             }
-            
+
             var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
             var request = new RestRequest(GetConfigUrl());
@@ -162,7 +169,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 DVCException finalError;
                 if (!e.IsRetryable())
                 {
-                    if ((int)e.HttpStatusCode == 403)
+                    if ((int) e.HttpStatusCode == 403)
                     {
                         finalError = new DVCException(e.HttpStatusCode,
                             new ErrorResponse("Project configuration could not be found. Check your SDK key."));
@@ -170,7 +177,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     else
                     {
                         finalError = new DVCException(e.HttpStatusCode,
-                            new ErrorResponse("Encountered non-retryable error fetching config. Halting polling loop."));
+                            new ErrorResponse(
+                                "Encountered non-retryable error fetching config. Halting polling loop."));
                     }
 
                     pollingTimer?.Dispose();
@@ -180,16 +188,17 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 {
                     finalError = new DVCException(e.HttpStatusCode,
                         new ErrorResponse("Error loading initial config. Exception: " + e.Message));
-                } 
+                }
                 else
                 {
                     finalError = new DVCException(e.HttpStatusCode,
                         new ErrorResponse(String.Format(
                             "Error loading config. Using cache etag: {ConfigEtag}. Exception: {Exception}",
-                            configEtag, 
+                            configEtag,
                             e.Message
                         )));
                 }
+
                 logger.LogError(finalError.ErrorResponse.Message);
                 dvcEventArgs.Error = finalError;
             }
@@ -198,10 +207,15 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 OnInitialized(dvcEventArgs);
             }
         }
-        
+
         private async void FetchConfigAsync(object state = null)
         {
             await FetchConfigAsyncWithTask();
+        }
+
+        internal RestClient GetRestClient()
+        {
+            return restClient;
         }
     }
 }

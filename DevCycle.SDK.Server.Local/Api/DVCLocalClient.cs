@@ -35,6 +35,13 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
+        public new DVCLocalClientBuilder SetOptions(IDVCOptions options)
+        {
+            this.options = options;
+            localOptions = (DVCLocalOptions) options;
+            return this;
+        }
+
         public override IDVCClient Build()
         {
             localBucketing ??= new LocalBucketing();
@@ -63,11 +70,11 @@ namespace DevCycle.SDK.Server.Local.Api
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
             RestClientOptions restClientOptions = null)
         {
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
 
             Task.Run(async delegate { await configManager.InitializeConfigAsync(); });
         }

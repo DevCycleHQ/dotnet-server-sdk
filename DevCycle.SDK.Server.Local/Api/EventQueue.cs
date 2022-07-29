@@ -52,7 +52,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
-
+        
         public void AddFlushedEventsSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
         {
             FlushedEvents += flushedEventsSubscriber;
@@ -62,12 +62,12 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             FlushedEvents -= flushedEventsSubscriber;
         }
-
+        
         public virtual async Task FlushEvents()
         {
             // cancel pending queued FlushEvents
             tokenSource.Cancel();
-
+            
             await EventQueueSemaphore.WaitAsync(0);
             var eventArgs = new DVCEventArgs();
             try
@@ -77,17 +77,17 @@ namespace DevCycle.SDK.Server.Local.Api
                 await batchQueueMutex.WaitAsync();
 
                 var userEventBatch = CombineUsersEventsToFlush();
-
+                
                 if (userEventBatch.Count != 0)
                 {
                     batchQueue.Add(new BatchOfUserEventsBatch(userEventBatch.Values.ToList()));
                     eventPayloadsToFlush.Clear();
                     aggregateEvents.Clear();
                 }
-
+                
                 eventQueueMutex.Release();
                 aggregateEventQueueMutex.Release();
-
+                
                 if (batchQueue.Count == 0)
                 {
                     eventArgs.Success = true;

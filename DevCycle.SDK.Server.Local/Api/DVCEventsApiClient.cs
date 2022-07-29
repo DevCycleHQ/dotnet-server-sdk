@@ -58,7 +58,8 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual async Task<RestResponse> PublishEvents(BatchOfUserEventsBatch batch)
         {
-            return await SendRequestAsync(batch, TrackEventsUrl);
+            return await SendRequestAsync(batch, 
+                sdkOptions.EventsApiSlug != "" ? sdkOptions.EventsApiSlug : TrackEventsUrl);
         }
 
         public override string GetServerSDKKey()

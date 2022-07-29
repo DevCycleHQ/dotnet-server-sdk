@@ -32,11 +32,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Respond(HttpStatusCode.OK, "application/json",
                     config);
             mockHttp.When("https://events*")
-                .Respond(HttpStatusCode.Created, mediaType: "application/json",
+                .Respond(HttpStatusCode.Created, "application/json",
                     "{}");
             var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var environmentKey = $"server-{Guid.NewGuid()}";
+            var environmentKey = $"dvc_server_{Guid.NewGuid()}_hash";
             localBucketing.StoreConfig(environmentKey, config);
             var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(),
                 new NullLoggerFactory(),
@@ -54,6 +54,24 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
+        public async Task CustomCDNURITest()
+        {
+            const string baseurl = "https://different-domain";
+            const string slug = "/slug";
+            var testClient = new DVCLocalClientBuilder().SetOptions(new DVCLocalOptions()
+                {
+                    CdnUri = baseurl,
+                    CdnSlug = slug
+                })
+                .SetInitializedSubscriber((_, args) =>
+                {
+                    Assert.IsTrue(args.Error != null); 
+                    Console.WriteLine("Failed to get config because: " + args.Error.ErrorResponse);
+                }).Build();
+            await Task.Delay(5000);
+        }
+
+        [TestMethod]
         public async Task GetProductionAllVariables()
         {
             var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
@@ -65,10 +83,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             }
 
             var api = (DVCLocalClient) new DVCLocalClientBuilder()
-                .SetInitializedSubscriber(((sender, args) =>
-                {
-                    Console.WriteLine($"Success? : {args.Success}");
-                }))
+                .SetInitializedSubscriber(((sender, args) => { Console.WriteLine($"Success? : {args.Success}"); }))
                 .SetEnvironmentKey(sdkKey)
                 .Build();
 
@@ -77,7 +92,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsTrue(resp.Count > 0);
             foreach (var (key, value) in resp)
             {
-                Console.WriteLine(key, value);    
+                Console.WriteLine(key, value);
             }
         }
 
@@ -188,8 +203,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.ThrowsException<ArgumentException>(() =>
             {
                 _ = new User("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
-                                + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
-                                + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
+                             + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
+                             + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
             });
         }
     }
