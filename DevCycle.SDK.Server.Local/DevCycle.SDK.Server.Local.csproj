@@ -78,7 +78,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Wasmtime" Version="0.34.0-preview1" />
+    <PackageReference Include="Wasmtime" Version="0.39.1-preview2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="bucketing-lib.release.wasm">
