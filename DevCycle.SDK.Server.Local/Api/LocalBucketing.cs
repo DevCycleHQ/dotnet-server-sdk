@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Local.Api
     {
 #if !NETSTANDARD2_1
         private static readonly string InvalidVersionMessage =
-            "This version of local bucketing is NOT compatible with .NET Standard 2.0. Please use LocalBucketingLegacyCompat for legacy compatibility.";
+            "This version of local bucketing is NOT compatible with .NET Standard 2.0.";
 #endif
 #if NETSTANDARD2_1
         private Engine WASMEngine { get; }

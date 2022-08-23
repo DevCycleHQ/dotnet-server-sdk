@@ -7,7 +7,6 @@ using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RestSharp;
 using RichardSzalay.MockHttp;

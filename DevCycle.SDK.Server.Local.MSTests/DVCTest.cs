@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Common.Model;
-using DevCycle.SDK.Server.Common.Model.Cloud;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using Newtonsoft.Json;
+
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using RichardSzalay.MockHttp;

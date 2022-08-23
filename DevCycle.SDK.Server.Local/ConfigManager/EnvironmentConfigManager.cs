@@ -114,7 +114,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     localBucketing.StoreConfig(environmentKey, Config);
 
 
-                    IEnumerable<HeaderParameter> headerValues = res.ContentHeaders.Where(e => e.Name == "etag");
+                    IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
                     configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
                     logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}", configEtag);
