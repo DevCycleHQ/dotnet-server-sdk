@@ -1,11 +1,6 @@
 using System.Runtime.Serialization;
-using System;
-using System.IO;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Common.Model
 {

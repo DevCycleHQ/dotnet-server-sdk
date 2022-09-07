@@ -4,10 +4,10 @@
 	"name": "C# (.NET)",
 	"build": {
 		"dockerfile": "Dockerfile",
-		"args": { 
+		"args": {
 			// Update 'VARIANT' to pick a .NET Core version: 3.1, 6.0
 			// Append -bullseye or -focal to pin to an OS version.
-			"VARIANT": "3.1",
+			"VARIANT": "6.0",
 			// Options
 			"NODE_VERSION": "none"
 		}

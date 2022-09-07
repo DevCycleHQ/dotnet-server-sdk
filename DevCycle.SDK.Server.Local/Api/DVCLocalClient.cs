@@ -77,6 +77,8 @@ namespace DevCycle.SDK.Server.Local.Api
             eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
 
             Task.Run(async delegate { await configManager.InitializeConfigAsync(); });
+            var platformData = new PlatformData();
+            localBucketing.SetPlatformData(platformData.ToJson());
         }
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)
@@ -96,13 +98,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
 
-            var platformData = new PlatformData(requestUser);
 
             BucketedUserConfig config = null;
 
             try
             {
-                localBucketing.SetPlatformData(platformData.ToJson());
                 config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
             }
             catch (Exception e)
@@ -145,11 +145,9 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             var requestUser = new DVCPopulatedUser(user);
-            var platformData = new PlatformData(requestUser);
 
             try
             {
-                localBucketing.SetPlatformData(platformData.ToJson());
                 var config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
                 return config.Features;
             }
@@ -169,11 +167,9 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             var requestUser = new DVCPopulatedUser(user);
-            var platformData = new PlatformData(requestUser);
 
             try
             {
-                localBucketing.SetPlatformData(platformData.ToJson());
                 var config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
                 return config.Variables;
             }
@@ -188,7 +184,6 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             BucketedUserConfig config = null;
             var requestUser = new DVCPopulatedUser(user);
-            var platformData = new PlatformData(requestUser);
 
             if (!configManager.Initialized)
             {
@@ -196,7 +191,6 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             else
             {
-                localBucketing.SetPlatformData(platformData.ToJson());
                 config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
             }
 

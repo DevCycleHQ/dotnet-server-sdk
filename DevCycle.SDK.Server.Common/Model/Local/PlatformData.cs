@@ -4,6 +4,13 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 {
     public class PlatformData
     {
+
+        private const string DefaultPlatform = "C# Local";
+        private const User.SdkTypeEnum DefaultSdkType = User.SdkTypeEnum.Server;
+        
+        private static readonly string DefaultSdkVersion = typeof(DVCPopulatedUser).Assembly.GetName().Version.ToString();
+        private static readonly string DefaultPlatformVersion = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+
         /// <summary>
         /// DevCycle SDK type
         /// </summary>
@@ -40,14 +47,14 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
-        
-        public PlatformData(DVCPopulatedUser user)
+    
+
+        public PlatformData()
         {
-            Platform = user.Platform;
-            PlatformVersion = user.PlatformVersion;
-            DeviceModel = user.DeviceModel ?? "";
-            SdkType = user.SdkType;
-            SdkVersion = user.SdkVersion;
+            Platform = DefaultPlatform;
+            PlatformVersion = DefaultPlatformVersion;
+            SdkType = DefaultSdkType.ToString().ToLower();
+            SdkVersion = DefaultSdkVersion;
         }
     }
 }
