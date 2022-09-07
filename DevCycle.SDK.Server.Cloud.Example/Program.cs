@@ -26,6 +26,12 @@ namespace Example
                 {
                     Console.WriteLine(entry.Key + " : " + entry.Value);
                 }
+
+                var variables = await api.AllVariablesAsync(user);
+                foreach (var (key, value) in variables)
+                {
+                    Console.WriteLine($"{key}:{value}");
+                }
             }
             catch (Exception e)
             {

@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
-using Moq;
-using Newtonsoft.Json;
-using RestSharp;
-using RichardSzalay.MockHttp;
+
 
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {
