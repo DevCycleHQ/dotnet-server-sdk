@@ -22,6 +22,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         private DVCLocalClient getTestClient(
             DVCLocalOptions options = null)
         {
+            //string config = "{\"project\":{\"settings\":{\"edgeDB\":{\"enabled\":false}},\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
             string config = new string(Fixtures.config());
             var mockHttp = new MockHttpMessageHandler();
 
@@ -33,7 +34,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     "{}");
             var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var environmentKey = $"dvc_server_{Guid.NewGuid()}_hash";
+            var environmentKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
             localBucketing.StoreConfig(environmentKey, config);
             var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(),
                 new NullLoggerFactory(),
@@ -113,14 +114,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetVariableByKeyTest()
+        public async Task GetVariableByKeyTestAsync()
         {
             using DVCLocalClient api = getTestClient();
 
             var user = new User("j_test");
             string key = "test";
+            await Task.Delay(3000);
             var result = api.Variable(user, key, false);
-            Task.Delay(1000);
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Value);
         }
@@ -147,13 +148,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task GetVariablesTest()
         {
             using DVCLocalClient api = getTestClient();
-            await Task.Delay(1000);
+            
             User user = new User("j_test");
-
-            var result = api.AllVariables(user);
             // Bucketing needs time to work.
             await Task.Delay(5000);
-
+            var result = api.AllVariables(user);
+        
+            Console.WriteLine(result);
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsNotNull(result);
             var variable = result.Get<bool>("test");
@@ -165,16 +166,16 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task PostEventsTest()
         {
             using DVCLocalClient api = getTestClient();
+        
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
             long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
 
             User user = new User("j_test");
-            Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
-
-            await Task.Delay(1000);
+            Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);    
+            await Task.Delay(5000);
             api.Track(user, userEvent);
-            await Task.Delay(1000);
+        
         }
 
         [TestMethod]

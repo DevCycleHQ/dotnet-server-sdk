@@ -7,11 +7,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
     [DataContract]
     public class DVCPopulatedUser
     {
-        private const string DefaultPlatform = "C# Local";
-        private const User.SdkTypeEnum DefaultSdkType = User.SdkTypeEnum.Server;
-        
-        private static readonly string DefaultSdkVersion = typeof(DVCPopulatedUser).Assembly.GetName().Version.ToString();
-        private static readonly string DefaultPlatformVersion = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
 
         [DataMember(Name="user_id", EmitDefaultValue=false)]
         [JsonProperty("user_id")]
@@ -97,10 +92,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             
             // Read only properties initialized once
             CreatedDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            Platform = DefaultPlatform;
-            PlatformVersion = DefaultPlatformVersion;
-            SdkType = DefaultSdkType.ToString().ToLower();
-            SdkVersion = DefaultSdkVersion;
             DeviceModel = user.DeviceModel;
         }
         
