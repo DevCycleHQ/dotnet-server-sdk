@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/dotnet
 {
-	"name": "C# (.NET)",
+	"name": "C# (.NET 6)",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
