@@ -26,6 +26,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private Store WASMStore { get; }
         private Memory WASMMemory { get; }
         private Instance WASMInstance { get; }
+        private Random random;
 #endif
         public LocalBucketing()
         {
@@ -33,6 +34,7 @@ namespace DevCycle.SDK.Server.Local.Api
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #else
+            random = new Random();
             Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
@@ -93,6 +95,12 @@ namespace DevCycle.SDK.Server.Local.Api
                 Function.FromCallback(WASMStore,
                     (Caller _) => (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds)
             );
+            WASMLinker.Define(
+                "env",
+                "seed",
+                Function.FromCallback(WASMStore,
+                    (Caller _) => (random.NextDouble() * (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds))
+            );
 
             WASMInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
             WASMMemory = WASMInstance.GetMemory(WASMStore, "memory");
@@ -146,6 +154,7 @@ namespace DevCycle.SDK.Server.Local.Api
             setPlatformData.Invoke(WASMStore, platformDataAddress);
 #endif
         }
+
 #if NETSTANDARD2_1
         private Function GetFunction(string name)
         {
