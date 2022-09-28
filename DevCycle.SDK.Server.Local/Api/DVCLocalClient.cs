@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Timers;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -65,6 +66,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly EventQueue eventQueue;
         private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
+        private readonly Timer timer;
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
@@ -74,11 +76,21 @@ namespace DevCycle.SDK.Server.Local.Api
             this.configManager = configManager;
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, restClientOptions);
+            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
             Task.Run(async delegate { await configManager.InitializeConfigAsync(); });
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
+
+            timer = new Timer(dvcLocalOptions.EventFlushIntervalMs);
+            timer.Elapsed += OnTimedEvent;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+        }
+        
+        private void OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            eventQueue?.ScheduleFlushWithDelay();
         }
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)

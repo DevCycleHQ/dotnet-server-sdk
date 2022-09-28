@@ -25,13 +25,13 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public string UserId { get; }
         
         [DataMember(Name="date", EmitDefaultValue=false)]
-        public long Date { get; }
+        public DateTime Date { get; }
         
         [DataMember(Name="clientDate", EmitDefaultValue=false)]
-        public long? ClientDate { get; }
+        public DateTime ClientDate { get; }
         
         [DataMember(Name="value", EmitDefaultValue=false)]
-        public decimal? Value { get; set; }
+        public double Value { get; set; }
         
         [DataMember(Name="featureVars", EmitDefaultValue=false)]
         public Dictionary<string, string> FeatureVars { get; }
@@ -40,6 +40,11 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public Dictionary<string, object> MetaData { get; }
         
         public bool IsCustomEvent { get; }
+
+        public DVCRequestEvent()
+        {
+            
+        }
 
         public DVCRequestEvent(Event @event, string userId, Dictionary<string, string> featureVars)
         {
@@ -61,8 +66,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             Target = @event.Target;
             CustomType = IsCustomEvent ? @event.Type : null;
             UserId = userId;
-            Date = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            ClientDate = @event.Date ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Date = DateTimeOffset.UtcNow.DateTime;
+            ClientDate = @event.Date ?? DateTimeOffset.UtcNow.DateTime;
             Value = @event.Value;
             FeatureVars = featureVars;
             MetaData = @event.MetaData;

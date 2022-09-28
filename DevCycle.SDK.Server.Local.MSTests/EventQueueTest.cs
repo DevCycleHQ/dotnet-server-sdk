@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
-using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using RestSharp;
 using RichardSzalay.MockHttp;
 
@@ -39,481 +40,148 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 builder.AddConsole();
                 builder.SetMinimumLevel(logLevel);
             });
-
+            var localBucketing = new LocalBucketing();
+            string config = new string(Fixtures.Config());
+            localBucketing.StoreConfig(environmentKey, config);
+            localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
 
             var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
-                new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
+                localBucketing, new RestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
 
-        [TestMethod]
-        public async Task TestQueueLimit_OneUserAggregate()
+        private async Task WaitForOneEvent(EventQueue eventQueue)
         {
-            // Goal here is to check whether or not the queue limit is imposed for one user when using queueaggregateevent
-
-            var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            var user = new User("user1");
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
+            var completion = new ManualResetEvent(false);
+            eventQueue.AddFlushedEventsSubscriber((object sender, DVCEventArgs e) =>
             {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
+                completion.Set();
             });
-            var loopsCompleted = 0;
-
-            Assert.ThrowsException<DVCException>(() =>
-            {
-                for (int i = 1; i < 10000; i++)
-                {
-                    eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, "" + i,
-                            metaData: new Dictionary<string, object> {{"test", "value"}}),
-                        new BucketedUserConfig()
-                        {
-                            FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id", "some-variation-id"}}
-                        }, true);
-                    loopsCompleted = i;
-                }
-
-                return loopsCompleted;
-            });
-
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
+            await eventQueue.FlushEvents();
+            completion.WaitOne();
         }
 
-
-        [TestMethod]
-        public async Task TestDisableEvents()
+        private void QueueSimpleEvent(EventQueue eventQueue, Event @event = null)
         {
-            // Ensure no events are sent when events are disabled.
-            var localOptions = new DVCLocalOptions(1000, 1000, disableCustomEvents: true, disableAutomaticEvents: true);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            var user = new User("user1");
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
-            {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
-            });
-            eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                new Event("testEvent", "target", metaData: new Dictionary<string, object> {{"test", "value"}}),
-                new BucketedUserConfig()
-                {
-                    FeatureVariationMap = new Dictionary<string, string>
-                        {{"some-feature-id", "some-variation-id"}}
-                });
-
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Assert.AreEqual(0, matches);
-        }
-
-        [TestMethod]
-        public async Task TestQueueLimit_MultiUserAggregate()
-        {
-            // Goal here is to check whether or not the queue limit is imposed for multiple users when using queueaggregateevent
-            var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
-            {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
-            });
-            var loopsCompleted = 0;
-
-            Assert.ThrowsException<DVCException>(() =>
-            {
-                for (int i = 1; i < 10000; i++)
-                {
-                    var user = new User("user" + i);
-                    eventQueue.Item1.QueueAggregateEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, "" + i,
-                            metaData: new Dictionary<string, object> {{"test", "value"}}),
-                        new BucketedUserConfig()
-                        {
-                            FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id", "some-variation-id"}}
-                        }, true);
-                    loopsCompleted = i;
-                }
-
-                return loopsCompleted;
-            });
-
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, loopsCompleted);
-        }
-
-        [TestMethod]
-        public async Task TestQueueLimit_OneUser()
-        {
-            // Goal here is to check whether or not the queue limit is imposed for multiple users when using queueevent
-
-            var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            var user = new User("user1");
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
-            {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
-            });
-            var i = 0;
-
-            Assert.ThrowsException<DVCException>(() =>
-            {
-                for ( i = 0; i < 10000; i++)
-                {
-                    eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
-                        new BucketedUserConfig()
-                        {
-                            FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id" + i, "some-variation-id" + i}}
-                        }, true);
-                }
-
-                return i;
-            });
-
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
-        }
-
-        [TestMethod]
-        public async Task TestQueueLimit_OneUser_Flushed()
-        {
-            // Goal here is to check whether or not the queue limit is imposed for one user when using queueevent
-            // and that the forced flush happens successfully; and that more events can be queued afterwards.
-
-            var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            var user = new User("user1");
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
-            {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
-            });
-            var i = 0;
-
-            Assert.ThrowsException<DVCException>(() =>
-            {
-                for (i = 0; i < 10000; i++)
-                {
-                    eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
-                        new BucketedUserConfig()
-                        {
-                            FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id" + i, "some-variation-id" + i}}
-                        }, true);
-                }
-
-                return i;
-            });
-            //await eventQueue.Item1.FlushEvents();
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
-            Assert.AreEqual(1, matches);
-
-
-            // These events should be fine to add as the queue is flushed after hitting the limit
-            i = 0;
-            for (i = 1; i < localOptions.MaxEventsInQueue / 2; i++)
-            {
-                eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
-                    new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
-                    new BucketedUserConfig()
-                    {
-                        FeatureVariationMap = new Dictionary<string, string>
-                            {{"some-feature-id" + i, "some-variation-id" + i}}
-                    });
-            }
-            Assert.AreEqual( localOptions.MaxEventsInQueue / 2,i);
-            await Task.Delay(5000);
-            matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(2, matches);
-        }
-
-        [TestMethod]
-        public async Task TestQueueLimit_MultiUser()
-        {
-            var localOptions = new DVCLocalOptions(1000, 1000);
-            var eventQueue = getTestQueue(
-                localOptions: localOptions);
-            eventQueue.Item1.AddFlushedEventsSubscriber((_, args) =>
-            {
-                Console.WriteLine("Error?: " + args.Error);
-                Console.WriteLine("Flushed events: " + (args.Success ? "true" : "false"));
-            });
-            var i = 0;
-
-            Assert.ThrowsException<DVCException>(() =>
-            {
-                for ( i = 0; i < 10000; i++)
-                {
-                    var user = new User("user" + i);
-
-                    eventQueue.Item1.QueueEvent(new DVCPopulatedUser(user),
-                        new Event("testEvent" + i, metaData: new Dictionary<string, object> {{"test", "value"}}),
-                        new BucketedUserConfig()
-                        {
-                            FeatureVariationMap = new Dictionary<string, string>
-                                {{"some-feature-id", "some-variation-id"}}
-                        }, true);
-                }
-
-                return i;
-            });
-
-            await Task.Delay(5000);
-            var matches = eventQueue.Item2.GetMatchCount(eventQueue.Item3);
-            Console.WriteLine(matches + " matches");
-            Assert.AreEqual(localOptions.MaxEventsInQueue, i);
-        }
-
-        [TestMethod]
-        public async Task FlushEvents_EventQueuedAndFlushed_OnCallBackIsSuccessful()
-        {
-            var eventQueue = getTestQueue();
-            eventQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
-
+            @event ??= new Event("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
             var user = new User("1");
-
-            var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
-
+            
             var config = new BucketedUserConfig
             {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
+                FeatureVariationMap = new Dictionary<string, string> { { Fixtures.FeatureId, Fixtures.VariationOnId } },
+                VariableVariationMap = new Dictionary<string, FeatureVariation>
+                {
+                    [Fixtures.VariableKey] = new FeatureVariation
+                    {
+                        Feature = Fixtures.FeatureId,
+                        Variation = Fixtures.VariationOnId
+                    },
+                }
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
-
-            await eventQueue.Item1.FlushEvents();
-
-            await Task.Delay(20);
+            eventQueue.QueueEvent(dvcPopulatedUser, @event, config);
         }
-
-        [TestMethod]
-        public async Task FlushEvents_EventQueuedAndFlushed_OnCallBackIsSuccessful_VerifyFlushEventsCalledOnce()
+        private void QueueSimpleAggregateEvent(EventQueue eventQueue, Event @event = null)
         {
-            var eventQueue = getTestQueue();
-
-            eventQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
-
-            var user = new User(userId: "1");
-
-            var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
-
+            @event ??= new Event(
+                "aggVariableEvaluated",
+                Fixtures.VariableKey,
+                metaData: new Dictionary<string, object> { { "test", "value" } });
+            var user = new User("1");
+            
             var config = new BucketedUserConfig
             {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
+                FeatureVariationMap = new Dictionary<string, string> { { Fixtures.FeatureId, Fixtures.VariationOnId } },
+                VariableVariationMap = new Dictionary<string, FeatureVariation>
+                {
+                    [Fixtures.VariableKey] = new FeatureVariation
+                    {
+                        Feature = Fixtures.FeatureId,
+                        Variation = Fixtures.VariationOnId
+                    },
+                }
             };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
-
-            await eventQueue.Item1.FlushEvents();
-
-            await Task.Delay(1000);
-
-            Assert.AreEqual(1, eventQueue.Item2.GetMatchCount(eventQueue.Item3));
+            eventQueue.QueueAggregateEvent(dvcPopulatedUser, @event, config);
         }
 
         [TestMethod]
-        // This test may not be able to replicate because of how we assign the response code once at the beginning of the test.
-        public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedOnFirstAttempt_VerifyFlushEventsCalledTwice()
+        public async Task FlushSuccessfulCustomEvent()
         {
-            var eventsQueue = getTestQueue(true, true);
+            var (eventQueue, messageHandler, request) = getTestQueue();
+            QueueSimpleEvent(eventQueue);
 
-            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
+            eventQueue.AddFlushedEventsSubscriber(AssertSuccessfulEvent);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+        }
+        
+        [TestMethod]
+        public async Task FlushSuccessfulAggregateEvent()
+        {
+            var (eventQueue, messageHandler, request) = getTestQueue();
+            QueueSimpleAggregateEvent(eventQueue);
 
-            var user = new User(userId: "1");
+            eventQueue.AddFlushedEventsSubscriber(AssertSuccessfulEvent);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+        }
+        
+        [TestMethod]
+        public async Task FlushFailedCustomEvent()
+        {
+            var (eventQueue, messageHandler, request) = getTestQueue(true);
+            QueueSimpleEvent(eventQueue);
 
-            var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
+            eventQueue.AddFlushedEventsSubscriber(AssertFailedEvent);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+        }
+        
+        [TestMethod]
+        public async Task FlushFailedAggregateEvent()
+        {
+            var (eventQueue, messageHandler, request) = getTestQueue(true);
+            QueueSimpleAggregateEvent(eventQueue);
 
-            var config = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
-            };
-
-            var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventsQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
-
-            await eventsQueue.Item1.FlushEvents();
-
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
-
-            // add delay so the queue should still be looping trying to flush
-            await Task.Delay(100);
-            var retryCount = eventsQueue.Item2.GetMatchCount(eventsQueue.Item3);
-
-            Assert.IsTrue(retryCount >= 1);
-
-            // ensure the queue can now be flushed
-
-            eventsQueue.Item2.Clear();
-
-            var newReq = eventsQueue.Item2.When("https://*")
-                .Respond(HttpStatusCode.Created,
-                    "application/json",
-                    "{}");
-            eventsQueue.Item1.RemoveFlushedEventsSubscriber(AssertFalseFlushedEvents);
-            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
-
-            // Add a longer delay to the test to ensure FlushEvents is no longer looping
-            await Task.Delay(50);
-
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
-
-            // internal event queue should now be empty, flush events manually and check that publish isnt called
-            await eventsQueue.Item1.FlushEvents();
-            await Task.Delay(20);
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(newReq));
+            eventQueue.AddFlushedEventsSubscriber(AssertFailedEvent);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
         }
 
         [TestMethod]
-        public async Task FlushEvents_EventQueuedAndFlushed_QueueNotFlushedNonRetryable_VerifyFlushEventsCalledOnce()
+        public async Task FailAndRetry()
         {
-            var eventsQueue = getTestQueue(true);
-
-
-            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertFalseFlushedEvents);
-
-            var user = new User(userId: "1");
-
-            var @event = new Event("testEvent", metaData: new Dictionary<string, object> {{"test", "value"}});
-
-            var config = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
-            };
-
-            var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventsQueue.Item1.QueueEvent(dvcPopulatedUser, @event, config);
-
-            await eventsQueue.Item1.FlushEvents();
-
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
-
-            // add delay to make sure we purged events that failed and were non-retryable, thus haven't flushed again
-            await Task.Delay(500);
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+            var (eventQueue, messageHandler, request) = getTestQueue(true, true);
+            QueueSimpleEvent(eventQueue);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+            await eventQueue.FlushEvents();
+            Assert.AreEqual(2, messageHandler.GetMatchCount(request));
         }
 
         [TestMethod]
-        public async Task QueueAggregateEvents_EventsQueuedSuccessfully()
+        public async Task FailAndDoNoRetry()
         {
-            // Mock EventQueue for verification without mocking any methods
-            var eventsQueue = getTestQueue();
-
-            var dvcPopulatedUser = new DVCPopulatedUser(new User(userId: "1", name: "User1"));
-            var dvcPopulatedUser2 = new DVCPopulatedUser(new User(userId: "2", name: "User2"));
-            var dvcPopulatedUser3 = new DVCPopulatedUser(new User(userId: "1", name: "User3"));
-
-            var @event = new Event("variableEvaluated", target: "var1");
-            var @event2 = new Event(type: "variableEvaluated", target: "var2");
-            var @event3 = new Event(type: "variableDefaulted", target: "var2");
-
-            var config = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
-            };
-
-            var configIdentical = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> {{"some-feature-id", "some-variation-id"}}
-            };
-
-            var config2 = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> {{"feature2", "variation2"}}
-            };
-
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, config);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, configIdentical);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event2, config);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event3, config);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser, @event, config2);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser2, @event, config);
-            eventsQueue.Item1.QueueAggregateEvent(dvcPopulatedUser3, @event, config);
-
-            eventsQueue.Item1.AddFlushedEventsSubscriber(AssertTrueFlushedEvents);
-
-            await eventsQueue.Item1.FlushEvents();
-            await Task.Delay(20);
-
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
-
-            await eventsQueue.Item1.FlushEvents();
-            await Task.Delay(20);
-            // verify that it hasn't been called again because there should be nothing in the queue
-            Assert.AreEqual(1, eventsQueue.Item2.GetMatchCount(eventsQueue.Item3));
+            var (eventQueue, messageHandler, request) = getTestQueue(true, false);
+            QueueSimpleEvent(eventQueue);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+            await eventQueue.FlushEvents();
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
         }
 
-        private void AssertTrueFlushedEvents(object sender, DVCEventArgs e)
+        private void AssertSuccessfulEvent(object sender, DVCEventArgs e)
         {
             Assert.IsNull(e.Error);
             Assert.IsTrue(e.Success);
         }
 
-        private void AssertFalseFlushedEvents(object sender, DVCEventArgs e)
+        private void AssertFailedEvent(object sender, DVCEventArgs e)
         {
             Assert.IsFalse(e.Success);
-        }
-
-        private bool AssertAggregateEventsBatch(BatchOfUserEventsBatch b)
-        {
-            Assert.IsTrue(b.UserEventsBatchRecords.Count == 3);
-            Assert.IsTrue(b.UserEventsBatchRecords[0].User.Name == "User1");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events.Count == 4);
-
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Type == "variableEvaluated");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Target == "var1");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[0].Value == 2);
-
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Type == "variableEvaluated");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Target == "var2");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[1].Value == 2);
-
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Type == "variableDefaulted");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Target == "var2");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[2].Value == 1);
-
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Type == "variableEvaluated");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Target == "var1");
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].Value == 1);
-            Assert.IsTrue(b.UserEventsBatchRecords[0].Events[3].FeatureVars["feature2"] == "variation2");
-
-            Assert.IsTrue(b.UserEventsBatchRecords[1].User.Name == "User2");
-            Assert.IsTrue(b.UserEventsBatchRecords[1].Events.Count == 1);
-            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Type == "variableEvaluated");
-            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Target == "var1");
-            Assert.IsTrue(b.UserEventsBatchRecords[1].Events[0].Value == 1);
-
-            Assert.IsTrue(b.UserEventsBatchRecords[2].User.Name == "User3");
-            Assert.IsTrue(b.UserEventsBatchRecords[2].Events.Count == 1);
-            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Type == "variableEvaluated");
-            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Target == "var1");
-            Assert.IsTrue(b.UserEventsBatchRecords[2].Events[0].Value == 1);
-
-            return true;
         }
     }
 }

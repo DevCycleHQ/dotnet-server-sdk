@@ -38,7 +38,6 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta2" />
     <PackageReference Include="JsonSubTypes" Version="1.9.0" />
-    <PackageReference Include="NETStandard.Library" Version="2.0.3" />
     <PackageReference Include="RestSharp" Version="108.0.2-alpha.0.6" />
   </ItemGroup>
 

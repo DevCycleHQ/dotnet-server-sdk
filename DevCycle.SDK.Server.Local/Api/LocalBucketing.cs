@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -30,7 +31,6 @@ namespace DevCycle.SDK.Server.Local.Api
 #endif
         public LocalBucketing()
         {
-            
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #else
@@ -113,6 +113,19 @@ namespace DevCycle.SDK.Server.Local.Api
 #endif
         }
 
+        public void InitEventQueue(string envKey, string options)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var optionsAddress = GetParameter(options);
+
+            var initEventQueue = GetFunction("initEventQueue");
+            initEventQueue.Invoke(WASMStore, envKeyAddress, optionsAddress);
+#endif
+        }
+
         public BucketedUserConfig GenerateBucketedConfig(string token, string user)
         {
 #if NETSTANDARD2_0
@@ -123,11 +136,90 @@ namespace DevCycle.SDK.Server.Local.Api
 
             var generateBucketedConfig = GetFunction("generateBucketedConfigForUser");
             var result = generateBucketedConfig.Invoke(WASMStore, tokenAddress, userAddress);
-
-            var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int) result!);
+            var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.InitializeVariables();
             return config;
+#endif
+        }
+
+        public int EventQueueSize(string envKey)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            
+            var eventQueueSize = GetFunction("eventQueueSize");
+            return (int)eventQueueSize.Invoke(WASMStore, envKeyAddress);
+#endif
+        }
+
+        public void QueueEvent(string envKey, string user, string eventString)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var userAddress = GetParameter(user);
+            var eventAddress = GetParameter(eventString);
+
+            var initEventQueue = GetFunction("queueEvent");
+            initEventQueue.Invoke(WASMStore, envKeyAddress, userAddress, eventAddress);
+#endif
+        }
+
+        public void QueueAggregateEvent(string envKey, string eventString, string variableVariationMapStr)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var eventAddress = GetParameter(eventString);
+            var variableMapAddress = GetParameter(variableVariationMapStr);
+
+            var queueAggregateEvent = GetFunction("queueAggregateEvent");
+            queueAggregateEvent.Invoke(WASMStore, envKeyAddress, eventAddress, variableMapAddress);
+#endif
+        }
+
+        public List<FlushPayload> FlushEventQueue(string envKey)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var flushEventQueue = GetFunction("flushEventQueue");
+            var result = flushEventQueue.Invoke(WASMStore, envKeyAddress);
+            var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
+            
+                var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
+                return payloads;
+           
+#endif
+        }
+
+        public void OnPayloadSuccess(string envKey, string payloadId)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var payloadIdAddress = GetParameter(payloadId);
+            var markPayloadSuccess = GetFunction("onPayloadSuccess");
+            markPayloadSuccess.Invoke(WASMStore, envKeyAddress, payloadIdAddress);
+#endif
+        }
+
+        public void OnPayloadFailure(string envKey, string payloadId, bool retryable)
+        {
+#if NETSTANDARD2_0
+            throw new NotImplementedException(InvalidVersionMessage);
+#elif NETSTANDARD2_1
+            var envKeyAddress = GetParameter(envKey);
+            var payloadIdAddress = GetParameter(payloadId);
+            var markPayloadFailure = GetFunction("onPayloadFailure");
+            markPayloadFailure.Invoke(WASMStore, envKeyAddress, payloadIdAddress, retryable);
 #endif
         }
 
@@ -176,7 +268,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var __new = GetFunction("__new");
 
             var paramAddress =
-                (int) __new.Invoke(WASMStore, Encoding.Unicode.GetByteCount(param), objectIdString)!;
+                (int)__new.Invoke(WASMStore, Encoding.Unicode.GetByteCount(param), objectIdString)!;
 
             Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(WASMStore)[paramAddress..]);
 

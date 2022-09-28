@@ -17,6 +17,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         
         [DataMember(Name="featureVariationMap", EmitDefaultValue=false)]
         public Dictionary<string, string> FeatureVariationMap { get; set; }
+
+        [DataMember(Name="variableVariationMap", EmitDefaultValue=false)]
+        public Dictionary<string, FeatureVariation> VariableVariationMap { get; set; }
         
         [DataMember(Name="variables", EmitDefaultValue=false)]
         public Dictionary<string, Variable<object>> InternalVariables { get; set; }
