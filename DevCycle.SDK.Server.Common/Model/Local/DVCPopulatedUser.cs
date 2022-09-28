@@ -29,7 +29,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public readonly string AppVersion;
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
         [JsonProperty("appBuild")]
-        public readonly int AppBuild;
+        public readonly double AppBuild;
         [DataMember(Name = "customData", EmitDefaultValue = false)]
         [JsonProperty("customData")]
         public readonly object CustomData;
@@ -39,10 +39,10 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         [DataMember(Name = "lastSeenDate", EmitDefaultValue = false)]
         [JsonProperty("lastSeenDate")]
-        public readonly long LastSeenDate;
+        public readonly DateTime LastSeenDate;
         [DataMember(Name = "createdDate", EmitDefaultValue = false)]
         [JsonProperty("createdDate")]
-        public readonly long CreatedDate;
+        public readonly DateTime CreatedDate;
         
         [DataMember(Name="platform", EmitDefaultValue=false)]
         [JsonProperty("platform")]
@@ -66,6 +66,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         private readonly int hashCode;
 
+        public DVCPopulatedUser()
+        {
+        }
         public DVCPopulatedUser(User user)
         {
             if (user == null)
@@ -88,10 +91,10 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             AppBuild = user.AppBuild;
             CustomData = user.CustomData;
             PrivateCustomData = user.PrivateCustomData;
-            LastSeenDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            LastSeenDate = DateTimeOffset.UtcNow.DateTime;
             
             // Read only properties initialized once
-            CreatedDate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            CreatedDate = DateTimeOffset.UtcNow.DateTime;
             DeviceModel = user.DeviceModel;
         }
         

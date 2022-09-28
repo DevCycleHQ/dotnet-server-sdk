@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             bool isError = false,
             bool isRetryableError = false)
         {
-            string config = new string(Fixtures.config());
+            string config = new string(Fixtures.Config());
 
             var mockHttp = new MockHttpMessageHandler();
             var statusCode =

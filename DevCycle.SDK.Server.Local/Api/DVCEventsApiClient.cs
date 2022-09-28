@@ -59,7 +59,7 @@ namespace DevCycle.SDK.Server.Local.Api
             GC.SuppressFinalize(this);
         }
 
-        public virtual async Task<RestResponse> PublishEvents(BatchOfUserEventsBatch batch)
+        public virtual async Task<RestResponse> PublishEvents(List<UserEventsBatchRecord> batch)
         {
             return await SendRequestAsync(batch, 
                 sdkOptions.EventsApiSlug != "" ? sdkOptions.EventsApiSlug : TrackEventsUrl);

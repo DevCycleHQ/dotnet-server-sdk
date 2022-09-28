@@ -113,11 +113,10 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1));
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
-            long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
 
             User user = new User("j_test");
             List<Event> events = new List<Event>();
-            Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
+            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
@@ -137,11 +136,10 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1), options);
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
-            long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
 
             User user = new User("j_test");
             List<Event> events = new List<Event>();
-            Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);
+            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 

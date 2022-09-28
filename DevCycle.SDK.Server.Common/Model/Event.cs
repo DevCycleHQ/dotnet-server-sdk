@@ -18,7 +18,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="date">Unix epoch time the event occurred according to client.</param>
         /// <param name="value">Value for numerical events. Contextual to event type.</param>
         /// <param name="metaData">Extra JSON metadata for event. Contextual to event type.</param>
-        public Event(string type = default, string target = default, long? date = default, long? value = default,
+        public Event(string type = default, string target = default, DateTime? date = default, double value = default,
             Dictionary<string, object> metaData = default)
         {
             // to ensure "type" is required (not null)
@@ -40,6 +40,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>Custom event type</value>
         [DataMember(Name = "type", EmitDefaultValue = false)]
+        [JsonProperty("type")]
+
         public string Type { get; set; }
 
         /// <summary>
@@ -47,6 +49,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>Custom event target / subject of event. Contextual to event type</value>
         [DataMember(Name = "target", EmitDefaultValue = false)]
+        [JsonProperty("target")]
+
         public string Target { get; set; }
 
         /// <summary>
@@ -54,20 +58,26 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>Unix epoch time the event occurred according to client</value>
         [DataMember(Name = "date", EmitDefaultValue = false)]
-        public long? Date { get; set; }
+        [JsonProperty("date")]
+
+        public DateTime? Date { get; set; }
 
         /// <summary>
         /// Value for numerical events. Contextual to event type
         /// </summary>
         /// <value>Value for numerical events. Contextual to event type</value>
         [DataMember(Name = "value", EmitDefaultValue = false)]
-        public decimal? Value { get; set; }
+        [JsonProperty("value")]
+
+        public double Value { get; set; }
 
         /// <summary>
         /// Extra JSON metadata for event. Contextual to event type
         /// </summary>
         /// <value>Extra JSON metadata for event. Contextual to event type</value>
         [DataMember(Name = "metaData", EmitDefaultValue = false)]
+        [JsonProperty("metaData")]
+
         public Dictionary<string, object> MetaData { get; set; }
 
         /// <summary>

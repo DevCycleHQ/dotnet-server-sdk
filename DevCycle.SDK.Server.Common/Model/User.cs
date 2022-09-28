@@ -56,9 +56,9 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
         public User(string userId = default, string email = default, string name = default, string language = default,
             string country = default,
-            string appVersion = default, int appBuild = default, Dictionary<string, object> customData = default,
+            string appVersion = default, double appBuild = default, Dictionary<string, object> customData = default,
             Dictionary<string, object> privateCustomData = default,
-            long? createdDate = default, long? lastSeenDate = default, string platform = default,
+            DateTime createdDate = default, DateTime lastSeenDate = default, string platform = default,
             string platformVersion = default,
             string deviceModel = default, SdkTypeEnum? sdkType = default, string sdkVersion = default)
         {
@@ -138,7 +138,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>App Build number of the running application</value>
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
-        public int AppBuild { get; set; }
+        public double AppBuild { get; set; }
 
         /// <summary>
         /// User&#x27;s custom data to target the user with, data will be logged to DevCycle for use in dashboard.
@@ -159,14 +159,14 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>Date the user was created, Unix epoch timestamp format</value>
         [DataMember(Name = "createdDate", EmitDefaultValue = false)]
-        public long? CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
 
         /// <summary>
         /// Date the user was created, Unix epoch timestamp format
         /// </summary>
         /// <value>Date the user was created, Unix epoch timestamp format</value>
         [DataMember(Name = "lastSeenDate", EmitDefaultValue = false)]
-        public long? LastSeenDate { get; set; }
+        public DateTime LastSeenDate { get; set; }
 
         /// <summary>
         /// Platform the Client SDK is running on
@@ -287,7 +287,6 @@ namespace DevCycle.SDK.Server.Common.Model
                 ) &&
                 (
                     AppBuild == input.AppBuild ||
-                    AppBuild != null &&
                     AppBuild.Equals(input.AppBuild)
                 ) &&
                 (
@@ -358,8 +357,7 @@ namespace DevCycle.SDK.Server.Common.Model
                     hashCode = hashCode * 59 + Country.GetHashCode();
                 if (AppVersion != null)
                     hashCode = hashCode * 59 + AppVersion.GetHashCode();
-                if (AppBuild != null)
-                    hashCode = hashCode * 59 + AppBuild.GetHashCode();
+                hashCode = hashCode * 59 + AppBuild.GetHashCode();
                 if (CustomData != null)
                     hashCode = hashCode * 59 + CustomData.GetHashCode();
                 if (PrivateCustomData != null)

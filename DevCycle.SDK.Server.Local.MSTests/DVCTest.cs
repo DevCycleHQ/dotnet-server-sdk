@@ -23,7 +23,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DVCLocalOptions options = null)
         {
             //string config = "{\"project\":{\"settings\":{\"edgeDB\":{\"enabled\":false}},\"_id\":\"6216420c2ea68943c8833c09\",\"key\":\"default\",\"a0_organization\":\"org_NszUFyWBFy7cr95J\"},\"environment\":{\"_id\":\"6216420c2ea68943c8833c0b\",\"key\":\"development\"},\"features\":[{\"_id\":\"6216422850294da359385e8b\",\"key\":\"test\",\"type\":\"release\",\"variations\":[{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":true}],\"name\":\"Variation On\",\"key\":\"variation-on\",\"_id\":\"6216422850294da359385e8f\"},{\"variables\":[{\"_var\":\"6216422850294da359385e8d\",\"value\":false}],\"name\":\"Variation Off\",\"key\":\"variation-off\",\"_id\":\"6216422850294da359385e90\"}],\"configuration\":{\"_id\":\"621642332ea68943c8833c4a\",\"targets\":[{\"distribution\":[{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e8f\"},{\"percentage\":0.5,\"_variation\":\"6216422850294da359385e90\"}],\"_audience\":{\"_id\":\"621642332ea68943c8833c4b\",\"filters\":{\"operator\":\"and\",\"filters\":[{\"values\":[],\"type\":\"all\",\"filters\":[]}]}},\"_id\":\"621642332ea68943c8833c4d\"}],\"forcedUsers\":{}}}],\"variables\":[{\"_id\":\"6216422850294da359385e8d\",\"key\":\"test\",\"type\":\"Boolean\"}],\"variableHashes\":{\"test\":2447239932}}";
-            string config = new string(Fixtures.config());
+            string config = new string(Fixtures.Config());
             var mockHttp = new MockHttpMessageHandler();
 
             mockHttp.When("https://config-cdn*")
@@ -56,16 +56,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             const string baseurl = "https://different-domain";
             const string slug = "/slug";
-            var testClient = new DVCLocalClientBuilder().SetOptions(new DVCLocalOptions()
-                {
-                    CdnUri = baseurl,
-                    CdnSlug = slug
-                })
-                .SetInitializedSubscriber((_, args) =>
-                {
-                    Assert.IsTrue(args.Error != null); 
-                    Console.WriteLine("Failed to get config because: " + args.Error.ErrorResponse);
-                }).Build();
+            var testClient = new DVCLocalClientBuilder()
+                .SetOptions(new DVCLocalOptions()
+                    {
+                        CdnUri = baseurl,
+                        CdnSlug = slug
+                    })
+                    .SetInitializedSubscriber((_, args) =>
+                    {
+                        Assert.IsTrue(args.Error != null); 
+                        Console.WriteLine("Failed to get config because: " + args.Error.ErrorResponse);
+                    })
+                .SetEnvironmentKey("CustomCDNURITest")
+                .Build();
             await Task.Delay(5000);
         }
 
@@ -169,10 +172,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
-            long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
 
             User user = new User("j_test");
-            Event userEvent = new Event("test event", "test target", unixTimeMilliseconds, 600);    
+            Event userEvent = new Event("test event", "test target", now.DateTime, 600);    
             await Task.Delay(5000);
             api.Track(user, userEvent);
         

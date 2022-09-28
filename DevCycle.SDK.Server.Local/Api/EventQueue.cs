@@ -9,8 +9,8 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using RestSharp;
-
 
 namespace DevCycle.SDK.Server.Local.Api
 {
@@ -18,6 +18,8 @@ namespace DevCycle.SDK.Server.Local.Api
     {
         private readonly DVCLocalOptions localOptions;
         private readonly DVCEventsApiClient dvcEventsApiClient;
+        private readonly ILocalBucketing localBucketing;
+        private readonly string environmentKey;
 
         private static readonly SemaphoreSlim EventQueueSemaphore = new(1, 1);
 
@@ -35,24 +37,23 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
+        private bool flushInProgress;
         private event EventHandler<DVCEventArgs> FlushedEvents;
-
-        // Internal parameterless constructor for testing with Moq
-        internal EventQueue() : this("not-a-real-key", new DVCLocalOptions(100, 100), new NullLoggerFactory())
-        {
-        }
-
+        
         public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory,
-            RestClientOptions restClientOptions = null)
+            ILocalBucketing localBucketing, RestClientOptions restClientOptions = null)
         {
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, localOptions, restClientOptions);
+            this.environmentKey = environmentKey;
             this.localOptions = localOptions;
+            this.localBucketing = localBucketing;
+            this.localBucketing.InitEventQueue(environmentKey, JsonConvert.SerializeObject(localOptions));
             eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
             aggregateEvents = new AggregateEventQueues();
 
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
-        
+
         public void AddFlushedEventsSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
         {
             FlushedEvents += flushedEventsSubscriber;
@@ -62,132 +63,96 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             FlushedEvents -= flushedEventsSubscriber;
         }
-        
+
+        private async Task<Tuple<FlushPayload, RestResponse>> GetPayloadResult(FlushPayload flushPayload)
+        {
+            return new Tuple<FlushPayload, RestResponse>(flushPayload, await dvcEventsApiClient.PublishEvents(flushPayload.Records));
+        }
+
         public virtual async Task FlushEvents()
         {
-            // cancel pending queued FlushEvents
-            tokenSource.Cancel();
-            
-            await EventQueueSemaphore.WaitAsync(0);
-            var eventArgs = new DVCEventArgs();
-            try
+            flushInProgress = true;
+            var flushPayloads = GetPayloads();
+            var flushResultEvent = new DVCEventArgs
             {
-                await eventQueueMutex.WaitAsync();
-                await aggregateEventQueueMutex.WaitAsync();
-                await batchQueueMutex.WaitAsync();
+                Success = true
+            };
 
-                var userEventBatch = CombineUsersEventsToFlush();
-                
-                if (userEventBatch.Count != 0)
-                {
-                    batchQueue.Add(new BatchOfUserEventsBatch(userEventBatch.Values.ToList()));
-                    eventPayloadsToFlush.Clear();
-                    aggregateEvents.Clear();
-                }
-                
-                eventQueueMutex.Release();
-                aggregateEventQueueMutex.Release();
-                
-                if (batchQueue.Count == 0)
-                {
-                    eventArgs.Success = true;
-                    OnFlushedEvents(eventArgs);
-                }
+            if (flushPayloads.Count == 0)
+            {
+                OnFlushedEvents(flushResultEvent);
+                return;
+            }
 
-                var eventCount = userEventBatch.Sum(u => u.Value.Events.Count);
+            logger.LogDebug($"AS Flush Payloads: ${flushPayloads}");
 
-                logger.LogInformation("DVC Flush {EventCount} Events, for {UserEventBatch} Users", eventCount,
-                    userEventBatch.Count);
+            Func<int, FlushPayload, int> reducer = (val, batches) => val + batches.EventCount;
+            var eventCount = flushPayloads.Aggregate(0, reducer);
+            logger.LogDebug($"DVC Flush ${eventCount} AS Events, for ${flushPayloads.Count} Users");
 
-                RestResponse response = null;
-
-                var completedRequests = new List<BatchOfUserEventsBatch>();
-
+            var requestTasks = flushPayloads.Select(GetPayloadResult).ToList();
+            await Task.WhenAll(requestTasks);
+            var results = requestTasks.Select(task => task.Result);
+            foreach (var (flushPayload, res) in results)
+            {
                 try
                 {
-                    foreach (var batch in batchQueue)
+                    if (res.StatusCode != HttpStatusCode.Created)
                     {
-                        response = await dvcEventsApiClient.PublishEvents(batch);
-
-                        if (response.StatusCode == HttpStatusCode.Created) continue;
-                        var error = new DVCException(response.StatusCode,
-                            new ErrorResponse(response.Content ?? "Something went wrong flushing events"));
-
-                        if (!error.IsRetryable())
-                        {
-                            // Add non-retryable payloads to list of "completed" so that they are removed from queue
-                            completedRequests.Add(batch);
-                        }
-
-                        throw error;
-                    }
-
-                    batchQueue.Clear();
-
-                    logger.LogDebug("DVC Flushed {EventCount} Events, for {UserEventBatch} Users", eventCount,
-                        userEventBatch.Count);
-                    eventArgs.Success = true;
-                    OnFlushedEvents(eventArgs);
-                }
-                catch (DVCException e)
-                {
-                    if (e.IsRetryable())
-                    {
-                        logger.LogError(
-                            "Error publishing events, retrying, status {status}, body: {response}", e.HttpStatusCode,
-                            response?.Content);
-                        ScheduleFlushWithDelay(true);
+                        logger.LogError($"Error publishing events, status: ${res.StatusCode}, body: ${res.Content}");
+                        localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
+                        flushResultEvent.Success = false;
+                        flushResultEvent.Error = new DVCException(res.StatusCode, new ErrorResponse(res.ErrorMessage ?? ""));
                     }
                     else
                     {
-                        logger.LogError(
-                            "DVC Events were invalid and have been dropped, status {status}, body: {response}",
-                            e.HttpStatusCode,
-                            response?.Content);
+                        logger.LogDebug($"DVC Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
+                        localBucketing.OnPayloadSuccess(this.environmentKey, flushPayload.PayloadID);
                     }
-
-                    eventArgs.Success = false;
-                    eventArgs.Error = e;
-                    OnFlushedEvents(eventArgs);
                 }
-                catch (Exception e)
+                catch (DVCException ex)
                 {
-                    logger.LogError(
-                        "Something went wrong flushing events, retrying, {message}", e.Message);
-                    ScheduleFlushWithDelay(true);
-                    eventArgs.Success = false;
-                    eventArgs.Error =
-                        new DVCException(HttpStatusCode.InternalServerError, new ErrorResponse(e.Message));
-                    OnFlushedEvents(eventArgs);
-                }
-                finally
-                {
-                    var retryableRequests = batchQueue.Except(completedRequests);
-                    var retryable = retryableRequests.ToList();
-                    batchQueue.Clear();
-
-                    batchQueue.AddRange(retryable);
-                    batchQueueMutex.Release();
+                    logger.LogError($"DVC Error Flushing Events response message: ${ex.Message}");
+                    localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, true);
+                    flushResultEvent.Success = false;
+                    flushResultEvent.Error = ex;
                 }
             }
-            finally
+            OnFlushedEvents(flushResultEvent);
+            flushInProgress = false;
+        }
+
+        private List<FlushPayload> GetPayloads()
+        {
+            List<FlushPayload> flushPayloads;
+            try
             {
-                EventQueueSemaphore.Release();
+                flushPayloads = localBucketing.FlushEventQueue(environmentKey);
             }
+            catch (Exception ex)
+            {
+                logger.LogError($"DVC Error Flushing Events: ${ex.Message}");
+                throw;
+            }
+
+            return flushPayloads;
         }
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
+            if (user is null)
+            {
+                throw new Exception("User can't be null");
+            }
             if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
                 localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
                 return;
 
-            if (IsOverMaxQueue())
+            if (CheckEventQueueSize())
             {
                 logger.LogWarning(
                     "{Event} failed to be queued; events in queue exceed {Max}. Triggering a forced flush", @event,
                     localOptions.MaxEventsInQueue);
-                ScheduleFlushWithDelay();
                 if (throwOnQueueMax)
                     throw new DVCException(
                         new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
@@ -196,22 +161,10 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             eventQueueMutex.Wait();
-            if (!eventPayloadsToFlush.ContainsKey(user))
-            {
-                eventPayloadsToFlush.Add(user, new UserEventsBatchRecord(user));
-            }
-
-            var userAndEvents = eventPayloadsToFlush[user];
-
-            var featureVars = config?.FeatureVariationMap ?? new Dictionary<string, string>();
-
-            userAndEvents.Events.Add(new DVCRequestEvent(@event, user.UserId, featureVars));
-
+            localBucketing.QueueEvent(environmentKey, JsonConvert.SerializeObject(user), JsonConvert.SerializeObject(@event));
             eventQueueMutex.Release();
 
             logger.LogInformation("{Event} queued successfully", @event);
-
-            ScheduleFlushWithDelay();
         }
 
         /**
@@ -224,16 +177,15 @@ namespace DevCycle.SDK.Server.Local.Api
                 localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
                 return;
 
-            if (IsOverMaxQueue())
+            if (CheckEventQueueSize())
             {
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
                     localOptions.MaxEventsInQueue);
-                ScheduleFlushWithDelay();
                 if (throwOnQueueMax)
                     throw new DVCException(
                         new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
-                return;                return;
+                return;
             }
 
             if (string.IsNullOrEmpty(user.UserId))
@@ -252,7 +204,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             var eventCopy = @event.Clone();
-            eventCopy.Date = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            eventCopy.Date = DateTimeOffset.UtcNow.DateTime;
             eventCopy.Value = 1;
 
             var requestEvent = new DVCRequestEvent(
@@ -264,9 +216,13 @@ namespace DevCycle.SDK.Server.Local.Api
             var userAndFeatureVars = new UserAndFeatureVars(user, requestEvent.FeatureVars);
 
             aggregateEventQueueMutex.Wait();
+            localBucketing.QueueAggregateEvent(
+                environmentKey,
+                JsonConvert.SerializeObject(@event),
+                JsonConvert.SerializeObject(config.VariableVariationMap)
+                );
             aggregateEvents.AddEvent(userAndFeatureVars, requestEvent);
             aggregateEventQueueMutex.Release();
-            ScheduleFlushWithDelay();
         }
 
         private Dictionary<DVCPopulatedUser, UserEventsBatchRecord> CombineUsersEventsToFlush()
@@ -292,21 +248,34 @@ namespace DevCycle.SDK.Server.Local.Api
             Dictionary<string, Dictionary<string, DVCRequestEvent>> aggUserEventsRecord)
         {
             return (from eventType in aggUserEventsRecord
-                from eventTarget in eventType.Value
-                select eventTarget.Value).ToList();
+                    from eventTarget in eventType.Value
+                    select eventTarget.Value).ToList();
         }
 
-        private bool IsOverMaxQueue()
+        private bool CheckEventQueueSize()
         {
-            return CombineUsersEventsToFlush().Sum(u => u.Value.Events.Count) + batchQueue.Count >=
-                   localOptions.MaxEventsInQueue;
+            var queueSize = localBucketing.EventQueueSize(this.environmentKey);
+            if (queueSize >= localOptions.FlushEventQueueSize)
+            {
+                if (!this.flushInProgress)
+                {
+                    ScheduleFlushWithDelay();
+                }
+                if (queueSize >= localOptions.MaxEventsInQueue)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        private void ScheduleFlushWithDelay(bool queueRequest = false)
+        public void ScheduleFlushWithDelay(bool queueRequest = false)
         {
             if (schedulerIsRunning && !queueRequest) return;
 
             schedulerIsRunning = true;
+            flushInProgress = true;
             tokenSource = new CancellationTokenSource();
 
             Task.Run(async delegate
@@ -331,6 +300,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private void OnFlushedEvents(DVCEventArgs e)
         {
+            if (FlushedEvents?.Target == null) return;
             FlushedEvents?.Invoke(this, e);
         }
     }
