@@ -8,7 +8,6 @@ using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using RestSharp;
 

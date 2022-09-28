@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
@@ -12,6 +13,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public bool DisableAutomaticEvents { get; set; }
         public bool DisableCustomEvents { get; set; }
         public int MaxEventsInQueue { get; set; }
+        public int EventRequestChunkSize { get; set; }
         public int FlushEventQueueSize { get; set; }
         public int EventFlushIntervalMs { get; set; }
         public string EventsApiUri { get; set; }
@@ -33,7 +35,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             bool disableCustomEvents = false,
             int flushEventQueueSize = 1000,
             int maxEventsInQueue = 2000,
-            int eventFlushIntervalMs = 10 * 1000)
+            int eventRequestChunkSize = 100,
+            int eventFlushIntervalMs = 10 * 1000
+            )
         {
             ConfigPollingIntervalMs = configPollingIntervalMs;
             ConfigPollingTimeoutMs = configPollingTimeoutMs;
@@ -45,10 +49,68 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             EventsApiCustomHeaders = eventsApiCustomHeaders;
             DisableAutomaticEvents = disableAutomaticEvents;
             DisableCustomEvents = disableCustomEvents;
-            if (maxEventsInQueue > 1000) maxEventsInQueue = 1000;
+            
+            switch (eventRequestChunkSize)
+            {
+                case < 10:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(eventRequestChunkSize),
+                        eventRequestChunkSize,
+                        "Must be greater than or equal to 10");
+                case > 10000:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(eventRequestChunkSize),
+                        eventRequestChunkSize,
+                        "Must not be larger than 10,000");
+            }
+            EventRequestChunkSize = eventRequestChunkSize;
+            
+            if (maxEventsInQueue > 20000)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maxEventsInQueue),
+                    maxEventsInQueue,
+                    "Must be less than or equal to 20,000");
+            }
+            if (maxEventsInQueue < eventRequestChunkSize)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maxEventsInQueue),
+                    maxEventsInQueue,
+                    $"Must be greater than or equal to eventRequestChunkSize ({eventRequestChunkSize})");
+            }
             MaxEventsInQueue = maxEventsInQueue;
+
+            if (flushEventQueueSize >= maxEventsInQueue)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(flushEventQueueSize),
+                    flushEventQueueSize,
+                    $"Must be smaller than maxEventsInQueue ({maxEventsInQueue})");
+            }
+            if (flushEventQueueSize < eventRequestChunkSize)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(flushEventQueueSize),
+                    flushEventQueueSize,
+                    $"Must be greater than or equal to eventRequestChunkSize ({eventRequestChunkSize})");
+            }
             FlushEventQueueSize = flushEventQueueSize;
+            
             EventFlushIntervalMs = eventFlushIntervalMs;
+            switch (eventFlushIntervalMs)
+            {
+                case < 500:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(eventFlushIntervalMs),
+                        eventFlushIntervalMs,
+                        $"Must be larger than 500ms");
+                case > 60 * 1000:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(eventFlushIntervalMs),
+                        eventFlushIntervalMs,
+                        $"Must be smaller than 1 minute");
+            }
         }
     }
 }
