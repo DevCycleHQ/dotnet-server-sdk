@@ -239,6 +239,7 @@ namespace DevCycle.SDK.Server.Local.Api
         public override void Dispose()
         {
             configManager.Dispose();
+            timer.Dispose();
         }
 
         public override string Platform()
