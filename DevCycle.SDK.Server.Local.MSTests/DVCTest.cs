@@ -64,8 +64,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     })
                     .SetInitializedSubscriber((_, args) =>
                     {
-                        Assert.IsTrue(args.Error != null); 
-                        Console.WriteLine("Failed to get config because: " + args.Error.ErrorResponse);
+                        Assert.IsTrue(args.Errors.Count != 0); 
+                        Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
                     })
                 .SetEnvironmentKey("CustomCDNURITest")
                 .Build();

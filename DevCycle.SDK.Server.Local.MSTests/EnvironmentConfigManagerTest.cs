@@ -111,12 +111,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         private void DidInitializeSubscriber(object o, DVCEventArgs e)
         {
             Assert.IsTrue(e.Success);
+            Assert.AreEqual(0, e.Errors.Count);
         }
 
         private void DidNotInitializeSubscriber(object o, DVCEventArgs e)
         {
             Assert.IsFalse(e.Success);
-            Assert.IsNotNull(e.Error);
+            Assert.AreNotEqual(0, e.Errors.Count);
         }
     }
 }

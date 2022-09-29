@@ -175,12 +175,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
         private void AssertSuccessfulEvent(object sender, DVCEventArgs e)
         {
-            Assert.IsNull(e.Error);
+            Assert.AreEqual(0, e.Errors.Count);
             Assert.IsTrue(e.Success);
         }
 
         private void AssertFailedEvent(object sender, DVCEventArgs e)
         {
+            Assert.AreNotEqual(0, e.Errors.Count);
             Assert.IsFalse(e.Success);
         }
     }
