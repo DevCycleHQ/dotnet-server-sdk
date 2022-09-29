@@ -20,9 +20,6 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILocalBucketing localBucketing;
         private readonly string environmentKey;
 
-        private readonly SemaphoreSlim eventQueueMutex = new(1, 1);
-        private readonly SemaphoreSlim aggregateEventQueueMutex = new(1, 1);
-
         private readonly ILogger logger;
 
         private CancellationTokenSource tokenSource = new();
@@ -145,11 +142,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
             }
-
-            eventQueueMutex.Wait();
             localBucketing.QueueEvent(environmentKey, JsonConvert.SerializeObject(user), JsonConvert.SerializeObject(@event));
-            eventQueueMutex.Release();
-
             logger.LogInformation("{Event} queued successfully", @event);
         }
 
@@ -197,13 +190,19 @@ namespace DevCycle.SDK.Server.Local.Api
 
             var userAndFeatureVars = new UserAndFeatureVars(user, requestEvent.FeatureVars);
 
-            aggregateEventQueueMutex.Wait();
             localBucketing.QueueAggregateEvent(
                 environmentKey,
                 JsonConvert.SerializeObject(@event),
                 JsonConvert.SerializeObject(config.VariableVariationMap)
                 );
-            aggregateEventQueueMutex.Release();
+        }
+
+        private IEnumerable<DVCRequestEvent> EventsFromAggregateEvents(
+            Dictionary<string, Dictionary<string, DVCRequestEvent>> aggUserEventsRecord)
+        {
+            return (from eventType in aggUserEventsRecord
+                    from eventTarget in eventType.Value
+                    select eventTarget.Value).ToList();
         }
 
         private bool CheckEventQueueSize()

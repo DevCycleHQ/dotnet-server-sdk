@@ -173,6 +173,24 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(1, messageHandler.GetMatchCount(request));
         }
 
+        [TestMethod]
+        public async Task UseMultipleThreads()
+        {
+            var (eventQueue, messageHandler, request) = getTestQueue();
+
+            var tasks = new List<Task>();
+            for (var i = 0; i<10; i++)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    QueueSimpleEvent(eventQueue);
+                }));
+            }
+            await Task.WhenAll(tasks);
+            await WaitForOneEvent(eventQueue);
+            Assert.AreEqual(1, messageHandler.GetMatchCount(request));
+        }
+
         private void AssertSuccessfulEvent(object sender, DVCEventArgs e)
         {
             Assert.AreEqual(0, e.Errors.Count);
