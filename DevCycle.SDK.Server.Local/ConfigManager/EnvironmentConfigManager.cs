@@ -137,7 +137,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
                         var exception = new DVCException(res.StatusCode,
                             new ErrorResponse("Failed to download DevCycle config."));
-                        dvcEventArgs.Error = exception;
+                        dvcEventArgs.Errors.Add(exception);
 
                         throw exception;
                     }
@@ -200,7 +200,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 }
 
                 logger.LogError(finalError.ErrorResponse.Message);
-                dvcEventArgs.Error = finalError;
+                dvcEventArgs.Errors.Add(finalError);
             }
             finally
             {

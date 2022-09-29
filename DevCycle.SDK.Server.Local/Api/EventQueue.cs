@@ -101,7 +101,8 @@ namespace DevCycle.SDK.Server.Local.Api
                         logger.LogError($"Error publishing events, status: ${res.StatusCode}, body: ${res.Content}");
                         localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
                         flushResultEvent.Success = false;
-                        flushResultEvent.Error = new DVCException(res.StatusCode, new ErrorResponse(res.ErrorMessage ?? ""));
+                        flushResultEvent.Errors.Add(new DVCException(res.StatusCode,
+                            new ErrorResponse(res.ErrorMessage ?? "")));
                     }
                     else
                     {
@@ -114,7 +115,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     logger.LogError($"DVC Error Flushing Events response message: ${ex.Message}");
                     localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, true);
                     flushResultEvent.Success = false;
-                    flushResultEvent.Error = ex;
+                    flushResultEvent.Errors.Add(ex);
                 }
             }
             OnFlushedEvents(flushResultEvent);
