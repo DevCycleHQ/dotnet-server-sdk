@@ -20,17 +20,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILocalBucketing localBucketing;
         private readonly string environmentKey;
 
-        private static readonly SemaphoreSlim EventQueueSemaphore = new(1, 1);
-
         private readonly SemaphoreSlim eventQueueMutex = new(1, 1);
         private readonly SemaphoreSlim aggregateEventQueueMutex = new(1, 1);
-        private readonly SemaphoreSlim batchQueueMutex = new(1, 1);
-
-        private readonly Dictionary<DVCPopulatedUser, UserEventsBatchRecord> eventPayloadsToFlush;
-
-        private readonly AggregateEventQueues aggregateEvents;
-
-        private readonly List<BatchOfUserEventsBatch> batchQueue = new();
 
         private readonly ILogger logger;
 
@@ -47,8 +38,6 @@ namespace DevCycle.SDK.Server.Local.Api
             this.localOptions = localOptions;
             this.localBucketing = localBucketing;
             this.localBucketing.InitEventQueue(environmentKey, JsonConvert.SerializeObject(localOptions));
-            eventPayloadsToFlush = new Dictionary<DVCPopulatedUser, UserEventsBatchRecord>();
-            aggregateEvents = new AggregateEventQueues();
 
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
@@ -144,9 +133,6 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 throw new Exception("User can't be null");
             }
-            if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
-                localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
-                return;
 
             if (CheckEventQueueSize())
             {
@@ -173,10 +159,6 @@ namespace DevCycle.SDK.Server.Local.Api
          */
         public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
-            if ((localOptions.DisableCustomEvents && @event.Type.Equals("customEvent")) ||
-                localOptions.DisableAutomaticEvents && !@event.Type.Equals("customEvent"))
-                return;
-
             if (CheckEventQueueSize())
             {
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
@@ -221,35 +203,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 JsonConvert.SerializeObject(@event),
                 JsonConvert.SerializeObject(config.VariableVariationMap)
                 );
-            aggregateEvents.AddEvent(userAndFeatureVars, requestEvent);
             aggregateEventQueueMutex.Release();
-        }
-
-        private Dictionary<DVCPopulatedUser, UserEventsBatchRecord> CombineUsersEventsToFlush()
-        {
-            var userEventsBatchRecords = aggregateEvents.GetEventBatches();
-
-            foreach (var (user, userEventsRecord) in eventPayloadsToFlush)
-            {
-                if (userEventsBatchRecords.ContainsKey(user))
-                {
-                    userEventsBatchRecords[user].Events.AddRange(userEventsRecord.Events);
-                }
-                else
-                {
-                    userEventsBatchRecords.Add(user, userEventsRecord);
-                }
-            }
-
-            return userEventsBatchRecords;
-        }
-
-        private IEnumerable<DVCRequestEvent> EventsFromAggregateEvents(
-            Dictionary<string, Dictionary<string, DVCRequestEvent>> aggUserEventsRecord)
-        {
-            return (from eventType in aggUserEventsRecord
-                    from eventTarget in eventType.Value
-                    select eventTarget.Value).ToList();
         }
 
         private bool CheckEventQueueSize()
