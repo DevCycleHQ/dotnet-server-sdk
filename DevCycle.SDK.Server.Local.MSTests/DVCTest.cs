@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
@@ -95,6 +96,34 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 Console.WriteLine(key, value);
             }
+        }
+        
+        [TestMethod]
+        public async Task FlushProductionEvent()
+        {
+            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
+            if (string.IsNullOrEmpty(sdkKey))
+            {
+                Console.WriteLine(
+                    "DEVCYCLE_SDK_KEY is not set in the environment variables - skipping production events test.");
+                return;
+            }
+
+            var api = (DVCLocalClient) new DVCLocalClientBuilder()
+                .SetInitializedSubscriber(((sender, args) => { Console.WriteLine($"Success? : {args.Success}"); }))
+                .SetEnvironmentKey(sdkKey)
+                .Build();
+
+            await Task.Delay(5000);
+            var completion = new ManualResetEvent(false);
+            api.AddFlushedEventSubscriber((object sender, DVCEventArgs e) =>
+            {
+                Assert.IsTrue(e.Success);
+                completion.Set();
+            });
+            api.Variable(new User("test"), "test", false);
+            api.FlushEvents();
+            completion.WaitOne();
         }
 
         [TestMethod]

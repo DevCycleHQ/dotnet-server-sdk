@@ -58,7 +58,7 @@ namespace Example
 
             try
             {
-                await Task.Delay(5000);
+                await Task.Delay(25000);
             }
             catch (TaskCanceledException)
             {
@@ -76,6 +76,8 @@ namespace Example
             }
 
             Console.WriteLine(api.AllVariables(user));
+            
+            api.Variable(user, "test", true);
         }
     }
 }
