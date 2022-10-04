@@ -103,7 +103,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 eventQueue.QueueAggregateEvent(
                     requestUser,
-                    new Event(type: EventTypes.variableDefaulted, target: key),
+                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
 
@@ -139,8 +139,8 @@ namespace DevCycle.SDK.Server.Local.Api
             var variable = Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
 
             var @event = new Event(type: variable.IsDefaulted
-                    ? EventTypes.variableDefaulted
-                    : EventTypes.variableEvaluated,
+                    ? EventTypes.aggVariableDefaulted
+                    : EventTypes.aggVariableEvaluated,
                 target: variable.Key);
 
             eventQueue.QueueAggregateEvent(requestUser, @event, config);

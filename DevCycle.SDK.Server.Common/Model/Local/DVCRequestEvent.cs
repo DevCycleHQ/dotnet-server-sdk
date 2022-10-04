@@ -7,10 +7,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
     [DataContract(Name = "requestEvent")]
     public class DVCRequestEvent
     {
-        private const string VariableEvaluated = "variableEvaluated";
-        private const string VariableDefaulted = "variableDefaulted";
-
-        private readonly List<string> eventTypes = new List<string> {VariableEvaluated, VariableDefaulted};
+        private readonly List<string> eventTypes = new List<string> {EventTypes.aggVariableEvaluated, EventTypes.aggVariableDefaulted};
         
         [DataMember(Name="type", EmitDefaultValue=false)]
         public string Type { get; }
