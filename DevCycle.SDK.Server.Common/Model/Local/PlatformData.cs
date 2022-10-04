@@ -43,6 +43,13 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("sdkVersion")]
         public string SdkVersion { get; set; }
         
+        /// <summary>
+        /// Server hostname. Used as the `user_id` for aggregated events.
+        /// </summary>
+        /// <value>null</value>
+        [JsonProperty("hostname")]
+        public string HostName { get; set; }
+        
         public virtual string ToJson()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
@@ -55,6 +62,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             PlatformVersion = DefaultPlatformVersion;
             SdkType = DefaultSdkType.ToString().ToLower();
             SdkVersion = DefaultSdkVersion;
+            HostName = null;
         }
     }
 }
