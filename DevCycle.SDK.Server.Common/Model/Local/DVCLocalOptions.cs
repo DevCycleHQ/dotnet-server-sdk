@@ -1,25 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
     public class DVCLocalOptions : IDVCOptions
     {
+        [DataMember(Name="configPollingIntervalMS", EmitDefaultValue=false)]
+        [JsonProperty("configPollingIntervalMS")]
         public int ConfigPollingIntervalMs { get; set; }
+        
+        [DataMember(Name="configPollingTimeoutMS", EmitDefaultValue=false)]
+        [JsonProperty("configPollingTimeoutMS")]
         public int ConfigPollingTimeoutMs { get; set; }
+        
+        [IgnoreDataMember]
         public string CdnUri { get; set; }
+        
+        [IgnoreDataMember]
         public string CdnSlug { get; set; }
 
+        [DataMember(Name="disableAutomaticEventLogging", EmitDefaultValue=false)]
+        [JsonProperty("disableAutomaticEventLogging")]
         public bool DisableAutomaticEvents { get; set; }
+        
+        [DataMember(Name="disableCustomEventLogging", EmitDefaultValue=false)]
+        [JsonProperty("disableCustomEventLogging")]
         public bool DisableCustomEvents { get; set; }
+        
+        [IgnoreDataMember]
         public int MaxEventsInQueue { get; set; }
+        
+        [DataMember(Name="eventRequestChunkSize", EmitDefaultValue=false)]
+        [JsonProperty("eventRequestChunkSize")]
         public int EventRequestChunkSize { get; set; }
+        
+        [IgnoreDataMember]
         public int FlushEventQueueSize { get; set; }
+        
+        [IgnoreDataMember]
         public int EventFlushIntervalMs { get; set; }
+        
+        [IgnoreDataMember]
         public string EventsApiUri { get; set; }
 
+        [IgnoreDataMember]
         public string EventsApiSlug { get; set; }
+        
+        [IgnoreDataMember]
         public Dictionary<string, string> CdnCustomHeaders { get; set; }
+        
+        [IgnoreDataMember]
         public Dictionary<string, string> EventsApiCustomHeaders { get; set; }
 
         public DVCLocalOptions(

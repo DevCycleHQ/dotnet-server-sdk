@@ -25,12 +25,14 @@ namespace DevCycle.SDK.Server.Common.Model
         /// Gets or Sets Events
         /// </summary>
         [DataMember(Name="events", EmitDefaultValue=false)]
+        [JsonProperty("events")]
         public List<Event> Events { get; set; }
 
         /// <summary>
         /// Gets or Sets User
         /// </summary>
         [DataMember(Name="user", EmitDefaultValue=false)]
+        [JsonProperty("user")]
         public User User { get; set; }
 
         /// <summary>
