@@ -29,7 +29,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private event EventHandler<DVCEventArgs> FlushedEvents;
         
         public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, DvcRestClientOptions restClientOptions = null)
+            ILocalBucketing localBucketing, DVCRestClientOptions restClientOptions = null)
         {
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, localOptions, restClientOptions);
             this.environmentKey = environmentKey;

@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Common.Model
         protected IDVCOptions options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
-        protected DvcRestClientOptions restClientOptions;
+        protected DVCRestClientOptions restClientOptions;
         
         public IClientBuilder SetEnvironmentKey(string key)
         {
@@ -33,7 +33,7 @@ namespace DevCycle.SDK.Server.Common.Model
             return this;
         }
 
-        public IClientBuilder SetRestClientOptions(DvcRestClientOptions options)
+        public IClientBuilder SetRestClientOptions(DVCRestClientOptions options)
         {
             this.restClientOptions = options;
             return this;

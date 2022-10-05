@@ -11,7 +11,7 @@ namespace DevCycle.SDK.Server.Common.Model
         IClientBuilder SetEnvironmentKey(string key);
         IClientBuilder SetOptions(IDVCOptions options);
         IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider);
-        IClientBuilder SetRestClientOptions(DvcRestClientOptions options);
+        IClientBuilder SetRestClientOptions(DVCRestClientOptions options);
         IDVCClient Build();
     }
 }

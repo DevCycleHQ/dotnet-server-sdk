@@ -2,11 +2,11 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
-    public class DvcRestClientOptions : RestClientOptions
+    public class DVCRestClientOptions : RestClientOptions
     {
-        public DvcRestClientOptions Clone()
+        public DVCRestClientOptions Clone()
         {
-            return (DvcRestClientOptions) MemberwiseClone();
+            return (DVCRestClientOptions) MemberwiseClone();
         }
     }
 }
