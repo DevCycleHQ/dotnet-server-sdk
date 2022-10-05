@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -41,7 +42,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null,
-            RestClientOptions restClientOptions = null)
+            DvcRestClientOptions restClientOptions = null)
         {
             localOptions = dvcLocalOptions;
             this.environmentKey = environmentKey;
@@ -52,14 +53,16 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
                 ? pollingIntervalMs
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
-            restClientOptions ??= new RestClientOptions();
             dvcLocalOptions.CdnCustomHeaders ??= new Dictionary<string, string>();
+
+            DvcRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DvcRestClientOptions();
             // Explicitly override the base URL to use the one in local bucketing options. This allows the normal 
             // rest client options to override the Events api endpoint url; while sharing certificate and other information.
-            restClientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
+            clientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
 
-            restClient = new RestClient(restClientOptions);
+            restClient = new RestClient(clientOptions);
             restClient.AddDefaultHeaders(dvcLocalOptions.CdnCustomHeaders);
+            
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             dvcEventArgs = new DVCEventArgs();

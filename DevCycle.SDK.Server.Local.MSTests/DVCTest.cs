@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
@@ -38,12 +39,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
             localBucketing.StoreConfig(environmentKey, config);
             var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(),
                 new NullLoggerFactory(),
-                localBucketing, restClientOptions: new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
+                localBucketing, restClientOptions: new DvcRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
             DVCLocalClient api = (DVCLocalClient) new DVCLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
-                .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetRestClientOptions(new DvcRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCLocalOptions())
                 .SetEnvironmentKey(environmentKey)
                 .SetLogger(loggerFactory)

@@ -70,7 +70,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
-            RestClientOptions restClientOptions = null)
+            DvcRestClientOptions restClientOptions = null)
         {
             this.environmentKey = environmentKey;
             this.configManager = configManager;

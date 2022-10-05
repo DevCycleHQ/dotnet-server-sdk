@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -28,7 +29,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private event EventHandler<DVCEventArgs> FlushedEvents;
         
         public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, RestClientOptions restClientOptions = null)
+            ILocalBucketing localBucketing, DvcRestClientOptions restClientOptions = null)
         {
             dvcEventsApiClient = new DVCEventsApiClient(environmentKey, localOptions, restClientOptions);
             this.environmentKey = environmentKey;

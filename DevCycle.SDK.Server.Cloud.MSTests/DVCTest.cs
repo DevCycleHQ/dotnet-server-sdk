@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Cloud.Api;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,7 +29,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     ));
 
             DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
-                .SetRestClientOptions(new RestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetRestClientOptions(new DvcRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
                 .SetEnvironmentKey($"server-{Guid.NewGuid().ToString()}")
                 .SetLogger(new NullLoggerFactory())
