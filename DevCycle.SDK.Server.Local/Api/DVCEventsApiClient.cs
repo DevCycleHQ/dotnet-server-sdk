@@ -21,17 +21,15 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, RestClientOptions restClientOptions = null)
+        public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, DvcRestClientOptions restClientOptions = null)
         {
             options ??= new DVCLocalOptions();
-            restClientOptions ??= new RestClientOptions()
-            {
-                BaseUrl = new Uri(options.EventsApiUri)
-            };
+            DVCRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DVCRestClientOptions();
+            if (string.IsNullOrEmpty(clientOptions.BaseUrl?.ToString()))
+                clientOptions.BaseUrl = new Uri(options.EventsApiUri);
             options.EventsApiCustomHeaders ??= new Dictionary<string, string>();
-            if (string.IsNullOrEmpty(restClientOptions.BaseUrl?.ToString()))
-                restClientOptions.BaseUrl = new Uri(options.EventsApiUri);
-            restClient = new RestClient(restClientOptions);
+ 
+            restClient = new RestClient(clientOptions);
             restClient.AddDefaultHeaders(options.EventsApiCustomHeaders);
             SdkKey = environmentKey;
             sdkOptions = options;

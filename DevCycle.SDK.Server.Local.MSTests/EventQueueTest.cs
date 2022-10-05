@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
@@ -46,7 +47,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
 
             var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
-                localBucketing, new RestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
+                localBucketing, new DvcRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
 

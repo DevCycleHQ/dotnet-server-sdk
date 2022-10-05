@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Local.ConfigManager;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var environmentKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var cfgManager = new EnvironmentConfigManager(environmentKey, new DVCLocalOptions(),
-                loggerFactory, new LocalBucketing(), restClientOptions: new RestClientOptions()
+                loggerFactory, new LocalBucketing(), restClientOptions: new DvcRestClientOptions()
                     {ConfigureMessageHandler = _ => mockHttp},
                 initializedHandler: isError ? DidNotInitializeSubscriber : DidInitializeSubscriber);
 
