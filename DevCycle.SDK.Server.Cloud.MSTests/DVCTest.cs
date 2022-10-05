@@ -29,7 +29,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     ));
 
             DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder()
-                .SetRestClientOptions(new DvcRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
                 .SetEnvironmentKey($"server-{Guid.NewGuid().ToString()}")
                 .SetLogger(new NullLoggerFactory())

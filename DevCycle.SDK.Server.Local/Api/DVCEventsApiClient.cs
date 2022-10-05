@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, DvcRestClientOptions restClientOptions = null)
+        public DVCEventsApiClient(string environmentKey, DVCLocalOptions options = null, DVCRestClientOptions restClientOptions = null)
         {
             options ??= new DVCLocalOptions();
             DVCRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DVCRestClientOptions();

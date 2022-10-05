@@ -47,7 +47,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
 
             var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
-                localBucketing, new DvcRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
+                localBucketing, new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
 

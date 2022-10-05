@@ -19,12 +19,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
         }
 
-        public DVCApiClient(string serverKey, DvcRestClientOptions restClientOptions = null)
+        public DVCApiClient(string serverKey, DVCRestClientOptions restClientOptions = null)
         {
             this.serverKey = serverKey;
 
             if (restClientOptions == null)
-                restClientOptions = new DvcRestClientOptions()
+                restClientOptions = new DVCRestClientOptions()
                 {
                     BaseUrl = new Uri(BaseURL)
                 };
