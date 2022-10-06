@@ -10,59 +10,59 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         [DataMember(Name="user_id", EmitDefaultValue=false)]
         [JsonProperty("user_id")]
-        public string UserId { get; }
+        public string UserId { get; set; }
         
         [DataMember(Name="email", EmitDefaultValue=false)]
         [JsonProperty("email")]
-        public readonly string Email;
+        public string Email;
         [DataMember(Name="name", EmitDefaultValue=false)]
         [JsonProperty("name")]
-        public readonly string Name;
+        public string Name;
         [DataMember(Name = "language", EmitDefaultValue = false)]
         [JsonProperty("language")]
-        public readonly string Language;
+        public string Language;
         [DataMember(Name = "country", EmitDefaultValue = false)]
         [JsonProperty("country")]
-        public readonly string Country;
+        public string Country;
         [DataMember(Name = "appVersion", EmitDefaultValue = false)]
         [JsonProperty("appVersion")]
-        public readonly string AppVersion;
+        public string AppVersion;
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
         [JsonProperty("appBuild")]
-        public readonly double AppBuild;
+        public double AppBuild;
         [DataMember(Name = "customData", EmitDefaultValue = false)]
         [JsonProperty("customData")]
-        public readonly object CustomData;
+        public object CustomData;
         [DataMember(Name = "privateCustomData", EmitDefaultValue = false)]
         [JsonProperty("privateCustomData")]
-        public readonly object PrivateCustomData;
+        public object PrivateCustomData;
 
         [DataMember(Name = "lastSeenDate", EmitDefaultValue = false)]
         [JsonProperty("lastSeenDate")]
-        public readonly DateTime LastSeenDate;
+        public DateTime LastSeenDate;
         [DataMember(Name = "createdDate", EmitDefaultValue = false)]
         [JsonProperty("createdDate")]
-        public readonly DateTime CreatedDate;
+        public DateTime CreatedDate;
         
         [DataMember(Name="platform", EmitDefaultValue=false)]
         [JsonProperty("platform")]
-        public readonly string Platform;
+        public string Platform;
         
         [DataMember(Name="platformVersion", EmitDefaultValue=false)]
         [JsonProperty("platformVersion")]
-        public readonly string PlatformVersion;
+        public string PlatformVersion;
         
         [DataMember(Name="sdkType", EmitDefaultValue=false)]
         [JsonProperty("sdkType")]
-        public readonly string SdkType;
+        public string SdkType;
         
         [DataMember(Name="sdkVersion", EmitDefaultValue=false)]
         [JsonProperty("sdkVersion")]
-        public readonly string SdkVersion;
+        public string SdkVersion;
         
         [DataMember(Name="deviceModel", EmitDefaultValue=false)]
         [JsonProperty("deviceModel")]
-        public readonly string DeviceModel;
+        public string DeviceModel;
 
         private readonly int hashCode;
 
