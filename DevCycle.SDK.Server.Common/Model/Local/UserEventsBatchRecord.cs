@@ -9,7 +9,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
     {
         [DataMember(Name="user", EmitDefaultValue=false)]
         [JsonProperty("user")]
-        public DVCPopulatedUser User { get; }
+        public DVCPopulatedUser User { get; set;  }
         
         [DataMember(Name="events", EmitDefaultValue=false)]
         [JsonProperty("events")]
