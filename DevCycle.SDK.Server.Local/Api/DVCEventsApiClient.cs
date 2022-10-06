@@ -59,7 +59,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual async Task<RestResponse> PublishEvents(List<UserEventsBatchRecord> batch)
         {
-            return await SendRequestAsync(batch, 
+            var requestBody = new
+            {
+                batch= batch
+            };
+            return await SendRequestAsync(requestBody, 
                 sdkOptions.EventsApiSlug != "" ? sdkOptions.EventsApiSlug : TrackEventsUrl);
         }
 
