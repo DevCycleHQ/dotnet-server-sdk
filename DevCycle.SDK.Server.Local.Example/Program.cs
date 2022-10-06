@@ -23,20 +23,7 @@ namespace Example
 
             DVCLocalClientBuilder apiBuilder = new DVCLocalClientBuilder();
             api = (DVCLocalClient) apiBuilder
-                .SetOptions(new DVCLocalOptions()
-                {
-                    ConfigPollingIntervalMs = 1000,
-                    ConfigPollingTimeoutMs = 5000,
-                    CdnUri = "https://config-cdn.devcycle.com",
-                    CdnSlug = $"/config/v1/server/{SDK_ENV_VAR}.json",
-                    EventsApiUri = "https://events.devcycle.com",
-                    EventsApiSlug = "/v1/events/batch",
-                    CdnCustomHeaders = new Dictionary<string, string>(),
-                    EventsApiCustomHeaders = new Dictionary<string, string>(),
-                    DisableAutomaticEvents = false,
-                    DisableCustomEvents = false,
-                    MaxEventsInQueue = 1000
-                })
+                .SetOptions(new DVCLocalOptions())
                 .SetInitializedSubscriber((o, e) =>
                 {
                     if (e.Success)
@@ -45,21 +32,33 @@ namespace Example
                     }
                     else
                     {
-                        Console.WriteLine($"Client did not initialize. Error: {e.Error}");
+                        Console.WriteLine($"Client did not initialize. Errors: {e.Errors}");
                     }
                 })
                 .SetRestClientOptions(
-                    new RestClientOptions()
+                    new DVCRestClientOptions()
                     {
                         //...
                     })
                 .SetEnvironmentKey(SDK_ENV_VAR)
                 .SetLogger(LoggerFactory.Create(builder => builder.AddConsole()))
                 .Build();
+            
+            api.AddFlushedEventSubscriber((sender, dvcEventArgs) =>
+            {
+                if(dvcEventArgs.Errors.Count > 0)
+                {
+                    Console.WriteLine($"Some events were not flushed. Errors: {dvcEventArgs.Errors}");
+                }
+                else
+                {
+                    Console.WriteLine("Events flushed successfully");
+                }
+            });
 
             try
             {
-                await Task.Delay(5000);
+                await Task.Delay(15000);
             }
             catch (TaskCanceledException)
             {
@@ -74,8 +73,9 @@ namespace Example
             foreach (KeyValuePair<string, Feature> entry in result)
             {
                 Console.WriteLine(entry.Key + " : " + entry.Value);
-            }
-
+            } 
+            
+            Console.WriteLine(api.Variable(user, "test-variable", true));
             Console.WriteLine(api.AllVariables(user));
         }
     }
