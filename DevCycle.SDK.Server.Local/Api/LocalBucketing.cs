@@ -96,13 +96,13 @@ namespace DevCycle.SDK.Server.Local.Api
                 "env",
                 "Date.now",
                 Function.FromCallback(WASMStore,
-                    (Caller _) => (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds)
+                    (Caller _) => (DateTime.Now.ToUniversalTime() - DateTime.UnixEpoch).TotalMilliseconds)
             );
             WASMLinker.Define(
                 "env",
                 "seed",
                 Function.FromCallback(WASMStore,
-                    (Caller _) => (random.NextDouble() * (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds))
+                    (Caller _) => (random.NextDouble() * (DateTime.Now.ToUniversalTime() - DateTime.UnixEpoch).TotalMilliseconds))
             );
 
             WASMInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
