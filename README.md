@@ -5,7 +5,7 @@ Events are queued and flushed periodically in the background.
 This version uses .NET Standard 2.1 and utilizes more resources to perform local bucketing.
 
 ## Installation
-Download the SDK from Nuget - https://www.nuget.org/packages/DevCycle.DotNet.Server.Local.SDK/2.0.0
+Download the SDK from Nuget - https://www.nuget.org/packages/DevCycle.DotNet.Server.Local.SDK/2.0.1
 
 ## Getting Started
 Use the example app `DevCycle.SDK.Server.Local.Example`. It will read your DevCycle SDK key from an environment variable `DEVCYCLE_SDK_TOKEN`
