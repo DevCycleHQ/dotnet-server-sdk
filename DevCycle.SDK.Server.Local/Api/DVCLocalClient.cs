@@ -78,7 +78,7 @@ namespace DevCycle.SDK.Server.Local.Api
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
             eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
-            Task.Run(async delegate { await configManager.InitializeConfigAsync(); });
+            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
 
