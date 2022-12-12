@@ -20,12 +20,12 @@
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>Server SDK</Title>
-    <PackageVersion>1.3.5</PackageVersion>
+    <PackageVersion>1.3.6</PackageVersion>
+    <AssemblyVersion>1.3.6</AssemblyVersion>
+    <FileVersion>1.3.6</FileVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>1.3.5</AssemblyVersion>
-    <FileVersion>1.3.5</FileVersion>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
 
