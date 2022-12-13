@@ -13,9 +13,11 @@ using RestSharp;
 namespace DevCycle.SDK.Server.Cloud.Api
 {
 
-    public class DVCCloudClientBuilder : DVCClientBuilder
+    public class DVCCloudClientBuilder : DVCClientBuilder<DVCCloudClient, DVCCloudOptions, DVCCloudClientBuilder>
     {
-        public override IDVCClient Build()
+        protected override DVCCloudClientBuilder BuilderInstance => this;
+
+        public override DVCCloudClient Build()
         {
             return new DVCCloudClient(environmentKey, loggerFactory, options, restClientOptions);
         }
