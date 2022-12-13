@@ -106,7 +106,7 @@ namespace DevCycle.SDK.Server.Local.Api
             );
 
             WASMInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
-            WASMMemory = WASMInstance.GetMemory(WASMStore, "memory");
+            WASMMemory = WASMInstance.GetMemory("memory");
             if (WASMMemory is null)
             {
                 throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
@@ -120,11 +120,10 @@ namespace DevCycle.SDK.Server.Local.Api
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
-            var envKeyAddress = GetParameter(envKey);
-            var optionsAddress = GetParameter(options);
+            var p = new ValueBox[] { envKey, options };
 
             var initEventQueue = GetFunction("initEventQueue");
-            initEventQueue.Invoke(WASMStore, envKeyAddress, optionsAddress);
+            initEventQueue.Invoke(p);
 #endif
         }
 
@@ -134,11 +133,10 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var tokenAddress = GetParameter(token);
-            var userAddress = GetParameter(user);
+            var p = new ValueBox[] { token, user };
 
             var generateBucketedConfig = GetFunction("generateBucketedConfigForUser");
-            var result = generateBucketedConfig.Invoke(WASMStore, tokenAddress, userAddress);
+            var result = generateBucketedConfig.Invoke(p);
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.InitializeVariables();
@@ -153,10 +151,10 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var p = new ValueBox[] { envKey };
             
             var eventQueueSize = GetFunction("eventQueueSize");
-            var result = (int)eventQueueSize.Invoke(WASMStore, envKeyAddress);
+            var result = (int)eventQueueSize.Invoke(p);
             WasmMutex.Release();
             return result;
 #endif
@@ -168,12 +166,10 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
-            var userAddress = GetParameter(user);
-            var eventAddress = GetParameter(eventString);
+            var p = new ValueBox[] { envKey, user, eventString };
 
             var initEventQueue = GetFunction("queueEvent");
-            initEventQueue.Invoke(WASMStore, envKeyAddress, userAddress, eventAddress);
+            initEventQueue.Invoke(p);
             WasmMutex.Release();
 #endif
         }
@@ -184,12 +180,8 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
-            var eventAddress = GetParameter(eventString);
-            var variableMapAddress = GetParameter(variableVariationMapStr);
-
             var queueAggregateEvent = GetFunction("queueAggregateEvent");
-            queueAggregateEvent.Invoke(WASMStore, envKeyAddress, eventAddress, variableMapAddress);
+            queueAggregateEvent.Invoke(new ValueBox[]{ envKey, eventString, variableVariationMapStr });
             WasmMutex.Release();
 #endif
         }
@@ -200,10 +192,9 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
             var flushEventQueue = GetFunction("flushEventQueue");
             
-            var result = flushEventQueue.Invoke(WASMStore, envKeyAddress);
+            var result = flushEventQueue.Invoke(new ValueBox[] { envKey });
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
             WasmMutex.Release();
@@ -217,10 +208,8 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
-            var payloadIdAddress = GetParameter(payloadId);
             var markPayloadSuccess = GetFunction("onPayloadSuccess");
-            markPayloadSuccess.Invoke(WASMStore, envKeyAddress, payloadIdAddress);
+            markPayloadSuccess.Invoke(new ValueBox[] { envKey, payloadId });
             WasmMutex.Release();
 #endif
         }
@@ -231,10 +220,9 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
-            var payloadIdAddress = GetParameter(payloadId);
+            var p = new ValueBox[] { envKey, payloadId, retryable ? 1 : 0 };
             var markPayloadFailure = GetFunction("onPayloadFailure");
-            markPayloadFailure.Invoke(WASMStore, envKeyAddress, payloadIdAddress, retryable);
+            markPayloadFailure.Invoke(new ValueBox[] { envKey, payloadId, 0 });
             WasmMutex.Release();
 #endif
         }
@@ -244,11 +232,9 @@ namespace DevCycle.SDK.Server.Local.Api
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
-            var tokenAddress = GetParameter(token);
-            var configAddress = GetParameter(config);
 
             var setConfigData = GetFunction("setConfigData");
-            setConfigData.Invoke(WASMStore, tokenAddress, configAddress);
+            setConfigData.Invoke(new ValueBox[] { token, config });
 #endif
         }
 
@@ -257,16 +243,16 @@ namespace DevCycle.SDK.Server.Local.Api
 #if NETSTANDARD2_0
             throw new NotImplementedException(InvalidVersionMessage);
 #elif NETSTANDARD2_1
-            var platformDataAddress = GetParameter(platformData);
             var setPlatformData = GetFunction("setPlatformData");
-            setPlatformData.Invoke(WASMStore, platformDataAddress);
+            setPlatformData.Invoke(new ValueBox[] { platformData });
 #endif
         }
 
 #if NETSTANDARD2_1
         private Function GetFunction(string name)
         {
-            var function = WASMInstance.GetFunction(WASMStore, name);
+            var function = WASMInstance.GetFunction(name);
+
             if (function is null)
             {
                 throw new DVCException(
@@ -276,26 +262,11 @@ namespace DevCycle.SDK.Server.Local.Api
             return function;
         }
 
-        private int GetParameter(string param)
-        {
-            const int objectIdString = 1;
-
-            // ReSharper disable once InconsistentNaming
-            var __new = GetFunction("__new");
-
-            var paramAddress =
-                (int)__new.Invoke(WASMStore, Encoding.Unicode.GetByteCount(param), objectIdString)!;
-
-            Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(WASMStore)[paramAddress..]);
-
-            return paramAddress;
-        }
-
         private static string ReadAssemblyScriptString(IStore store, Memory memory, int address)
         {
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
-            var length = memory.ReadInt32(store, address - 4);
-            return Encoding.Unicode.GetString(memory.GetSpan(store).Slice(address, length));
+            var length = memory.ReadInt32(address - 4);
+            return Encoding.Unicode.GetString(memory.GetSpan(address, length));
         }
 #endif
     }
