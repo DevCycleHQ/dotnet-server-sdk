@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 new NullLoggerFactory(),
                 localBucketing, restClientOptions: new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
-            DVCLocalClient api = (DVCLocalClient) new DVCLocalClientBuilder()
+            DVCLocalClient api = new DVCLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
                 .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
@@ -84,7 +84,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 return;
             }
 
-            var api = (DVCLocalClient) new DVCLocalClientBuilder()
+            var api = new DVCLocalClientBuilder()
                 .SetInitializedSubscriber(((sender, args) => { Console.WriteLine($"Success? : {args.Success}"); }))
                 .SetEnvironmentKey(sdkKey)
                 .Build();
