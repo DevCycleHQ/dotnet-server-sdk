@@ -14,7 +14,7 @@ namespace Example
         {
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
 
-            DVCCloudClient api = new DVCCloudClientBuilder().SetEnvironmentKey(SDK_ENV_VAR).SetLogger(new NullLoggerFactory()).Build();
+            DVCCloudClient api = (DVCCloudClient) new DVCCloudClientBuilder().SetEnvironmentKey(SDK_ENV_VAR).SetLogger(new NullLoggerFactory()).Build();
             
             var user = new User("user_id");
 
