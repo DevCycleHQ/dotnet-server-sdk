@@ -6,12 +6,16 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
-    public interface IClientBuilder
+    public interface IClientBuilder<ClientType, OptionsType, BuilderType>
+        where ClientType : IDVCClient
+        where OptionsType: IDVCOptions
+        where BuilderType: IClientBuilder<ClientType, OptionsType, BuilderType>
     {
-        IClientBuilder SetEnvironmentKey(string key);
-        IClientBuilder SetOptions(IDVCOptions options);
-        IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider);
-        IClientBuilder SetRestClientOptions(DVCRestClientOptions options);
-        IDVCClient Build();
+        BuilderType SetEnvironmentKey(string key);
+        BuilderType SetOptions(OptionsType options);
+        BuilderType SetLogger(ILoggerFactory loggerFactoryProvider);
+        BuilderType SetRestClientOptions(DVCRestClientOptions options);
+
+        ClientType Build();
     }
 }

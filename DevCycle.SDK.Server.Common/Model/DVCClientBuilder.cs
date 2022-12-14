@@ -7,38 +7,47 @@ using RestSharp;
 namespace DevCycle.SDK.Server.Common.Model
 {
 
-    public abstract class DVCClientBuilder : IClientBuilder
+    public abstract class DVCClientBuilder<ClientType, OptionsType, BuilderType> : IClientBuilder<
+        ClientType, 
+        OptionsType,
+        BuilderType
+    >
+        where ClientType : IDVCClient
+        where OptionsType : IDVCOptions
+        where BuilderType : DVCClientBuilder<ClientType, OptionsType, BuilderType>
     {
         protected string environmentKey;
-        protected IDVCOptions options;
+        protected OptionsType options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
         protected DVCRestClientOptions restClientOptions;
+
+        protected abstract BuilderType BuilderInstance { get; }
         
-        public IClientBuilder SetEnvironmentKey(string key)
+        public BuilderType SetEnvironmentKey(string key)
         {
             environmentKey = key;
-            return this;
+            return BuilderInstance;
         }
 
-        public IClientBuilder SetOptions(IDVCOptions dvcOptions)
+        public BuilderType SetOptions(OptionsType dvcOptions)
         {
             options = dvcOptions;
-            return this;
+            return BuilderInstance;
         }
 
-        public IClientBuilder SetLogger(ILoggerFactory loggerFactoryProvider)
+        public BuilderType SetLogger(ILoggerFactory loggerFactoryProvider)
         {
             loggerFactory = loggerFactoryProvider;
-            return this;
+            return BuilderInstance;
         }
 
-        public IClientBuilder SetRestClientOptions(DVCRestClientOptions options)
+        public BuilderType SetRestClientOptions(DVCRestClientOptions options)
         {
             this.restClientOptions = options;
-            return this;
+            return BuilderInstance;
         }
 
-        public abstract IDVCClient Build();
+        public abstract ClientType Build();
     }
 }

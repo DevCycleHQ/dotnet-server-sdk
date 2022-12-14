@@ -11,12 +11,12 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    public class DVCLocalClientBuilder : DVCClientBuilder
+    public class DVCLocalClientBuilder : DVCClientBuilder<DVCLocalClient, DVCLocalOptions, DVCLocalClientBuilder>
     {
         private EnvironmentConfigManager configManager;
         private ILocalBucketing localBucketing;
-        private DVCLocalOptions localOptions;
-
+        
+        protected override DVCLocalClientBuilder BuilderInstance => this;
 
         public DVCLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
@@ -36,25 +36,18 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public new DVCLocalClientBuilder SetOptions(IDVCOptions options)
-        {
-            this.options = options;
-            localOptions = (DVCLocalOptions) options;
-            return this;
-        }
-
-        public override IDVCClient Build()
+        public override DVCLocalClient Build()
         {
             localBucketing ??= new LocalBucketing();
 
-            localOptions ??= new DVCLocalOptions();
+            options ??= new DVCLocalOptions();
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
-            configManager ??= new EnvironmentConfigManager(environmentKey, localOptions, loggerFactory, localBucketing,
+            configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
-            return new DVCLocalClient(environmentKey, localOptions, loggerFactory, configManager, localBucketing,
+            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing,
                 restClientOptions);
         }
     }
