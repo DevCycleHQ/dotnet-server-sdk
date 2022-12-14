@@ -8,20 +8,13 @@ using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Newtonsoft.Json;
-#if NETSTANDARD2_1
 using Wasmtime;
 using Module = Wasmtime.Module;
-#endif
 
 namespace DevCycle.SDK.Server.Local.Api
 {
     public class LocalBucketing : ILocalBucketing
     {
-#if !NETSTANDARD2_1
-        private static readonly string InvalidVersionMessage =
-            "This version of local bucketing is NOT compatible with .NET Standard 2.0.";
-#endif
-#if NETSTANDARD2_1
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
@@ -30,12 +23,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private Memory WASMMemory { get; }
         private Instance WASMInstance { get; }
         private Random random;
-#endif
         public LocalBucketing()
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#else
             WasmMutex.Wait();
             random = new Random();
             Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
@@ -112,27 +101,19 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
             }
             WasmMutex.Release();
-#endif
         }
 
         public void InitEventQueue(string envKey, string options)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             var envKeyAddress = GetParameter(envKey);
             var optionsAddress = GetParameter(options);
 
             var initEventQueue = GetFunction("initEventQueue");
             initEventQueue.Invoke(envKeyAddress, optionsAddress);
-#endif
         }
 
         public BucketedUserConfig GenerateBucketedConfig(string token, string user)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var tokenAddress = GetParameter(token);
             var userAddress = GetParameter(user);
@@ -144,14 +125,10 @@ namespace DevCycle.SDK.Server.Local.Api
             config?.InitializeVariables();
             WasmMutex.Release();
             return config;
-#endif
         }
 
         public int EventQueueSize(string envKey)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             
@@ -159,14 +136,10 @@ namespace DevCycle.SDK.Server.Local.Api
             var result = (int)eventQueueSize.Invoke(envKeyAddress);
             WasmMutex.Release();
             return result;
-#endif
         }
 
         public void QueueEvent(string envKey, string user, string eventString)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var userAddress = GetParameter(user);
@@ -175,14 +148,10 @@ namespace DevCycle.SDK.Server.Local.Api
             var initEventQueue = GetFunction("queueEvent");
             initEventQueue.Invoke(envKeyAddress, userAddress, eventAddress);
             WasmMutex.Release();
-#endif
         }
 
         public void QueueAggregateEvent(string envKey, string eventString, string variableVariationMapStr)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var eventAddress = GetParameter(eventString);
@@ -191,14 +160,10 @@ namespace DevCycle.SDK.Server.Local.Api
             var queueAggregateEvent = GetFunction("queueAggregateEvent");
             queueAggregateEvent.Invoke(envKeyAddress, eventAddress, variableMapAddress);
             WasmMutex.Release();
-#endif
         }
 
         public List<FlushPayload> FlushEventQueue(string envKey)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var flushEventQueue = GetFunction("flushEventQueue");
@@ -208,62 +173,44 @@ namespace DevCycle.SDK.Server.Local.Api
             var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
             WasmMutex.Release();
             return payloads;
-#endif
         }
 
         public void OnPayloadSuccess(string envKey, string payloadId)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadSuccess = GetFunction("onPayloadSuccess");
             markPayloadSuccess.Invoke(envKeyAddress, payloadIdAddress);
             WasmMutex.Release();
-#endif
         }
 
         public void OnPayloadFailure(string envKey, string payloadId, bool retryable)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadFailure = GetFunction("onPayloadFailure");
             markPayloadFailure.Invoke(envKeyAddress, payloadIdAddress, retryable ? 1 : 0);
             WasmMutex.Release();
-#endif
         }
 
         public void StoreConfig(string token, string config)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             var tokenAddress = GetParameter(token);
             var configAddress = GetParameter(config);
 
             var setConfigData = GetFunction("setConfigData");
             setConfigData.Invoke(tokenAddress, configAddress);
-#endif
         }
 
         public void SetPlatformData(string platformData)
         {
-#if NETSTANDARD2_0
-            throw new NotImplementedException(InvalidVersionMessage);
-#elif NETSTANDARD2_1
             var platformDataAddress = GetParameter(platformData);
             var setPlatformData = GetFunction("setPlatformData");
             setPlatformData.Invoke(platformDataAddress);
-#endif
         }
 
-#if NETSTANDARD2_1
         private Function GetFunction(string name)
         {
             var function = WASMInstance.GetFunction(name);
@@ -297,6 +244,5 @@ namespace DevCycle.SDK.Server.Local.Api
             var length = memory.ReadInt32(address - 4);
             return Encoding.Unicode.GetString(memory.GetSpan(address, length));
         }
-#endif
     }
 }
