@@ -6,6 +6,7 @@ using System.Text;
 using Newtonsoft.Json;
 
 [assembly: InternalsVisibleTo("DevCycle.SDK.Server.Cloud.MSTests")]
+[assembly: InternalsVisibleTo( "DevCycle.SDK.Server.Cloud")]
 
 namespace DevCycle.SDK.Server.Common.Model.Cloud
 {
@@ -24,7 +25,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
         /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        internal Variable(string key = default, TypeEnum type = default, T value = default, T defaultValue = default)
+        internal Variable(string key = default, T value = default, T defaultValue = default)
         {
             // to ensure "key" is required (not null)
             if (key == null)
@@ -34,7 +35,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
 
             Key = key;
 
-            Type = type;
+            Type = Local.Variable<T>.DetermineType(defaultValue);
 
             // to ensure "value" is required (not null)
             if (value == null)
@@ -54,12 +55,12 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
             IsDefaulted = false;
         }
 
-        public Variable(string key, T defaultValue, string evalReason)
+        public Variable(string key, T defaultValue)
         {
             Key = key;
             Value = defaultValue;
             DefaultValue = defaultValue;
-            EvalReason = evalReason;
+            Type = Local.Variable<T>.DetermineType(defaultValue);
             IsDefaulted = true;
         }
 

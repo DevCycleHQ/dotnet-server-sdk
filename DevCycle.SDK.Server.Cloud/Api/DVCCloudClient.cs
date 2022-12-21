@@ -85,13 +85,21 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
             try
             {
-                variable = await GetResponseAsync<Variable<T>>(user, urlFragment, queryParams);
-                variable.DefaultValue = defaultValue;
-                variable.IsDefaulted = false;
+                var variableResponse = await GetResponseAsync<Variable<object>>(user, urlFragment, queryParams);
+                variableResponse.DefaultValue = defaultValue;
+                variableResponse.IsDefaulted = false;
+                variable = variableResponse as Variable<T>;
+                if (variable == null)
+                {
+                    variable = new Variable<T>(lowerKey, defaultValue, defaultValue);
+                    variable.IsDefaulted = true;
+                    Console.WriteLine($"Type mismatch for variable {key}. Expected asdas, got {variable.Type}");
+                    logger.LogWarning($"Type mismatch for variable {key}. Expected asdas, got {variable.Type}");
+                }
             }
             catch (DVCException e)
             {
-                variable = new Variable<T>(lowerKey, defaultValue, e.Message);
+                variable = new Variable<T>(lowerKey, defaultValue);
             }
 
             return variable;
