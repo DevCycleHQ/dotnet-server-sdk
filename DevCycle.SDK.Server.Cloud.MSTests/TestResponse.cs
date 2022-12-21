@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
         public static Variable<bool> GetVariableByKeyAsync()
         {
-            return new Variable<bool>(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
+            return new Variable<bool>("test-false", TypeEnum.Boolean, false, false);
         }
 
         public static Dictionary<string, Variable<bool>> GetVariablesAsync()
@@ -30,7 +30,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             {
                 {
                     "test-false",
-                    new Variable<bool>(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false)
+                    new Variable<bool>("test-false", TypeEnum.Boolean, false, false)
                 }
             };
         }

@@ -86,6 +86,8 @@ namespace DevCycle.SDK.Server.Cloud.Api
             try
             {
                 variable = await GetResponseAsync<Variable<T>>(user, urlFragment, queryParams);
+                variable.DefaultValue = defaultValue;
+                variable.IsDefaulted = false;
             }
             catch (DVCException e)
             {
