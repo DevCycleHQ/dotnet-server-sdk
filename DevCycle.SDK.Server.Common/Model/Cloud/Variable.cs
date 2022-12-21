@@ -47,6 +47,8 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
                 throw new InvalidDataException("defaultValue is a required property for Variable and cannot be null");
             } ;
 
+            DefaultValue = defaultValue;
+
             Value = value;
 
             IsDefaulted = false;
