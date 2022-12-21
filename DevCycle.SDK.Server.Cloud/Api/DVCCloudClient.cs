@@ -93,8 +93,8 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 {
                     variable = new Variable<T>(lowerKey, defaultValue, defaultValue);
                     variable.IsDefaulted = true;
-                    Console.WriteLine($"Type mismatch for variable {key}. Expected asdas, got {variable.Type}");
-                    logger.LogWarning($"Type mismatch for variable {key}. Expected asdas, got {variable.Type}");
+                    logger.LogWarning($"Type mismatch for variable {key}. " +
+                                      $"Expected {Common.Model.Local.Variable<T>.DetermineType(defaultValue)}, got {variable.Type}");
                 }
             }
             catch (DVCException e)
