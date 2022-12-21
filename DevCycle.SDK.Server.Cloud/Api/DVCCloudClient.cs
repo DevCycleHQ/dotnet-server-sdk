@@ -59,7 +59,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
         }
 
-        public async Task<IVariable> VariableAsync<T>(User user, string key, T defaultValue)
+        public async Task<Variable<T>> VariableAsync<T>(User user, string key, T defaultValue)
         {
             ValidateUser(user);
 
@@ -81,21 +81,21 @@ namespace DevCycle.SDK.Server.Cloud.Api
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            Variable variable;
+            Variable<T> variable;
 
             try
             {
-                variable = await GetResponseAsync<Variable>(user, urlFragment, queryParams);
+                variable = await GetResponseAsync<Variable<T>>(user, urlFragment, queryParams);
             }
             catch (DVCException e)
             {
-                variable = new Variable(lowerKey, (object) defaultValue, e.Message);
+                variable = new Variable<T>(lowerKey, defaultValue, e.Message);
             }
 
             return variable;
         }
 
-        public async Task<Dictionary<string, Variable>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, Variable<object>>> AllVariablesAsync(User user)
         {
             ValidateUser(user);
 
@@ -106,7 +106,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
 
-            return await GetResponseAsync<Dictionary<string, Variable>>(user, urlFragment, queryParams);
+            return await GetResponseAsync<Dictionary<string, Variable<object>>>(user, urlFragment, queryParams);
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
