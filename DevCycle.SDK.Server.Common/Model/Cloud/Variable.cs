@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 namespace DevCycle.SDK.Server.Common.Model.Cloud
 {
  [DataContract]
-    public class Variable : IEquatable<Variable>, IVariable
+    public class Variable<T> : IEquatable<Variable<T>>, IVariable
     {
         /// <summary>
         /// Variable type
@@ -22,7 +22,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
         /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        public Variable(string id = default, string key = default, TypeEnum type = default, Object value = default)
+        public Variable(string id = default, string key = default, TypeEnum type = default, T value = default)
         {
             // to ensure "id" is required (not null)
             if (id == null)
@@ -52,7 +52,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
             IsDefaulted = false;
         }
 
-        public Variable(string key, Object defaultValue, string evalReason)
+        public Variable(string key, T defaultValue, string evalReason)
         {
             Key = key;
             Value = defaultValue;
@@ -85,7 +85,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// </summary>
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
         [DataMember(Name="value", EmitDefaultValue=false)]
-        public Object Value { get; set; }
+        public T Value { get; set; }
         public bool IsDefaulted { get; set; }
         
         public string EvalReason { get; set; }
@@ -122,7 +122,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// <returns>Boolean</returns>
         public override bool Equals(object input)
         {
-            return Equals(input as Variable);
+            return Equals(input as Variable<T>);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// </summary>
         /// <param name="input">Instance of Variable to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Variable input)
+        public bool Equals(Variable<T> input)
         {
             if (input == null)
                 return false;
@@ -151,7 +151,6 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
                     Type.Equals(input.Type)
                 ) && 
                 (
-                    Value == input.Value ||
                     (Value != null &&
                     Value.Equals(input.Value))
                 );

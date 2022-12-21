@@ -19,18 +19,18 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             };
         }
 
-        public static Variable GetVariableByKeyAsync()
+        public static Variable<bool> GetVariableByKeyAsync()
         {
-            return new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
+            return new Variable<bool>(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false);
         }
 
-        public static Dictionary<string, Variable> GetVariablesAsync()
+        public static Dictionary<string, Variable<bool>> GetVariablesAsync()
         {
-            return new Dictionary<string, Variable>
+            return new Dictionary<string, Variable<bool>>
             {
                 {
                     "test-false",
-                    new Variable(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false)
+                    new Variable<bool>(Guid.NewGuid().ToString(), "test-false", TypeEnum.Boolean, false)
                 }
             };
         }

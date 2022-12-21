@@ -90,7 +90,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             AssertUserDefaultsCorrect(user);
 
             Assert.IsNotNull(result);
-            Assert.IsFalse((bool) ((Variable) result).Value);
+            Assert.IsFalse(result.Value);
         }
 
         [TestMethod]
