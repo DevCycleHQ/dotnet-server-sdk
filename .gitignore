@@ -11,6 +11,7 @@ riderModule.iml
 *.suo
 *.user
 *.sln.docstates
+global.json
 
 # Build results
 

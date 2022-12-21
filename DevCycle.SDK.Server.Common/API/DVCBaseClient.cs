@@ -65,7 +65,7 @@ namespace DevCycle.SDK.Server.Common.API
                         return JsonConvert.DeserializeObject<T>(response.Content);
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.StatusDescription ?? string.Empty);
+                var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content ?? string.Empty);
                 throw new DVCException(response.StatusCode, errorResponse);
             }
             catch (System.Exception e)
