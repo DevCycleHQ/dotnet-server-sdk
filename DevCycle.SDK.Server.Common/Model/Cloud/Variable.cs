@@ -54,7 +54,6 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
 
         public Variable(string key, T defaultValue, string evalReason)
         {
-            Console.WriteLine("MAKING DEFAULT VARIABLE");
             Key = key;
             Value = defaultValue;
             DefaultValue = defaultValue;
