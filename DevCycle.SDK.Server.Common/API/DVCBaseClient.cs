@@ -58,7 +58,6 @@ namespace DevCycle.SDK.Server.Common.API
             try
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
-                Console.WriteLine(response.Content);
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     if (response.Content != null)
