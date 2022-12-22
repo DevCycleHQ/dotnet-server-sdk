@@ -98,15 +98,17 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 }
                 catch (InvalidCastException e)
                 {
-                    variable = new Variable<T>(lowerKey, defaultValue, defaultValue);
-                    variable.IsDefaulted = true;
+                    variable = new Variable<T>(lowerKey, defaultValue);
                     logger.LogWarning($"Type mismatch for variable {key}. " +
                                       $"Expected {type}, got {variableResponse.Type}");
                 }
             }
             catch (DVCException e)
             {
-                logger.LogError(e, "Failed to retrieve variable value, using default.");
+                if (e.IsRetryable())
+                {
+                    logger.LogError(e, "Failed to retrieve variable value, using default.");
+                }
                 variable = new Variable<T>(lowerKey, defaultValue);
             }
 
