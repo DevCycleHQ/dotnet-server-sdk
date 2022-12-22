@@ -131,7 +131,25 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetJsonVariableByKeyReturnsDefaultTest()
+        public void GetJsonVariableByKeyReturnsDefaultArrayTest()
+        {
+            using DVCLocalClient api = getTestClient();
+
+            var user = new User("j_test");
+            string key = "json";
+
+            string json = "['Small','Medium','Large']";
+            var expectedValue = JArray.Parse(json);
+
+            var result = api.Variable(user, key, JArray.Parse(json));
+
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.IsDefaulted);
+            Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
+        }
+        
+        [TestMethod]
+        public void GetJsonVariableByKeyReturnsDefaultObjectTest()
         {
             using DVCLocalClient api = getTestClient();
 

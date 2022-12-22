@@ -135,7 +135,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
                 {
                     typeEnum = TypeEnum.Boolean;
                 }
-                else if (baseType.IsSubclassOf(typeof(JObject)) || baseType == typeof(JObject))
+                else if (baseType.IsSubclassOf(typeof(JContainer)))
                 {
                     typeEnum = TypeEnum.JSON;
                 }
