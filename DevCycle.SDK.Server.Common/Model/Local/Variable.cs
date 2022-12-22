@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
@@ -87,6 +88,19 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             return returnVariable;
         }
 
+        public static Variable<T> InitializeFromVariableDictionary(
+            Dictionary<string, object> dictionary, 
+            T defaultValue
+        ) 
+        {
+            var returnVariable = new Variable<T>();
+            returnVariable.Key = (string)dictionary["key"];
+            returnVariable.Value = (T)dictionary["value"];
+            returnVariable.Type = DetermineType(defaultValue);
+            returnVariable.EvalReason = (string)dictionary["evalReason"];
+            returnVariable.IsDefaulted = false;
+            return returnVariable;
+        }
 
         /// <summary>
         /// Variable value can be a string, number, boolean, or JSON

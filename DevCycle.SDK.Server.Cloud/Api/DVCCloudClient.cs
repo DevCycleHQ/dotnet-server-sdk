@@ -126,7 +126,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return variable;
         }
 
-        public async Task<Dictionary<string, Variable<object>>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, Dictionary<string, object>>> AllVariablesAsync(User user)
         {
             ValidateUser(user);
 
@@ -137,15 +137,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
 
-            try
-            {
-                return await GetResponseAsync<Dictionary<string, Variable<object>>>(user, urlFragment, queryParams);
-            }
-            catch (DVCException e)
-            {
-                logger.LogError(e, "Failed to request AllVariables: ");
-                return new Dictionary<string, Variable<object>>();
-            }
+            return await GetResponseAsync<Dictionary<string, Dictionary<string, object>>>(user, urlFragment, queryParams);
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)

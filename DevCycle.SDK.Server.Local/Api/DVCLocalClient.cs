@@ -122,7 +122,10 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 try
                 {
-                    existingVariable = config.Variables.Get<T>(key);
+                    existingVariable = Common.Model.Local.Variable<T>.InitializeFromVariableDictionary(
+                        config?.Variables["key"], 
+                        defaultValue
+                    );
                 }
                 catch (InvalidCastException)
                 {
@@ -164,12 +167,12 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public VariableCollection AllVariables(User user)
+        public Dictionary<string, Dictionary<string, object>> AllVariables(User user)
         {
             if (!configManager.Initialized)
             {
                 logger.LogWarning("AllVariables called before DVCClient has initialized");
-                return new VariableCollection(new Dictionary<string, Variable<object>>());
+                return new Dictionary<string, Dictionary<string, object>>();
             }
 
             var requestUser = new DVCPopulatedUser(user);
@@ -182,7 +185,7 @@ namespace DevCycle.SDK.Server.Local.Api
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception retrieving variables from the config: {Exception}", e.Message);
-                return new VariableCollection(new Dictionary<string, Variable<object>>());
+                return new Dictionary<string, Dictionary<string, object>>();
             }
         }
 
