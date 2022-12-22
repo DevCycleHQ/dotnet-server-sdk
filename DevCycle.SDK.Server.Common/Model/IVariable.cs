@@ -41,10 +41,6 @@ namespace DevCycle.SDK.Server.Common.Model
         [DataMember(Name = "type", EmitDefaultValue = false)]
         public TypeEnum Type { get; set; }
 
-
-
-        public string Id { get; set; }
-
         public string Key { get; set; }
 
 

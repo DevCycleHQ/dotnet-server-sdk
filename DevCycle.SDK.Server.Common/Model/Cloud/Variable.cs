@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
+
+[assembly: InternalsVisibleTo("DevCycle.SDK.Server.Cloud.MSTests")]
 
 namespace DevCycle.SDK.Server.Common.Model.Cloud
 {
@@ -18,19 +21,11 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// <summary>
         /// Initializes a new instance of the <see cref="Variable" /> class.
         /// </summary>
-        /// <param name="id">unique database id (required).</param>
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
         /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        public Variable(string id = default, string key = default, TypeEnum type = default, T value = default)
+        internal Variable(string key = default, TypeEnum type = default, T value = default, T defaultValue = default)
         {
-            // to ensure "id" is required (not null)
-            if (id == null)
-            {
-                throw new InvalidDataException("id is a required property for Variable and cannot be null");
-            }
-
-            Id = id;
             // to ensure "key" is required (not null)
             if (key == null)
             {
@@ -47,6 +42,13 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
                 throw new InvalidDataException("value is a required property for Variable and cannot be null");
             }
 
+            if (defaultValue == null)
+            {
+                throw new InvalidDataException("defaultValue is a required property for Variable and cannot be null");
+            } ;
+
+            DefaultValue = defaultValue;
+
             Value = value;
 
             IsDefaulted = false;
@@ -56,6 +58,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         {
             Key = key;
             Value = defaultValue;
+            DefaultValue = defaultValue;
             EvalReason = evalReason;
             IsDefaulted = true;
         }
@@ -64,19 +67,12 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         {
 
         }
-        
-        /// <summary>
-        /// unique database id
-        /// </summary>
-        /// <value>unique database id</value>
-        [DataMember(Name="_id", EmitDefaultValue=false)]
-        public string Id { get; set; }
 
         /// <summary>
         /// Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.
         /// </summary>
         /// <value>Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.</value>
-        [DataMember(Name="key", EmitDefaultValue=false)]
+        [DataMember(Name="key")]
         public string Key { get; set; }
 
 
@@ -84,8 +80,13 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// Variable value can be a string, number, boolean, or JSON
         /// </summary>
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
-        [DataMember(Name="value", EmitDefaultValue=false)]
+        [DataMember(Name="value")]
         public T Value { get; set; }
+        
+        [DataMember(Name="defaultValue")]
+        public T DefaultValue { get; set; }
+        
+        [DataMember(Name="isDefaulted")]
         public bool IsDefaulted { get; set; }
         
         public string EvalReason { get; set; }
@@ -98,7 +99,6 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         {
             var sb = new StringBuilder();
             sb.Append("class Variable {\n");
-            sb.Append("  Id: ").Append(Id).Append("\n");
             sb.Append("  Key: ").Append(Key).Append("\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Value: ").Append(Value).Append("\n");
@@ -137,11 +137,6 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
 
             return 
                 (
-                    Id == input.Id ||
-                    (Id != null &&
-                    Id.Equals(input.Id))
-                ) && 
-                (
                     Key == input.Key ||
                     (Key != null &&
                     Key.Equals(input.Key))
@@ -165,8 +160,6 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
             unchecked // Overflow is fine, just wrap
             {
                 int hashCode = 41;
-                if (Id != null)
-                    hashCode = hashCode * 59 + Id.GetHashCode();
                 if (Key != null)
                     hashCode = hashCode * 59 + Key.GetHashCode();
                 hashCode = hashCode * 59 + Type.GetHashCode();
