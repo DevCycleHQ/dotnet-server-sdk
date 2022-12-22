@@ -138,10 +138,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new User("j_test");
             string key = "json";
 
-            string json = "['Small','Medium','Large']";
-            var expectedValue = JArray.Parse(json);
+            string json = "{\"key\": \"value\"}";
+            var expectedValue = JObject.Parse(json);
 
-            var result = api.Variable(user, key, JArray.Parse(json));
+            var result = api.Variable(user, key, JObject.Parse(json));
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
