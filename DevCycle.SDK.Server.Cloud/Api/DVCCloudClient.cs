@@ -83,15 +83,33 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
             Variable<T> variable;
 
+            TypeEnum type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
+            
             try
             {
-                variable = await GetResponseAsync<Variable<T>>(user, urlFragment, queryParams);
-                variable.DefaultValue = defaultValue;
-                variable.IsDefaulted = false;
+                var variableResponse = await GetResponseAsync<Variable<object>>(user, urlFragment, queryParams);
+                variableResponse.DefaultValue = defaultValue;
+                variableResponse.IsDefaulted = false;
+                variableResponse.Type = Common.Model.Local.Variable<object>.DetermineType(variableResponse.Value);
+               
+                try
+                {
+                    variable = variableResponse.Convert<T>();
+                }
+                catch (InvalidCastException e)
+                {
+                    variable = new Variable<T>(lowerKey, defaultValue);
+                    logger.LogWarning($"Type mismatch for variable {key}. " +
+                                      $"Expected {type}, got {variableResponse.Type}");
+                }
             }
             catch (DVCException e)
             {
-                variable = new Variable<T>(lowerKey, defaultValue, e.Message);
+                if (e.IsRetryable())
+                {
+                    logger.LogError(e, "Failed to retrieve variable value, using default.");
+                }
+                variable = new Variable<T>(lowerKey, defaultValue);
             }
 
             return variable;

@@ -6,68 +6,13 @@ using System.Text;
 using Newtonsoft.Json;
 
 [assembly: InternalsVisibleTo("DevCycle.SDK.Server.Cloud.MSTests")]
+[assembly: InternalsVisibleTo( "DevCycle.SDK.Server.Cloud")]
 
 namespace DevCycle.SDK.Server.Common.Model.Cloud
 {
  [DataContract]
     public class Variable<T> : IEquatable<Variable<T>>, IVariable
     {
-        /// <summary>
-        /// Variable type
-        /// </summary>
-        /// <value>Variable type</value>
-        [DataMember(Name="type", EmitDefaultValue=false)]
-        public TypeEnum Type { get; set; }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Variable" /> class.
-        /// </summary>
-        /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
-        /// <param name="type">Variable type (required).</param>
-        /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        internal Variable(string key = default, TypeEnum type = default, T value = default, T defaultValue = default)
-        {
-            // to ensure "key" is required (not null)
-            if (key == null)
-            {
-                throw new InvalidDataException("key is a required property for Variable and cannot be null");
-            }
-
-            Key = key;
-
-            Type = type;
-
-            // to ensure "value" is required (not null)
-            if (value == null)
-            {
-                throw new InvalidDataException("value is a required property for Variable and cannot be null");
-            }
-
-            if (defaultValue == null)
-            {
-                throw new InvalidDataException("defaultValue is a required property for Variable and cannot be null");
-            } ;
-
-            DefaultValue = defaultValue;
-
-            Value = value;
-
-            IsDefaulted = false;
-        }
-
-        public Variable(string key, T defaultValue, string evalReason)
-        {
-            Key = key;
-            Value = defaultValue;
-            DefaultValue = defaultValue;
-            EvalReason = evalReason;
-            IsDefaulted = true;
-        }
-
-        Variable()
-        {
-
-        }
-
         /// <summary>
         /// Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.
         /// </summary>
@@ -90,6 +35,63 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         public bool IsDefaulted { get; set; }
         
         public string EvalReason { get; set; }
+        
+        /// <summary>
+        /// Variable type
+        /// </summary>
+        /// <value>Variable type</value>
+        [DataMember(Name="type")]
+        public TypeEnum Type { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Variable" /> class.
+        /// </summary>
+        /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
+        /// <param name="type">Variable type (required).</param>
+        /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
+        internal Variable(string key = default, T value = default, T defaultValue = default)
+        {
+            // to ensure "key" is required (not null)
+            if (key == null)
+            {
+                throw new InvalidDataException("key is a required property for Variable and cannot be null");
+            }
+
+            Key = key;
+
+            Type = Local.Variable<T>.DetermineType(defaultValue);
+
+            // to ensure "value" is required (not null)
+            if (value == null)
+            {
+                throw new InvalidDataException("value is a required property for Variable and cannot be null");
+            }
+
+            if (defaultValue == null)
+            {
+                throw new InvalidDataException("defaultValue is a required property for Variable and cannot be null");
+            } ;
+
+            DefaultValue = defaultValue;
+
+            Value = value;
+
+            IsDefaulted = false;
+        }
+
+        public Variable(string key, T defaultValue)
+        {
+            Key = key;
+            Value = defaultValue;
+            DefaultValue = defaultValue;
+            Type = Local.Variable<T>.DetermineType(defaultValue);
+            IsDefaulted = true;
+        }
+
+        [JsonConstructor]
+        Variable()
+        {
+
+        }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -167,6 +169,20 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
                     hashCode = hashCode * 59 + Value.GetHashCode();
                 return hashCode;
             }
+        }
+    }
+    
+    public static class VariableHelper
+    {
+        public static Variable<T> Convert<T>(this Variable<object> variable)
+        {
+            var defaultValue = variable.DefaultValue;
+            var value = variable.Value;
+
+            return new Variable<T>(variable.Key, (T) value, (T) defaultValue)
+            {
+                IsDefaulted = variable.IsDefaulted,
+            };
         }
     }
 }
