@@ -58,7 +58,7 @@ namespace DevCycle.SDK.Server.Common.API
             try
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
-                if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
+                if (response.IsSuccessful)
                 {
                     if (response.Content != null)
                         return JsonConvert.DeserializeObject<T>(response.Content);
