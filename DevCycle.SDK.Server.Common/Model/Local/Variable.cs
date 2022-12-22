@@ -70,6 +70,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             {
                 returnVariable.Key = variable.Key;
                 returnVariable.Value = variable.Value;
+                returnVariable.DefaultValue = defaultValue;
                 returnVariable.Type = variable.Type;
                 returnVariable.EvalReason = variable.EvalReason;
                 returnVariable.IsDefaulted = false;
@@ -113,34 +114,45 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public bool IsDefaulted { get; set; }
         public string EvalReason { get; set; }
 
-        public static TypeEnum DetermineType(T variableType)
+        public static TypeEnum DetermineType(T variableValue)
         {
             TypeEnum typeEnum;
-            var type = variableType.GetType().GetExtendedType();
+    
+            try
+            {
+                var baseType = variableValue.GetType();
+                var type = baseType.GetExtendedType();
 
-            if (type == typeof(string))
-            {
-                typeEnum = TypeEnum.String;
-            }
-            else if (type.IsNumericType)
-            {
-                typeEnum = TypeEnum.Number;
-            }
-            else if (type == typeof(bool))
-            {
-                typeEnum = TypeEnum.Boolean;
-            }
-            else if (variableType.GetType().IsSubclassOf(typeof(JContainer)))
-            {
-                typeEnum = TypeEnum.JSON;
-            }
-            else
-            {
-                throw new ArgumentException(
-                    $"{type} is not a valid type. Must be String / Number / Boolean or a subclass of a JContainer (JArray / JObject)");
-            }
+                if (type == typeof(string))
+                {
+                    typeEnum = TypeEnum.String;
+                }
+                else if (type.IsNumericType)
+                {
+                    typeEnum = TypeEnum.Number;
+                }
+                else if (type == typeof(bool))
+                {
+                    typeEnum = TypeEnum.Boolean;
+                }
+                else if (baseType.IsSubclassOf(typeof(JObject)) || baseType == typeof(JObject))
+                {
+                    typeEnum = TypeEnum.JSON;
+                }
+                else
+                {
+                    throw new ArgumentException(
+                        $"{type} is not a valid type. Must be String / Number / Boolean or a subclass of a JObject");
+                }
 
-            return typeEnum;
+                return typeEnum;
+            }
+            catch (System.Exception e)
+            {
+                Console.WriteLine(variableValue);
+                Console.WriteLine(e);
+                throw e;
+            }
         }
     }
 }

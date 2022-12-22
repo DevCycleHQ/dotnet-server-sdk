@@ -38,7 +38,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// Variable type
         /// </summary>
         /// <value>Variable type</value>
-        [DataMember(Name = "type", EmitDefaultValue = false)]
+        [DataMember(Name = "type")]
         public TypeEnum Type { get; set; }
 
         public string Key { get; set; }

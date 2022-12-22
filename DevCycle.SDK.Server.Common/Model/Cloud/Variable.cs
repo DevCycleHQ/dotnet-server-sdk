@@ -14,10 +14,33 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
     public class Variable<T> : IEquatable<Variable<T>>, IVariable
     {
         /// <summary>
+        /// Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.
+        /// </summary>
+        /// <value>Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.</value>
+        [DataMember(Name="key")]
+        public string Key { get; set; }
+
+
+        /// <summary>
+        /// Variable value can be a string, number, boolean, or JSON
+        /// </summary>
+        /// <value>Variable value can be a string, number, boolean, or JSON</value>
+        [DataMember(Name="value")]
+        public T Value { get; set; }
+        
+        [DataMember(Name="defaultValue")]
+        public T DefaultValue { get; set; }
+        
+        [DataMember(Name="isDefaulted")]
+        public bool IsDefaulted { get; set; }
+        
+        public string EvalReason { get; set; }
+        
+        /// <summary>
         /// Variable type
         /// </summary>
         /// <value>Variable type</value>
-        [DataMember(Name="type", EmitDefaultValue=false)]
+        [DataMember(Name="type")]
         public TypeEnum Type { get; set; }
         /// <summary>
         /// Initializes a new instance of the <see cref="Variable" /> class.
@@ -64,33 +87,11 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
             IsDefaulted = true;
         }
 
+        [JsonConstructor]
         Variable()
         {
 
         }
-
-        /// <summary>
-        /// Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.
-        /// </summary>
-        /// <value>Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.</value>
-        [DataMember(Name="key")]
-        public string Key { get; set; }
-
-
-        /// <summary>
-        /// Variable value can be a string, number, boolean, or JSON
-        /// </summary>
-        /// <value>Variable value can be a string, number, boolean, or JSON</value>
-        [DataMember(Name="value")]
-        public T Value { get; set; }
-        
-        [DataMember(Name="defaultValue")]
-        public T DefaultValue { get; set; }
-        
-        [DataMember(Name="isDefaulted")]
-        public bool IsDefaulted { get; set; }
-        
-        public string EvalReason { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -168,6 +169,20 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
                     hashCode = hashCode * 59 + Value.GetHashCode();
                 return hashCode;
             }
+        }
+    }
+    
+    public static class VariableHelper
+    {
+        public static Variable<T> Convert<T>(this Variable<object> variable)
+        {
+            var defaultValue = variable.DefaultValue;
+            var value = variable.Value;
+
+            return new Variable<T>(variable.Key, (T) value, (T) defaultValue)
+            {
+                IsDefaulted = variable.IsDefaulted,
+            };
         }
     }
 }
