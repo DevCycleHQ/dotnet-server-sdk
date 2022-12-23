@@ -66,22 +66,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             @event ??= new Event("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
             var user = new User("1");
-            
-            var config = new BucketedUserConfig
-            {
-                FeatureVariationMap = new Dictionary<string, string> { { Fixtures.FeatureId, Fixtures.VariationOnId } },
-                VariableVariationMap = new Dictionary<string, FeatureVariation>
-                {
-                    [Fixtures.VariableKey] = new FeatureVariation
-                    {
-                        Feature = Fixtures.FeatureId,
-                        Variation = Fixtures.VariationOnId
-                    },
-                }
-            };
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
-            eventQueue.QueueEvent(dvcPopulatedUser, @event, config);
+            eventQueue.QueueEvent(dvcPopulatedUser, @event);
         }
         private void QueueSimpleAggregateEvent(EventQueue eventQueue, Event @event = null)
         {

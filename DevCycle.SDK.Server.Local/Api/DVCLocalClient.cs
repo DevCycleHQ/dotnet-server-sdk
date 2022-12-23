@@ -202,11 +202,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
             try
             {
-                eventQueue.QueueEvent(requestUser, userEvent, config);
+                eventQueue.QueueEvent(requestUser, userEvent);
             }
             catch (Exception e)
             {
-                logger.LogError("Unexpected exception generating bucketed config: {Exception}", e.Message);
+                logger.LogError("Unexpected exception queueing event: {Exception}", e.Message);
             }
         }
 
