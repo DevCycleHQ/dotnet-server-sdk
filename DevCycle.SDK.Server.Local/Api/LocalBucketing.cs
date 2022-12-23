@@ -138,15 +138,16 @@ namespace DevCycle.SDK.Server.Local.Api
             return result;
         }
 
-        public void QueueEvent(string envKey, string user, string eventString)
+        public void QueueEvent(string envKey, string user, string eventString, string variableVariationMapStr)
         {
             WasmMutex.Wait();
             var envKeyAddress = GetParameter(envKey);
             var userAddress = GetParameter(user);
             var eventAddress = GetParameter(eventString);
+            var variableMapAddress = GetParameter(variableVariationMapStr);
 
             var initEventQueue = GetFunction("queueEvent");
-            initEventQueue.Invoke(envKeyAddress, userAddress, eventAddress);
+            initEventQueue.Invoke(envKeyAddress, userAddress, eventAddress, variableMapAddress);
             WasmMutex.Release();
         }
 

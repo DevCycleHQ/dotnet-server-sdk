@@ -11,8 +11,8 @@ public interface ILocalBucketing
     public void OnPayloadFailure(string envKey, string payloadId, bool retryable);
     public BucketedUserConfig GenerateBucketedConfig(string token, string user);
     public int EventQueueSize(string envKey);
-    public void QueueEvent(string envKey, string user, string eventString);
-    public void QueueAggregateEvent(string envKey, string user, string eventString);
+    public void QueueEvent(string envKey, string user, string eventString, string variableVariationMapStr);
+    public void QueueAggregateEvent(string envKey, string eventString, string variableVariationMapStr);
     public void StoreConfig(string token, string config);
     public void SetPlatformData(string platformData);
 

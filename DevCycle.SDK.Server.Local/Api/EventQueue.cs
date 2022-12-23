@@ -143,7 +143,12 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
             }
-            localBucketing.QueueEvent(environmentKey, JsonConvert.SerializeObject(user), JsonConvert.SerializeObject(@event));
+            localBucketing.QueueEvent(
+                environmentKey, 
+                JsonConvert.SerializeObject(user), 
+                JsonConvert.SerializeObject(@event),
+                JsonConvert.SerializeObject(config?.VariableVariationMap ?? new Dictionary<string, FeatureVariation>())
+                );
             logger.LogInformation("{Event} queued successfully", @event);
         }
 
@@ -168,12 +173,12 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 throw new ArgumentException("UserId must be set");
             }
-
+            
             if (string.IsNullOrEmpty(@event.Target))
             {
                 throw new ArgumentException("Target must be set");
             }
-
+            
             if (@event.Type == string.Empty)
             {
                 throw new ArgumentException("Type must be set");
@@ -183,18 +188,10 @@ namespace DevCycle.SDK.Server.Local.Api
             eventCopy.Date = DateTimeOffset.UtcNow.DateTime;
             eventCopy.Value = 1;
 
-            var requestEvent = new DVCRequestEvent(
-                eventCopy,
-                user.UserId,
-                config == null ? new Dictionary<string, string>() : config.FeatureVariationMap
-            );
-
-            var userAndFeatureVars = new UserAndFeatureVars(user, requestEvent.FeatureVars);
-
             localBucketing.QueueAggregateEvent(
                 environmentKey,
                 JsonConvert.SerializeObject(@event),
-                JsonConvert.SerializeObject(config.VariableVariationMap)
+                JsonConvert.SerializeObject(config?.VariableVariationMap ?? new Dictionary<string, FeatureVariation>())
                 );
         }
 
