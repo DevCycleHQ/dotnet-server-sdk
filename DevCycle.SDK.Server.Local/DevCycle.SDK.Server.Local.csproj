@@ -20,9 +20,9 @@
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>.NET Server Local Bucketing SDK for DevCycle</Title>
-    <PackageVersion>2.2.3</PackageVersion>
-    <AssemblyVersion>2.2.3</AssemblyVersion>
-    <FileVersion>2.2.3</FileVersion>
+    <PackageVersion>2.2.4</PackageVersion>
+    <AssemblyVersion>2.2.4</AssemblyVersion>
+    <FileVersion>2.2.4</FileVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <RepositoryUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</RepositoryUrl>
