@@ -210,7 +210,7 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 if (!this.flushInProgress)
                 {
-                    ScheduleFlushWithDelay();
+                    ScheduleFlush();
                 }
                 if (queueSize >= localOptions.MaxEventsInQueue)
                 {
@@ -221,7 +221,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return false;
         }
 
-        public void ScheduleFlushWithDelay(bool queueRequest = false)
+        public void ScheduleFlush(bool queueRequest = false)
         {
             if (schedulerIsRunning && !queueRequest) return;
 
@@ -237,7 +237,6 @@ namespace DevCycle.SDK.Server.Local.Api
                     tokenSource.Token.ThrowIfCancellationRequested();
                 }
 
-                await Task.Delay(localOptions.ConfigPollingIntervalMs);
                 if (tokenSource.IsCancellationRequested)
                 {
                     schedulerIsRunning = false;

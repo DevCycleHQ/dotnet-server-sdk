@@ -83,7 +83,7 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private void OnTimedEvent(object source, ElapsedEventArgs e)
         {
-            eventQueue?.ScheduleFlushWithDelay();
+            eventQueue?.ScheduleFlush();
         }
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)
