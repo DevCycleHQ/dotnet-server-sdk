@@ -125,7 +125,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return flushPayloads;
         }
 
-        public virtual void QueueEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
+        public virtual void QueueEvent(DVCPopulatedUser user, Event @event, bool throwOnQueueMax = false)
         {
             if (user is null)
             {
@@ -146,8 +146,7 @@ namespace DevCycle.SDK.Server.Local.Api
             localBucketing.QueueEvent(
                 environmentKey, 
                 JsonConvert.SerializeObject(user), 
-                JsonConvert.SerializeObject(@event),
-                JsonConvert.SerializeObject(config?.VariableVariationMap ?? new Dictionary<string, FeatureVariation>())
+                JsonConvert.SerializeObject(@event)
                 );
             logger.LogInformation("{Event} queued successfully", @event);
         }
