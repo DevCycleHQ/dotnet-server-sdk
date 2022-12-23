@@ -237,7 +237,6 @@ namespace DevCycle.SDK.Server.Local.Api
                     tokenSource.Token.ThrowIfCancellationRequested();
                 }
 
-                await Task.Delay(localOptions.ConfigPollingIntervalMs);
                 if (tokenSource.IsCancellationRequested)
                 {
                     schedulerIsRunning = false;
