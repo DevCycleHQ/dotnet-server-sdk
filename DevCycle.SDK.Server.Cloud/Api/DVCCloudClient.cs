@@ -126,7 +126,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return variable;
         }
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(User user)
         {
             ValidateUser(user);
 
@@ -137,7 +137,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
 
-            return await GetResponseAsync<Dictionary<string, Dictionary<string, object>>>(user, urlFragment, queryParams);
+            return await GetResponseAsync<Dictionary<string, ReadOnlyVariable<object>>>(user, urlFragment, queryParams);
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)

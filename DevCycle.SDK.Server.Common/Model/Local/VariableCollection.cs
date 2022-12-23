@@ -4,9 +4,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 {
     public class VariableCollection
     {
-        private readonly Dictionary<string, Variable<object>> variables;
+        private readonly Dictionary<string, ReadOnlyVariable<object>> variables;
 
-        public VariableCollection(Dictionary<string, Variable<object>> variables)
+        public VariableCollection(Dictionary<string, ReadOnlyVariable<object>> variables)
         {
             this.variables = variables;
         }
@@ -20,24 +20,16 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         /// Retrieve the Variable by key from the collection as the correct typeof T.
         /// Throws InvalidCastException if the requested conversion is incorrect
         /// </summary>
-        public Variable<T> Get<T>(string key)
+        public ReadOnlyVariable<object> Get(string key)
         {
-            Variable<T> existingVariable = null;
-
             if (!variables.ContainsKey(key))
                 throw new KeyNotFoundException(key);
             
             var variable = variables[key];
-            
-            if (variable != null)
-            {
-                existingVariable = variable.Convert<T>();
-            }
-
-            return existingVariable;
+            return variables[key];
         }
 
-        public Dictionary<string, Variable<object>> GetAll()
+        public Dictionary<string, ReadOnlyVariable<object>> GetAll()
         {
             return variables;
         }

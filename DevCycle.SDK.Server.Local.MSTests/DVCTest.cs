@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 using RestSharp;
 using RichardSzalay.MockHttp;
 using Environment = System.Environment;
+using System.Collections.Generic;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
@@ -175,13 +176,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
             // Bucketing needs time to work.
             await Task.Delay(5000);
             var result = api.AllVariables(user);
-        
-            Console.WriteLine(result);
+            
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsNotNull(result);
-            var variable = result.Get<bool>("test");
+            var variable = result.Get("test");
             Assert.IsNotNull(variable);
-            Assert.IsTrue(variable.Value);
+            Assert.IsTrue((Boolean)variable.Value);
         }
 
         [TestMethod]

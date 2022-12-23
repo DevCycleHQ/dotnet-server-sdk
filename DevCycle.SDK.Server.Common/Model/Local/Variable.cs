@@ -7,22 +7,6 @@ using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
-    public static class VariableHelper
-    {
-        public static Variable<T> Convert<T>(this Variable<object> variable)
-        {
-            var defaultValue = variable.DefaultValue ?? variable.Value;
-            var value = variable.Value;
-
-            return new Variable<T>(variable.Key, (T) value)
-            {
-                DefaultValue = (T) defaultValue,
-                EvalReason = variable.EvalReason,
-                IsDefaulted = variable.IsDefaulted,
-            };
-        }
-    }
-
     [DataContract]
     public class Variable<T> : IVariable
     {
@@ -59,6 +43,15 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             IsDefaulted = true;
         }
 
+        public Variable(ReadOnlyVariable<object> readOnlyVariable, T defaultValue)
+        {
+            Key = readOnlyVariable.Key;
+            Value = (T)readOnlyVariable.Value;
+            DefaultValue = defaultValue;
+            Type = DetermineType(defaultValue);
+            IsDefaulted = true;
+        }
+
         // parameterless private constructor for testing
         private Variable()
         {
@@ -85,20 +78,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
                 returnVariable.Type = DetermineType(defaultValue);
             }
 
-            return returnVariable;
-        }
-
-        public static Variable<T> InitializeFromVariableDictionary(
-            Dictionary<string, object> dictionary, 
-            T defaultValue
-        ) 
-        {
-            var returnVariable = new Variable<T>();
-            returnVariable.Key = (string)dictionary["key"];
-            returnVariable.Value = (T)dictionary["value"];
-            returnVariable.Type = DetermineType(defaultValue);
-            returnVariable.EvalReason = (string)dictionary["evalReason"];
-            returnVariable.IsDefaulted = false;
             return returnVariable;
         }
 
