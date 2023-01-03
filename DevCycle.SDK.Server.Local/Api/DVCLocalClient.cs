@@ -122,8 +122,8 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 try
                 {
-                    ReadOnlyVariable<object> readOnlyVariable = config.Variables.Get(key);
-                    existingVariable = new Variable<T>(readOnlyVariable, defaultValue);
+                    ReadOnlyVariable<object> readOnlyVariable = config.Variables[key];
+                    existingVariable = new Variable<T>(readOnlyVariable, defaultValue);                
                 }
                 catch (InvalidCastException)
                 {
@@ -165,12 +165,12 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public VariableCollection AllVariables(User user)
+        public Dictionary<string, ReadOnlyVariable<object>> AllVariables(User user)
         {
             if (!configManager.Initialized)
             {
                 logger.LogWarning("AllVariables called before DVCClient has initialized");
-                return new VariableCollection(new Dictionary<string, ReadOnlyVariable<object>>());
+                return new Dictionary<string, ReadOnlyVariable<object>>();
             }
 
             var requestUser = new DVCPopulatedUser(user);
@@ -183,7 +183,7 @@ namespace DevCycle.SDK.Server.Local.Api
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception retrieving variables from the config: {Exception}", e.Message);
-                return new VariableCollection(new Dictionary<string, ReadOnlyVariable<object>>());
+                return new Dictionary<string, ReadOnlyVariable<object>>();
             }
         }
 
@@ -230,7 +230,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             _ = eventQueue.FlushEvents();
         }
-
+        
         public override void Dispose()
         {
             configManager.Dispose();
