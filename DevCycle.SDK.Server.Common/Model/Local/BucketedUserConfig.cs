@@ -22,7 +22,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public Dictionary<string, FeatureVariation> VariableVariationMap { get; set; }
         
         [DataMember(Name="variables", EmitDefaultValue=false)]
-        public Dictionary<string, Variable<object>> InternalVariables { get; set; }
+        public Dictionary<string, ReadOnlyVariable<object>> InternalVariables { get; set; }
         public VariableCollection Variables { get; private set; }
         
         [DataMember(Name="knownVariableKeys", EmitDefaultValue=false)]
@@ -31,7 +31,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public void InitializeVariables()
         {
             Variables = new VariableCollection(InternalVariables);
-
             if (FeatureVariationMap == null)
             {
                 FeatureVariationMap = new Dictionary<string, string>();
