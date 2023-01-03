@@ -179,7 +179,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsNotNull(result);
-            var variable = result.Get("test");
+            var variable = result["test"];
             Assert.IsNotNull(variable);
             Assert.IsTrue((Boolean)variable.Value);
         }

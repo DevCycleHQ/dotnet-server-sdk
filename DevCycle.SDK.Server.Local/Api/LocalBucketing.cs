@@ -122,7 +122,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var result = generateBucketedConfig.Invoke(tokenAddress, userAddress);
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
-            config?.InitializeVariables();
+            config?.Initialize();
             WasmMutex.Release();
             return config;
         }
