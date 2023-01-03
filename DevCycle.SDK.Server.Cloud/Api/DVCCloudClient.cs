@@ -31,6 +31,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IDVCOptions options=null, DVCRestClientOptions restClientOptions = null)
         {
+            validateEnvironmentKey(serverKey);
             apiClient = new DVCApiClient(serverKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();
             this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();

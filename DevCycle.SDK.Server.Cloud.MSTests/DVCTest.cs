@@ -149,7 +149,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVCCloudClient api = new DVCCloudClient(Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DVCCloudClient api = new DVCCloudClient("dvc_server" + Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {

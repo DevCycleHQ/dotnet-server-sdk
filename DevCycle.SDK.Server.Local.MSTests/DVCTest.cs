@@ -68,7 +68,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         Assert.IsTrue(args.Errors.Count != 0); 
                         Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
                     })
-                .SetEnvironmentKey("CustomCDNURITest")
+                .SetEnvironmentKey("dvc_server_CustomCDNURITest")
                 .Build();
             await Task.Delay(5000);
         }
