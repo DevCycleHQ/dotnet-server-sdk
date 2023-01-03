@@ -55,8 +55,18 @@ namespace DevCycle.SDK.Server.Cloud.Api
             string urlFragment = "v1/features";
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
+
+            try
+            {
+                return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
+
+            }
+            catch (DVCException e)
+            {
+                logger.LogError(e, "Failed to request AllFeatures:");
+                return new Dictionary<string, Feature>();
+            }
             
-            return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
         }
 
         public async Task<Variable<T>> VariableAsync<T>(User user, string key, T defaultValue)
@@ -126,7 +136,15 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
 
-            return await GetResponseAsync<Dictionary<string, Variable<object>>>(user, urlFragment, queryParams);
+            try
+            {
+                return await GetResponseAsync<Dictionary<string, Variable<object>>>(user, urlFragment, queryParams);
+            }
+            catch (DVCException e)
+            {
+                logger.LogError(e, "Failed to request AllVariables: ");
+                return new Dictionary<string, Variable<object>>();
+            }
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
