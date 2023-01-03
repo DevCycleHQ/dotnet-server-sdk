@@ -65,6 +65,7 @@ namespace DevCycle.SDK.Server.Local.Api
             EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
             DVCRestClientOptions restClientOptions = null)
         {
+            validateEnvironmentKey(environmentKey);
             this.environmentKey = environmentKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;

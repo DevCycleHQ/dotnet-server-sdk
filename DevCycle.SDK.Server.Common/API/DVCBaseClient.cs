@@ -79,5 +79,18 @@ namespace DevCycle.SDK.Server.Common.API
                 throw new DVCException(errorResponse);
             }
         }
+
+        public void validateEnvironmentKey(string environmentKey)
+        {
+            if (string.IsNullOrEmpty(environmentKey))
+            {
+                throw new ArgumentException("Missing environment key! Call build with a valid environment key");
+            }
+
+            if (!environmentKey.StartsWith("server") && !environmentKey.StartsWith("dvc_server"))
+            {
+                throw new ArgumentException("Invalid environment key provided. Please call build with a valid server environment key");
+            }
+        }
     }
 }
