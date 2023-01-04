@@ -13,6 +13,14 @@ namespace DevCycle.SDK.Server.Common.Model
     public class ReadOnlyVariable<T>
     {
         /// <summary>
+        /// Variable's unique database ID
+        /// </summary>
+        /// <value>Unique ID</value>
+        [DataMember(Name = "_id")]
+        [JsonProperty("_id")]
+        public T Id { get; set; }
+        
+        /// <summary>
         /// Variable value can be a string, number, boolean, or JSON
         /// </summary>
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
