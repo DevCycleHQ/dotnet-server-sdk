@@ -16,15 +16,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="data">Additional error information detailing the error reasoning.</param>
         public ErrorResponse(string message = default, Object data = default)
         {
-            // to ensure "message" is required (not null)
-            if (message == null)
-            {
-                throw new InvalidDataException("message is a required property for ErrorResponse and cannot be null");
-            }
-            else
-            {
-                this.Message = message;
-            }
+            
+            this.Message = message ?? "An Unexpected Error Occurred.";
             this.Data = data;
         }
         
