@@ -13,6 +13,14 @@ namespace DevCycle.SDK.Server.Common.Model
     public class ReadOnlyVariable<T>
     {
         /// <summary>
+        /// Variable's unique database ID
+        /// </summary>
+        /// <value>Unique ID</value>
+        [DataMember(Name = "_id")]
+        [JsonProperty("_id")]
+        public string Id { get; set; }
+        
+        /// <summary>
         /// Variable value can be a string, number, boolean, or JSON
         /// </summary>
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
@@ -46,6 +54,7 @@ namespace DevCycle.SDK.Server.Common.Model
         {
             var sb = new StringBuilder();
             sb.Append("class ReadOnlyVariable {\n");
+            sb.Append("  Id: ").Append(Id).Append("\n");
             sb.Append("  Key: ").Append(Key).Append("\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Value: ").Append(Value).Append("\n");
