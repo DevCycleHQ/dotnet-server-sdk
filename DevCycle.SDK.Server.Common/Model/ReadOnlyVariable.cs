@@ -18,7 +18,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <value>Unique ID</value>
         [DataMember(Name = "_id")]
         [JsonProperty("_id")]
-        public T Id { get; set; }
+        public string Id { get; set; }
         
         /// <summary>
         /// Variable value can be a string, number, boolean, or JSON
