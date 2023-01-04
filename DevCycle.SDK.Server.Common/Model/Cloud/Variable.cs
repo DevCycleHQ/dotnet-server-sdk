@@ -18,6 +18,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// </summary>
         /// <value>Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.</value>
         [DataMember(Name="key")]
+        [JsonProperty(Required = Required.Always)]
         public string Key { get; set; }
 
 
@@ -26,6 +27,7 @@ namespace DevCycle.SDK.Server.Common.Model.Cloud
         /// </summary>
         /// <value>Variable value can be a string, number, boolean, or JSON</value>
         [DataMember(Name="value")]
+        [JsonProperty(Required = Required.Always)]
         public T Value { get; set; }
         
         [DataMember(Name="defaultValue")]
