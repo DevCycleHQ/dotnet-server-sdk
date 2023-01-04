@@ -137,7 +137,16 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
 
-            return await GetResponseAsync<Dictionary<string, ReadOnlyVariable<object>>>(user, urlFragment, queryParams);
+            try
+            {
+                return await GetResponseAsync<Dictionary<string, ReadOnlyVariable<object>>>(user, urlFragment,
+                    queryParams);
+            }
+            catch (DVCException e)
+            {
+                logger.LogError(e, "Failed to request AllVariables");
+                return new Dictionary<string, ReadOnlyVariable<object>>();
+            }
         }
 
         public async Task<DVCResponse> TrackAsync(User user, Event userEvent)

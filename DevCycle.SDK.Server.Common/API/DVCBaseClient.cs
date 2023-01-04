@@ -55,6 +55,7 @@ namespace DevCycle.SDK.Server.Common.API
         protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null)
         {
             RestResponse response = null;
+            ErrorResponse errorResponse = null;
             try
             {
                 response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
@@ -69,8 +70,13 @@ namespace DevCycle.SDK.Server.Common.API
                         }
                     }
                 }
+
+                if (response.Content != null)
+                {
+                    errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+                }
                 
-                var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content ?? string.Empty);
+                errorResponse ??= new ErrorResponse("Unexpected Error Occurred"); 
                 throw new DVCException(response.StatusCode, errorResponse);
             }
             catch (System.Exception e)
@@ -80,7 +86,7 @@ namespace DevCycle.SDK.Server.Common.API
                     throw e;
                 }
 
-                var errorResponse = new ErrorResponse(e.ToString());
+                errorResponse = new ErrorResponse(e.ToString());
                 if (response != null) throw new DVCException(response.StatusCode, errorResponse);
                 throw new DVCException(errorResponse);
             }
