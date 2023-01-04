@@ -54,6 +54,7 @@ namespace DevCycle.SDK.Server.Common.Model
         {
             var sb = new StringBuilder();
             sb.Append("class ReadOnlyVariable {\n");
+            sb.Append("  Id: ").Append(Id).Append("\n");
             sb.Append("  Key: ").Append(Key).Append("\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Value: ").Append(Value).Append("\n");
