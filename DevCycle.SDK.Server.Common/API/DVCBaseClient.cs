@@ -61,7 +61,13 @@ namespace DevCycle.SDK.Server.Common.API
                 if (response.IsSuccessful)
                 {
                     if (response.Content != null)
-                        return JsonConvert.DeserializeObject<T>(response.Content);
+                    {
+                        var deserializedResponse = JsonConvert.DeserializeObject<T>(response.Content);
+                        if (deserializedResponse != null)
+                        {
+                            return deserializedResponse;
+                        }
+                    }
                 }
                 
                 var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content ?? string.Empty);
