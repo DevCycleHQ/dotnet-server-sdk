@@ -52,13 +52,13 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null)
+        protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null, bool shouldRetry = true)
         {
             RestResponse response = null;
             ErrorResponse errorResponse = null;
             try
             {
-                response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams);
+                response = await GetApiClient().SendRequestAsync(body, urlFragment, queryParams, shouldRetry);
                 if (response.IsSuccessful)
                 {
                     if (response.Content != null)

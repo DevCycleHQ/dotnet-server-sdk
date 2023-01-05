@@ -10,6 +10,6 @@ namespace DevCycle.SDK.Server.Common.API
         public string GetServerSDKKey();
         public RestClient GetRestClient();
 
-        public Task<RestResponse> SendRequestAsync(object json, string urlFragment, Dictionary<string, string> queryParams = null);
+        public Task<RestResponse> SendRequestAsync(object json, string urlFragment, Dictionary<string, string> queryParams = null, bool shouldRetry = false);
     }
 }
