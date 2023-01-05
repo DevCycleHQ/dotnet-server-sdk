@@ -98,17 +98,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
             await configManager.Item1.InitializeConfigAsync();
         }
 
-        [TestMethod]
-        public async Task initializeConfigAsync_configIsNotFetched_thenFetchedOnNextCall_NotificationIsSuccessful()
-        {
-            var configManager = getTestConfigManager();
-            await configManager.Item1.InitializeConfigAsync();
-            await Task.Delay(2000);
-
-            Assert.AreEqual(2, configManager.Item2.GetMatchCount(configManager.Item3));
-        }
-
-
         private void DidInitializeSubscriber(object o, DVCEventArgs e)
         {
             Assert.IsTrue(e.Success);

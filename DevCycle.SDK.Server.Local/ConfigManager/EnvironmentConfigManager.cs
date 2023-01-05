@@ -9,6 +9,7 @@ using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
+using DevCycle.SDK.Server.Common.Policies;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp;
@@ -164,7 +165,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
             try
             {
-                RestResponse res = await restClient.ExecuteAsync(request, cts.Token);
+                RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy.ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
                 SetConfig(res);
             }
             catch (DVCException e)

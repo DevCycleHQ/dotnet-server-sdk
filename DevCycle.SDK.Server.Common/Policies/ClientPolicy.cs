@@ -9,20 +9,25 @@ namespace DevCycle.SDK.Server.Common.Policies
 {
     public class ClientPolicy
     {
-        public AsyncPolicyWrap<RestResponse> RetryPolicyWithTimeout { get; }
+        public AsyncPolicyWrap<RestResponse> ExponentialBackoffRetryPolicyWithTimeout { get; }
+        public AsyncRetryPolicy<RestResponse> RetryOncePolicy { get; }
         private static ClientPolicy _instance = new ClientPolicy();
 
         private ClientPolicy()
         {
             AsyncTimeoutPolicy timeoutPolicy = Policy.TimeoutAsync(5, TimeoutStrategy.Pessimistic);
-            AsyncRetryPolicy<RestResponse> retryPolicy = Policy
+            AsyncRetryPolicy<RestResponse> exponentialBackoffRetryPolicy = Policy
                 .HandleResult<RestResponse>(res => (int)res.StatusCode >= 500)
                 .WaitAndRetryAsync(5, retryAttempt => {
                   var delay = Math.Pow(2, retryAttempt) * 100;
                   var randomSum = delay * 0.2 * new Random().NextDouble();
                   return TimeSpan.FromMilliseconds(delay + randomSum);
                 });
-            RetryPolicyWithTimeout = retryPolicy.WrapAsync(timeoutPolicy);
+            ExponentialBackoffRetryPolicyWithTimeout = exponentialBackoffRetryPolicy.WrapAsync(timeoutPolicy);
+
+            RetryOncePolicy = Policy
+                .HandleResult<RestResponse>(res => (int)res.StatusCode >= 500)
+                .RetryAsync(1);
         }
 
         public static ClientPolicy GetInstance() => _instance;

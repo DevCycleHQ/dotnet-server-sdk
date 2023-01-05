@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Common.API
 
             if (shouldRetry)
             {
-                return await ClientPolicy.GetInstance().RetryPolicyWithTimeout.ExecuteAsync(() => restClient.ExecuteAsync(request));
+                return await ClientPolicy.GetInstance().ExponentialBackoffRetryPolicyWithTimeout.ExecuteAsync(() => restClient.ExecuteAsync(request));
             }
             return await restClient.ExecuteAsync(request);
         }
