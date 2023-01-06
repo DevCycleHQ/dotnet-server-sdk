@@ -8,7 +8,7 @@ on:
       - DevCycle.SDK.Server.Common/**
 
 jobs:
-  build:
+  harness-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: convictional/trigger-workflow-and-wait@v1.6.1
