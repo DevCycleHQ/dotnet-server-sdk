@@ -6,9 +6,11 @@ on:
       - DevCycle.SDK.Server.Cloud/**
       - DevCycle.SDK.Server.Local/**
       - DevCycle.SDK.Server.Common/**
+      - .github/**
 
 jobs:
   harness-tests:
+    name: Harness Tests
     runs-on: ubuntu-latest
     steps:
       - uses: convictional/trigger-workflow-and-wait@v1.6.1
