@@ -64,6 +64,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             catch (DVCException e)
             {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                    throw e;
+                }
                 logger.LogError(e, "Failed to request AllFeatures:");
                 return new Dictionary<string, Feature>();
             }
@@ -116,8 +119,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             catch (DVCException e)
             {
-                if (e.IsRetryable())
-                {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400 && (int)e.HttpStatusCode != 404) {
+                    throw e;
+                } else {
                     logger.LogError(e, "Failed to retrieve variable value, using default.");
                 }
                 variable = new Variable<T>(lowerKey, defaultValue);
@@ -144,6 +148,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             catch (DVCException e)
             {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                    throw e;
+                }
                 logger.LogError(e, "Failed to request AllVariables");
                 return new Dictionary<string, ReadOnlyVariable<object>>();
             }
@@ -161,7 +168,18 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
             UserAndEvents userAndEvents = new UserAndEvents(new List<Event>() {userEvent}, user);
 
-            return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment, queryParams);
+            try 
+            {
+                return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment, queryParams);
+            } 
+            catch (DVCException e)
+            {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                    throw e;
+                }
+                logger.LogError(e, "Failed to request AllVariables");
+                return new DVCResponse(e.ToString());
+            }
         }
 
         public override void Dispose()
