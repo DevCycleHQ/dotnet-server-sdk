@@ -13,7 +13,7 @@ jobs:
     name: Harness Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: convictional/trigger-workflow-and-wait@v1.6.1
+      - uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: DevCycleHQ
           repo: test-harness
@@ -23,4 +23,6 @@ jobs:
           propagate_failure: true
           trigger_workflow: true
           wait_workflow: true
-          client_payload: '{ "sha": "${{ github.event.pull_request.head.sha }}", "sdk": "dotnet" }'
+          client_payload: '{ "sha": "${{ github.event.pull_request.head.sha }}", "sdk": "dotnet", "title": "DotNet PR: ${{ github.event.pull_request.title }}"}'
+          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
+
