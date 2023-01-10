@@ -205,6 +205,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
                 logger.LogError(finalError.ErrorResponse.Message);
                 dvcEventArgs.Errors.Add(finalError);
+            } catch (System.ArgumentNullException e) {
+                // This error can be thrown if the config is in an invalid format 
+                // from the method SetConfig
+                logger.LogError(e.Message);
+                dvcEventArgs.Errors.Add(new DVCException(new ErrorResponse(e.Message)));
             }
             finally
             {
