@@ -120,6 +120,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     var isInitialFetch = Config == null;
                     Config = res.Content;
                     localBucketing.StoreConfig(sdkKey, Config);
+
                     IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
                     configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
