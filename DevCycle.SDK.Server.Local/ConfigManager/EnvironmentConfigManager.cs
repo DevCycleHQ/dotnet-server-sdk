@@ -95,10 +95,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             if (Initialized && alreadyCalledHandler) return;
 
-            initializedHandler?.Invoke(this, e);
-
-            if (Initialized)
-            {
+            if (alreadyCalledHandler == false) {
+                initializedHandler?.Invoke(this, e);
                 alreadyCalledHandler = true;
             }
         }

@@ -16,6 +16,7 @@ namespace DevCycle.SDK.Server.Local.Api
     public class LocalBucketing : ILocalBucketing
     {
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
+        private static readonly SemaphoreSlim FlushMutex = new(1, 1);
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
         private Linker WASMLinker { get; }
@@ -243,6 +244,16 @@ namespace DevCycle.SDK.Server.Local.Api
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
             var length = memory.ReadInt32(address - 4);
             return Encoding.Unicode.GetString(memory.GetSpan(address, length));
+        }
+
+        public void StartFlush()
+        {
+            FlushMutex.Wait();
+        }
+
+        public void EndFlush()
+        {
+            FlushMutex.Release();
         }
     }
 }

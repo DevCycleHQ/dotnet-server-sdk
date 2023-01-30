@@ -99,12 +99,6 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
 
-                eventQueue.QueueAggregateEvent(
-                    requestUser,
-                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
-                    null
-                );
-
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
 
@@ -237,6 +231,8 @@ namespace DevCycle.SDK.Server.Local.Api
         
         public override void Dispose()
         {
+            Task flushTask = eventQueue.FlushEvents();
+            flushTask.Wait();
             configManager.Dispose();
             timer.Dispose();
         }
