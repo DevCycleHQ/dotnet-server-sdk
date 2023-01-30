@@ -127,7 +127,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     if (!isInitialFetch) return;
 
                     Initialized = true;
-                    dvcEventArgs.Success = true;
                     break;
                 }
                 default:
@@ -140,11 +139,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     {
                         logger.LogError("Failed to download DevCycle config");
 
-                        var exception = new DVCException(res.StatusCode,
+                        throw new DVCException(res.StatusCode,
                             new ErrorResponse("Failed to download DevCycle config."));
-                        dvcEventArgs.Errors.Add(exception);
-
-                        throw exception;
                     }
 
                     break;
@@ -167,6 +163,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             try
             {
                 RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy.ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
+                dvcEventArgs.Success = true;
                 SetConfig(res);
             }
             catch (DVCException e)
@@ -174,6 +171,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 DVCException finalError;
                 if (!e.IsRetryable())
                 {
+                    dvcEventArgs.Success = false;
+
                     if ((int) e.HttpStatusCode == 403)
                     {
                         finalError = new DVCException(e.HttpStatusCode,
@@ -188,24 +187,22 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
                     pollingTimer?.Dispose();
                     PollingEnabled = false;
+
+                    logger.LogError(finalError.ErrorResponse.Message);
+                    dvcEventArgs.Errors.Add(finalError);
                 }
                 else if (Config == null && configEtag == null)
                 {
-                    finalError = new DVCException(e.HttpStatusCode,
-                        new ErrorResponse("Error loading initial config. Exception: " + e.Message));
+                    logger.LogDebug("Error loading initial config. Exception: " + e.Message);
                 }
                 else
                 {
-                    finalError = new DVCException(e.HttpStatusCode,
-                        new ErrorResponse(String.Format(
+                    logger.LogDebug(String.Format(
                             "Error loading config. Using cache etag: {ConfigEtag}. Exception: {Exception}",
                             configEtag,
                             e.Message
-                        )));
+                    ));
                 }
-
-                logger.LogError(finalError.ErrorResponse.Message);
-                dvcEventArgs.Errors.Add(finalError);
             } catch (WasmtimeException e) {
                 // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
                 logger.LogError("Failed to set config: " + e.Message);
