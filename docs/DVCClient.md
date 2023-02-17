@@ -26,7 +26,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetSDKKey("INSERT_SDK_KEY")
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {
@@ -103,7 +103,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetSDKKey("INSERT_SDK_KEY")
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {
@@ -182,7 +182,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetSDKKey("INSERT_SDK_KEY")
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {
@@ -258,7 +258,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetSDKKey("INSERT_SDK_KEY")
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {
@@ -339,7 +339,7 @@ namespace Example
             var user = new User("test");
 
             DVCClientBuilder apiBuilder = new DVCClientBuilder();
-            api = apiBuilder.SetEnvironmentKey("INSERT_SDK_KEY")
+            api = apiBuilder.SetSDKKey("INSERT_SDK_KEY")
                 .SetOptions(new DVCOptions(1000, 5000))
                 .SetInitializedSubscriber((o, e) =>
                 {

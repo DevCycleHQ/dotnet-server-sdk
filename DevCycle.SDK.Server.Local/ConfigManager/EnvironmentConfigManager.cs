@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
     {
         private const int MinimumPollingIntervalMs = 1000;
 
-        private readonly string environmentKey;
+        private readonly string sdkKey;
         private readonly int pollingIntervalMs;
         private readonly int requestTimeoutMs;
         private readonly RestClient restClient;
@@ -40,13 +40,16 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private string configEtag;
         private bool alreadyCalledHandler;
 
-        public EnvironmentConfigManager(string environmentKey, DVCLocalOptions dvcLocalOptions,
+        public EnvironmentConfigManager(
+            string sdkKey, 
+            DVCLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, EventHandler<DVCEventArgs> initializedHandler = null,
-            DVCRestClientOptions restClientOptions = null)
-        {
+            ILocalBucketing localBucketing,
+            EventHandler<DVCEventArgs> initializedHandler = null,
+            DVCRestClientOptions restClientOptions = null
+        ) {
             localOptions = dvcLocalOptions;
-            this.environmentKey = environmentKey;
+            this.sdkKey = sdkKey;
 
             pollingIntervalMs = dvcLocalOptions.ConfigPollingIntervalMs >= MinimumPollingIntervalMs
                 ? dvcLocalOptions.ConfigPollingIntervalMs
@@ -101,7 +104,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private string GetConfigUrl()
         {
-            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{environmentKey}.json";
+            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{sdkKey}.json";
         }
 
         private void SetConfig(RestResponse res)
@@ -115,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 {
                     var isInitialFetch = Config == null;
                     Config = res.Content;
-                    localBucketing.StoreConfig(environmentKey, Config);
+                    localBucketing.StoreConfig(sdkKey, Config);
 
 
                     IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");

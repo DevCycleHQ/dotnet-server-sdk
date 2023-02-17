@@ -44,33 +44,37 @@ namespace DevCycle.SDK.Server.Local.Api
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
-            configManager ??= new EnvironmentConfigManager(environmentKey, options, loggerFactory, localBucketing,
+            configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
-            return new DVCLocalClient(environmentKey, options, loggerFactory, configManager, localBucketing,
+            return new DVCLocalClient(sdkKey, options, loggerFactory, configManager, localBucketing,
                 restClientOptions);
         }
     }
 
     public sealed class DVCLocalClient : DVCBaseClient
     {
-        private readonly string environmentKey;
+        private readonly string sdkKey;
         private readonly EnvironmentConfigManager configManager;
         private readonly EventQueue eventQueue;
         private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
         private readonly Timer timer;
 
-        internal DVCLocalClient(string environmentKey, DVCLocalOptions dvcLocalOptions, ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, ILocalBucketing localBucketing,
-            DVCRestClientOptions restClientOptions = null)
-        {
-            validateEnvironmentKey(environmentKey);
-            this.environmentKey = environmentKey;
+        internal DVCLocalClient(
+            string sdkKey, 
+            DVCLocalOptions dvcLocalOptions, 
+            ILoggerFactory loggerFactory,
+            EnvironmentConfigManager configManager, 
+            ILocalBucketing localBucketing,
+            DVCRestClientOptions restClientOptions = null
+        )  {
+            ValidateSDKKey(sdkKey);
+            this.sdkKey = sdkKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
-            eventQueue = new EventQueue(environmentKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
+            eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
             Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
             var platformData = new PlatformData();
@@ -109,7 +113,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             try
             {
-                config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
             }
             catch (Exception e)
             {
@@ -155,7 +159,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             try
             {
-                var config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
                 return config.Features;
             }
             catch (Exception e)
@@ -177,7 +181,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             try
             {
-                var config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
                 return config.Variables;
             }
             catch (Exception e)
@@ -198,7 +202,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             else
             {
-                config = localBucketing.GenerateBucketedConfig(environmentKey, requestUser.ToJson());
+                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
             }
 
 

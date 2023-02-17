@@ -18,7 +18,7 @@ namespace Example
 
         static async Task Main()
         {
-            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
             var user = new User("testing");
 
             DVCLocalClientBuilder apiBuilder = new DVCLocalClientBuilder();

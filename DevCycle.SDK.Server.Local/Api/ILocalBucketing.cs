@@ -5,15 +5,15 @@ namespace DevCycle.SDK.Server.Local.Api;
 
 public interface ILocalBucketing
 {
-    public void InitEventQueue(string envKey, string options);
-    public List<FlushPayload> FlushEventQueue(string envKey);
-    public void OnPayloadSuccess(string envKey, string payloadId);
-    public void OnPayloadFailure(string envKey, string payloadId, bool retryable);
-    public BucketedUserConfig GenerateBucketedConfig(string token, string user);
-    public int EventQueueSize(string envKey);
-    public void QueueEvent(string envKey, string user, string eventString);
-    public void QueueAggregateEvent(string envKey, string eventString, string variableVariationMapStr);
-    public void StoreConfig(string token, string config);
+    public void InitEventQueue(string sdkKey, string options);
+    public List<FlushPayload> FlushEventQueue(string sdkKey);
+    public void OnPayloadSuccess(string sdkKey, string payloadId);
+    public void OnPayloadFailure(string sdkKey, string payloadId, bool retryable);
+    public BucketedUserConfig GenerateBucketedConfig(string sdkKey, string user);
+    public int EventQueueSize(string sdkKey);
+    public void QueueEvent(string sdkKey, string user, string eventString);
+    public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr);
+    public void StoreConfig(string sdkKey, string config);
     public void SetPlatformData(string platformData);
 
 }

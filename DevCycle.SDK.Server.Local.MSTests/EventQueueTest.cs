@@ -23,7 +23,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DVCLocalOptions localOptions = null)
         {
             var mockHttp = new MockHttpMessageHandler();
-            var environmentKey = $"server-{Guid.NewGuid()}";
+            var sdkKey = $"server-{Guid.NewGuid()}";
             var statusCode =
                 isError
                     ? isRetryableError
@@ -43,10 +43,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
             });
             var localBucketing = new LocalBucketing();
             string config = new string(Fixtures.Config());
-            localBucketing.StoreConfig(environmentKey, config);
+            localBucketing.StoreConfig(sdkKey, config);
             localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
 
-            var eventQueue = new EventQueue(environmentKey, localOptions, loggerFactory,
+            var eventQueue = new EventQueue(sdkKey, localOptions, loggerFactory,
                 localBucketing, new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }

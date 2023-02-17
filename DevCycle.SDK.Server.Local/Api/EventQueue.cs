@@ -19,7 +19,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly DVCLocalOptions localOptions;
         private readonly DVCEventsApiClient dvcEventsApiClient;
         private readonly ILocalBucketing localBucketing;
-        private readonly string environmentKey;
+        private readonly string sdkKey;
 
         private readonly ILogger logger;
 
@@ -28,14 +28,18 @@ namespace DevCycle.SDK.Server.Local.Api
         private bool flushInProgress;
         private event EventHandler<DVCEventArgs> FlushedEvents;
         
-        public EventQueue(string environmentKey, DVCLocalOptions localOptions, ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing, DVCRestClientOptions restClientOptions = null)
-        {
-            dvcEventsApiClient = new DVCEventsApiClient(environmentKey, localOptions, restClientOptions);
-            this.environmentKey = environmentKey;
+        public EventQueue(
+            string sdkKey, 
+            DVCLocalOptions localOptions,
+            ILoggerFactory loggerFactory,
+            ILocalBucketing localBucketing,
+            DVCRestClientOptions restClientOptions = null
+        ) {
+            dvcEventsApiClient = new DVCEventsApiClient(sdkKey, localOptions, restClientOptions);
+            this.sdkKey = sdkKey;
             this.localOptions = localOptions;
             this.localBucketing = localBucketing;
-            this.localBucketing.InitEventQueue(environmentKey, JsonConvert.SerializeObject(localOptions));
+            this.localBucketing.InitEventQueue(sdkKey, JsonConvert.SerializeObject(localOptions));
 
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
@@ -86,7 +90,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     if (res.StatusCode != HttpStatusCode.Created)
                     {
                         logger.LogError($"Error publishing events, status: ${res.StatusCode}, body: ${res.Content}");
-                        localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
+                        localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
                         flushResultEvent.Success = false;
                         flushResultEvent.Errors.Add(new DVCException(res.StatusCode,
                             new ErrorResponse(res.ErrorMessage ?? "")));
@@ -94,13 +98,13 @@ namespace DevCycle.SDK.Server.Local.Api
                     else
                     {
                         logger.LogDebug($"DVC Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
-                        localBucketing.OnPayloadSuccess(this.environmentKey, flushPayload.PayloadID);
+                        localBucketing.OnPayloadSuccess(this.sdkKey, flushPayload.PayloadID);
                     }
                 }
                 catch (DVCException ex)
                 {
                     logger.LogError($"DVC Error Flushing Events response message: ${ex.Message}");
-                    localBucketing.OnPayloadFailure(this.environmentKey, flushPayload.PayloadID, true);
+                    localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, true);
                     flushResultEvent.Success = false;
                     flushResultEvent.Errors.Add(ex);
                 }
@@ -114,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.Api
             List<FlushPayload> flushPayloads;
             try
             {
-                flushPayloads = localBucketing.FlushEventQueue(environmentKey);
+                flushPayloads = localBucketing.FlushEventQueue(sdkKey);
             }
             catch (Exception ex)
             {
@@ -144,7 +148,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 return;
             }
             localBucketing.QueueEvent(
-                environmentKey, 
+                sdkKey, 
                 JsonConvert.SerializeObject(user), 
                 JsonConvert.SerializeObject(@event)
                 );
@@ -188,7 +192,7 @@ namespace DevCycle.SDK.Server.Local.Api
             eventCopy.Value = 1;
 
             localBucketing.QueueAggregateEvent(
-                environmentKey,
+                sdkKey,
                 JsonConvert.SerializeObject(@event),
                 JsonConvert.SerializeObject(config?.VariableVariationMap ?? new Dictionary<string, FeatureVariation>())
                 );
@@ -204,7 +208,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private bool CheckEventQueueSize()
         {
-            var queueSize = localBucketing.EventQueueSize(this.environmentKey);
+            var queueSize = localBucketing.EventQueueSize(this.sdkKey);
             if (queueSize >= localOptions.FlushEventQueueSize)
             {
                 if (!this.flushInProgress)

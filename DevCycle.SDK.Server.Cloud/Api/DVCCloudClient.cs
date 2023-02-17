@@ -19,7 +19,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         public override DVCCloudClient Build()
         {
-            return new DVCCloudClient(environmentKey, loggerFactory, options, restClientOptions);
+            return new DVCCloudClient(sdkKey, loggerFactory, options, restClientOptions);
         }
     }
     public sealed class DVCCloudClient : DVCBaseClient
@@ -29,10 +29,14 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         private readonly DVCCloudOptions options;
 
-        internal DVCCloudClient(string serverKey, ILoggerFactory loggerFactory, IDVCOptions options=null, DVCRestClientOptions restClientOptions = null)
-        {
-            validateEnvironmentKey(serverKey);
-            apiClient = new DVCApiClient(serverKey, restClientOptions);
+        internal DVCCloudClient(
+            string sdkKey,
+            ILoggerFactory loggerFactory, 
+            IDVCOptions options=null,
+            DVCRestClientOptions restClientOptions = null
+        ) {
+            ValidateSDKKey(sdkKey);
+            apiClient = new DVCApiClient(sdkKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DVCCloudClient>();
             this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();
         }
