@@ -35,9 +35,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     "{}");
             var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var environmentKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
-            localBucketing.StoreConfig(environmentKey, config);
-            var configManager = new EnvironmentConfigManager(environmentKey, options ?? new DVCLocalOptions(),
+            var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
+            localBucketing.StoreConfig(sdkKey, config);
+            var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DVCLocalOptions(),
                 new NullLoggerFactory(),
                 localBucketing, restClientOptions: new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             configManager.Initialized = true;
@@ -46,7 +46,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .SetConfigManager(configManager)
                 .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCLocalOptions())
-                .SetEnvironmentKey(environmentKey)
+                .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)
                 .Build();
             return api;
@@ -68,7 +68,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                         Assert.IsTrue(args.Errors.Count != 0); 
                         Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
                     })
-                .SetEnvironmentKey("dvc_server_CustomCDNURITest")
+                .SetSDKKey("dvc_server_CustomCDNURITest")
                 .Build();
             await Task.Delay(5000);
         }
@@ -76,17 +76,17 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetProductionAllVariables()
         {
-            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
+            var sdkKey = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
             if (string.IsNullOrEmpty(sdkKey))
             {
                 Console.WriteLine(
-                    "DEVCYCLE_SDK_KEY is not set in the environment variables - skipping production features test.");
+                    "DVC_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
                 return;
             }
 
             var api = new DVCLocalClientBuilder()
                 .SetInitializedSubscriber(((sender, args) => { Console.WriteLine($"Success? : {args.Success}"); }))
-                .SetEnvironmentKey(sdkKey)
+                .SetSDKKey(sdkKey)
                 .Build();
 
             await Task.Delay(5000);

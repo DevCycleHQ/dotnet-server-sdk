@@ -52,8 +52,12 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        protected async Task<T> GetResponseAsync<T>(object body, string urlFragment, Dictionary<string, string> queryParams = null, bool shouldRetry = true)
-        {
+        protected async Task<T> GetResponseAsync<T>(
+            object body,
+            string urlFragment, 
+            Dictionary<string, string> queryParams = null,
+            bool shouldRetry = true
+        )  {
             RestResponse response = null;
             ErrorResponse errorResponse = null;
             try
@@ -92,16 +96,16 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        public void validateEnvironmentKey(string environmentKey)
+        public void ValidateSDKKey(string sdkKey)
         {
-            if (string.IsNullOrEmpty(environmentKey))
+            if (string.IsNullOrEmpty(sdkKey))
             {
-                throw new ArgumentException("Missing environment key! Call build with a valid environment key");
+                throw new ArgumentException("Missing SDK key! Call build with a valid SDK key");
             }
 
-            if (!environmentKey.StartsWith("server") && !environmentKey.StartsWith("dvc_server"))
+            if (!sdkKey.StartsWith("server") && !sdkKey.StartsWith("dvc_server"))
             {
-                throw new ArgumentException("Invalid environment key provided. Please call build with a valid server environment key");
+                throw new ArgumentException("Invalid SDK key provided. Please call build with a valid server SDK key");
             }
         }
     }

@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             DVCCloudClient api = new DVCCloudClientBuilder()
                 .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
-                .SetEnvironmentKey($"server-{Guid.NewGuid().ToString()}")
+                .SetSDKKey($"server-{Guid.NewGuid().ToString()}")
                 .SetLogger(new NullLoggerFactory())
                 .Build();
             return api;
@@ -40,16 +40,16 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetProductionAllFeatures()
         {
-            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY");
+            var sdkKey = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
             if (string.IsNullOrEmpty(sdkKey))
             {
                 Console.WriteLine(
-                    "DEVCYCLE_SDK_KEY is not set in the environment variables - skipping production features test.");
+                    "DVC_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
                 return;
             }
 
             DVCCloudClient api = new DVCCloudClientBuilder()
-                    .SetEnvironmentKey(Environment.GetEnvironmentVariable("DEVCYCLE_SDK_KEY"))
+                    .SetSDKKey(Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY"))
                     .SetLogger(new NullLoggerFactory())
                     .Build();
             var resp = await api.AllFeaturesAsync(new User("test"));

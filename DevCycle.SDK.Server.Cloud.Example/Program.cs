@@ -12,7 +12,7 @@ namespace Example
     {
         static async Task Main(string[] args)
         {
-            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SDK_TOKEN");
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
 
             DVCCloudClient api = new DVCCloudClientBuilder().SetEnvironmentKey(SDK_ENV_VAR).SetLogger(new NullLoggerFactory()).Build();
             

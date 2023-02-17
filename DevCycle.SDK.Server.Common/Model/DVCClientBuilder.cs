@@ -16,17 +16,23 @@ namespace DevCycle.SDK.Server.Common.Model
         where OptionsType : IDVCOptions
         where BuilderType : DVCClientBuilder<ClientType, OptionsType, BuilderType>
     {
-        protected string environmentKey;
+        protected string sdkKey;
         protected OptionsType options;
         protected ILoggerFactory loggerFactory;
         protected EventHandler<DVCEventArgs> initialized;
         protected DVCRestClientOptions restClientOptions;
 
         protected abstract BuilderType BuilderInstance { get; }
+
+        public BuilderType SetSDKKey(string key)
+        {
+            sdkKey = key;
+            return BuilderInstance;
+        }
         
         public BuilderType SetEnvironmentKey(string key)
         {
-            environmentKey = key;
+            sdkKey = key;
             return BuilderInstance;
         }
 

@@ -103,23 +103,23 @@ namespace DevCycle.SDK.Server.Local.Api
             WasmMutex.Release();
         }
 
-        public void InitEventQueue(string envKey, string options)
+        public void InitEventQueue(string sdkKey, string options)
         {
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var optionsAddress = GetParameter(options);
 
             var initEventQueue = GetFunction("initEventQueue");
-            initEventQueue.Invoke(envKeyAddress, optionsAddress);
+            initEventQueue.Invoke(sdkKeyAddress, optionsAddress);
         }
 
-        public BucketedUserConfig GenerateBucketedConfig(string token, string user)
+        public BucketedUserConfig GenerateBucketedConfig(string sdkKey, string user)
         {
             WasmMutex.Wait();
-            var tokenAddress = GetParameter(token);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var userAddress = GetParameter(user);
 
             var generateBucketedConfig = GetFunction("generateBucketedConfigForUser");
-            var result = generateBucketedConfig.Invoke(tokenAddress, userAddress);
+            var result = generateBucketedConfig.Invoke(sdkKeyAddress, userAddress);
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.Initialize();
@@ -127,81 +127,81 @@ namespace DevCycle.SDK.Server.Local.Api
             return config;
         }
 
-        public int EventQueueSize(string envKey)
+        public int EventQueueSize(string sdkKey)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             
             var eventQueueSize = GetFunction("eventQueueSize");
-            var result = (int)eventQueueSize.Invoke(envKeyAddress);
+            var result = (int)eventQueueSize.Invoke(sdkKeyAddress);
             WasmMutex.Release();
             return result;
         }
 
-        public void QueueEvent(string envKey, string user, string eventString)
+        public void QueueEvent(string sdkKey, string user, string eventString)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var userAddress = GetParameter(user);
             var eventAddress = GetParameter(eventString);
 
             var initEventQueue = GetFunction("queueEvent");
-            initEventQueue.Invoke(envKeyAddress, userAddress, eventAddress);
+            initEventQueue.Invoke(sdkKeyAddress, userAddress, eventAddress);
             WasmMutex.Release();
         }
 
-        public void QueueAggregateEvent(string envKey, string eventString, string variableVariationMapStr)
+        public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var eventAddress = GetParameter(eventString);
             var variableMapAddress = GetParameter(variableVariationMapStr);
 
             var queueAggregateEvent = GetFunction("queueAggregateEvent");
-            queueAggregateEvent.Invoke(envKeyAddress, eventAddress, variableMapAddress);
+            queueAggregateEvent.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
             WasmMutex.Release();
         }
 
-        public List<FlushPayload> FlushEventQueue(string envKey)
+        public List<FlushPayload> FlushEventQueue(string sdkKey)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var flushEventQueue = GetFunction("flushEventQueue");
             
-            var result = flushEventQueue.Invoke(envKeyAddress);
+            var result = flushEventQueue.Invoke(sdkKeyAddress);
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
             WasmMutex.Release();
             return payloads;
         }
 
-        public void OnPayloadSuccess(string envKey, string payloadId)
+        public void OnPayloadSuccess(string sdkKey, string payloadId)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadSuccess = GetFunction("onPayloadSuccess");
-            markPayloadSuccess.Invoke(envKeyAddress, payloadIdAddress);
+            markPayloadSuccess.Invoke(sdkKeyAddress, payloadIdAddress);
             WasmMutex.Release();
         }
 
-        public void OnPayloadFailure(string envKey, string payloadId, bool retryable)
+        public void OnPayloadFailure(string sdkKey, string payloadId, bool retryable)
         {
             WasmMutex.Wait();
-            var envKeyAddress = GetParameter(envKey);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadFailure = GetFunction("onPayloadFailure");
-            markPayloadFailure.Invoke(envKeyAddress, payloadIdAddress, retryable ? 1 : 0);
+            markPayloadFailure.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
             WasmMutex.Release();
         }
 
-        public void StoreConfig(string token, string config)
+        public void StoreConfig(string sdkKey, string config)
         {
-            var tokenAddress = GetParameter(token);
+            var sdkKeyAddress = GetParameter(sdkKey);
             var configAddress = GetParameter(config);
 
             var setConfigData = GetFunction("setConfigData");
-            setConfigData.Invoke(tokenAddress, configAddress);
+            setConfigData.Invoke(sdkKeyAddress, configAddress);
         }
 
         public void SetPlatformData(string platformData)
