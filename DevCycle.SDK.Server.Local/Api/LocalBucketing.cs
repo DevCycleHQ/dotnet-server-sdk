@@ -13,9 +13,19 @@ using Module = Wasmtime.Module;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
+    public class LocalBucketingException : Exception
+    {
+        public LocalBucketingException(string message): base(message)
+        {
+        }
+        
+    }
+    
     public class LocalBucketing : ILocalBucketing
     {
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
+
+        private String wasmError;
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
         private Linker WASMLinker { get; }
@@ -62,7 +72,7 @@ namespace DevCycle.SDK.Server.Local.Api
                         var message = ReadAssemblyScriptString(caller, memory, messagePtr);
                         var filename = ReadAssemblyScriptString(caller, memory, filenamePtr);
 
-                        throw new System.Exception($"abort: {message} ({filename}:{linenum}:{colnum})");
+                        wasmError = $"WASM Error: {message} ({filename}:{linenum}:{colnum})";
                     })
             );
             WASMLinker.Define(
@@ -105,16 +115,27 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public void InitEventQueue(string sdkKey, string options)
         {
+            WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var optionsAddress = GetParameter(options);
 
             var initEventQueue = GetFunction("initEventQueue");
             initEventQueue.Invoke(sdkKeyAddress, optionsAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
+            WasmMutex.Release();
         }
 
         public BucketedUserConfig GenerateBucketedConfig(string sdkKey, string user)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var userAddress = GetParameter(user);
 
@@ -123,6 +144,13 @@ namespace DevCycle.SDK.Server.Local.Api
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.Initialize();
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
             return config;
         }
@@ -130,10 +158,18 @@ namespace DevCycle.SDK.Server.Local.Api
         public int EventQueueSize(string sdkKey)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             
             var eventQueueSize = GetFunction("eventQueueSize");
             var result = (int)eventQueueSize.Invoke(sdkKeyAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
             return result;
         }
@@ -141,36 +177,60 @@ namespace DevCycle.SDK.Server.Local.Api
         public void QueueEvent(string sdkKey, string user, string eventString)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var userAddress = GetParameter(user);
             var eventAddress = GetParameter(eventString);
 
             var initEventQueue = GetFunction("queueEvent");
             initEventQueue.Invoke(sdkKeyAddress, userAddress, eventAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
         }
 
         public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var eventAddress = GetParameter(eventString);
             var variableMapAddress = GetParameter(variableVariationMapStr);
 
             var queueAggregateEvent = GetFunction("queueAggregateEvent");
             queueAggregateEvent.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
         }
 
         public List<FlushPayload> FlushEventQueue(string sdkKey)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var flushEventQueue = GetFunction("flushEventQueue");
             
             var result = flushEventQueue.Invoke(sdkKeyAddress);
             var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
             var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
             return payloads;
         }
@@ -178,37 +238,73 @@ namespace DevCycle.SDK.Server.Local.Api
         public void OnPayloadSuccess(string sdkKey, string payloadId)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadSuccess = GetFunction("onPayloadSuccess");
             markPayloadSuccess.Invoke(sdkKeyAddress, payloadIdAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
         }
 
         public void OnPayloadFailure(string sdkKey, string payloadId, bool retryable)
         {
             WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
             var markPayloadFailure = GetFunction("onPayloadFailure");
             markPayloadFailure.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
             WasmMutex.Release();
         }
 
         public void StoreConfig(string sdkKey, string config)
         {
+            WasmMutex.Wait();
+            wasmError = "";
             var sdkKeyAddress = GetParameter(sdkKey);
             var configAddress = GetParameter(config);
 
             var setConfigData = GetFunction("setConfigData");
             setConfigData.Invoke(sdkKeyAddress, configAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
+            WasmMutex.Release();
         }
 
         public void SetPlatformData(string platformData)
         {
+            WasmMutex.Wait();
+            wasmError = "";
             var platformDataAddress = GetParameter(platformData);
             var setPlatformData = GetFunction("setPlatformData");
             setPlatformData.Invoke(platformDataAddress);
+            if (wasmError.Length > 0)
+            {
+                var error = new LocalBucketingException(wasmError);
+                WasmMutex.Release();
+                throw error;
+            }
+          
+            WasmMutex.Release();
         }
 
         private Function GetFunction(string name)
