@@ -237,6 +237,7 @@ namespace DevCycle.SDK.Server.Local.Api
         
         public override void Dispose()
         {
+            eventQueue.FlushEvents().GetAwaiter().GetResult();
             configManager.Dispose();
             timer.Dispose();
         }

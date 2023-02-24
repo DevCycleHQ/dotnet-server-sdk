@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
+using Wasmtime;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
 {
@@ -119,8 +120,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     var isInitialFetch = Config == null;
                     Config = res.Content;
                     localBucketing.StoreConfig(sdkKey, Config);
-
-
                     IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
                     configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
@@ -208,11 +207,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
                 logger.LogError(finalError.ErrorResponse.Message);
                 dvcEventArgs.Errors.Add(finalError);
-            } catch (System.ArgumentNullException e) {
-                // This error can be thrown if the config is in an invalid format 
-                // from the method SetConfig
-                logger.LogError(e.Message);
-                dvcEventArgs.Errors.Add(new DVCException(new ErrorResponse(e.Message)));
+            } catch (WasmtimeException e) {
+                // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
+                logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                dvcEventArgs.Errors.Add(new DVCException(new ErrorResponse(e.InnerException?.Message)));
             }
             finally
             {
