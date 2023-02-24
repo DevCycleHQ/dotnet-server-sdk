@@ -20,6 +20,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly DVCEventsApiClient dvcEventsApiClient;
         private readonly ILocalBucketing localBucketing;
         private readonly string sdkKey;
+        private bool closing = false;
 
         private readonly ILogger logger;
 
@@ -131,6 +132,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, bool throwOnQueueMax = false)
         {
+            if (closing)
+            {
+                return;
+            }
+            
             if (user is null)
             {
                 throw new Exception("User can't be null");
@@ -161,6 +167,10 @@ namespace DevCycle.SDK.Server.Local.Api
          */
         public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
+            if (closing)
+            {
+                return;
+            }
             if (CheckEventQueueSize())
             {
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
@@ -251,6 +261,12 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             if (FlushedEvents?.Target == null) return;
             FlushedEvents?.Invoke(this, e);
+        }
+
+        public void Dispose()
+        {
+            closing = true;
+            FlushEvents().GetAwaiter().GetResult();
         }
     }
 }
