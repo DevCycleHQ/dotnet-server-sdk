@@ -74,11 +74,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 return;
             }
 
-            logger.LogDebug($"AS Flush Payloads: ${flushPayloads}");
+            logger.LogDebug($"Flush Payloads: {flushPayloads}");
 
             Func<int, FlushPayload, int> reducer = (val, batches) => val + batches.EventCount;
             var eventCount = flushPayloads.Aggregate(0, reducer);
-            logger.LogDebug($"DVC Flush ${eventCount} AS Events, for ${flushPayloads.Count} Users");
+            logger.LogDebug($"DVC Flush {eventCount} Events, for {flushPayloads.Count} Users");
 
             var requestTasks = flushPayloads.Select(GetPayloadResult).ToList();
             await Task.WhenAll(requestTasks);

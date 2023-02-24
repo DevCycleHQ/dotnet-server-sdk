@@ -120,7 +120,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     var isInitialFetch = Config == null;
                     Config = res.Content;
                     localBucketing.StoreConfig(sdkKey, Config);
-
                     IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
                     configEtag = (string) headerValues.FirstOrDefault()?.Value;
 
@@ -210,8 +209,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 dvcEventArgs.Errors.Add(finalError);
             } catch (WasmtimeException e) {
                 // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                logger.LogError("Failed to set config: " + e.Message);
-                dvcEventArgs.Errors.Add(new DVCException(new ErrorResponse(e.Message)));
+                logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                dvcEventArgs.Errors.Add(new DVCException(new ErrorResponse(e.InnerException?.Message)));
             }
             finally
             {
