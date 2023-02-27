@@ -78,11 +78,16 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
         }
 
-        public virtual async Task InitializeConfigAsync()
+        public async Task InitializeConfigAsync()
         {
             try
             {
-                await FetchConfigAsyncWithTask();
+                await FetchConfigAsyncWithTask().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Failed to download config");
+                throw;
             }
             finally
             {
@@ -97,7 +102,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public void Dispose()
         {
-            pollingTimer?.Dispose();
+            StopPolling();
             restClient.Dispose();
         }
 
@@ -112,6 +117,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{sdkKey}.json";
         }
 
+        /**
+         * Fetches the config from the server and stores it in the local bucketing manager.
+         * This method should never throw on recoverable server errors. A 5xx error or other problem will only be
+         * logged. Any error caused by the user (e.g. a 400 error) will be communicated via the initializationEvent
+         * which is passed to the registered callback on the client.
+         *
+         * Unexpected exceptions will still be thrown from here.
+         */
         private async Task FetchConfigAsyncWithTask()
         {
             if (!PollingEnabled)
@@ -129,16 +142,17 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
             DVCException finalError;
-
-            if (res.StatusCode >= HttpStatusCode.InternalServerError)
+            
+            // Status code of 0 means some other error (like a network error) occurred
+            if (res.StatusCode >= HttpStatusCode.InternalServerError || res.StatusCode == 0)
             {
                 if (Config != null)
                 {
-                    logger.LogError("Failed to download config, using cached version: {ConfigEtag}", configEtag);
+                    logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}", configEtag);
                 }
                 else
                 {
-                    logger.LogError("Failed to download DevCycle config");
+                    logger.LogError(res.ErrorException,"Failed to download DevCycle config");
                 }
             }
             else if (res.StatusCode >= HttpStatusCode.BadRequest)
@@ -163,10 +177,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             else
             {
-                Config = res.Content;
                 try
                 {
-                    localBucketing.StoreConfig(sdkKey, Config);
+                    localBucketing.StoreConfig(sdkKey, res.Content);
                     IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
                     configEtag = (string)headerValues.FirstOrDefault()?.Value;
 
@@ -182,7 +195,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private async void FetchConfigAsync(object state = null)
         {
-            await FetchConfigAsyncWithTask();
+            try
+            {
+                await FetchConfigAsyncWithTask();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Unexpected error during config polling");
+            }
         }
 
         private void StopPolling()

@@ -77,7 +77,6 @@ namespace DevCycle.SDK.Server.Local.Api
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
             eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
-            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
 
@@ -85,6 +84,7 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
+            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
         }
         
         private void OnTimedEvent(object source, ElapsedEventArgs e)
