@@ -29,7 +29,7 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private Dictionary<string, int> sdkKeyAddresses;
 
-        private List<int> pinnedAddresses;
+        private HashSet<int> pinnedAddresses;
         private Engine WASMEngine { get; }
         private Module WASMModule { get; }
         private Linker WASMLinker { get; }
@@ -42,7 +42,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             WasmMutex.Wait();
             random = new Random();
-            pinnedAddresses = new List<int>();
+            pinnedAddresses = new HashSet<int>();
             sdkKeyAddresses = new Dictionary<string, int>();
             
             Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
