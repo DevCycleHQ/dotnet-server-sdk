@@ -60,6 +60,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
         private readonly Timer timer;
+        private bool closing;
 
         internal DVCLocalClient(
             string sdkKey, 
@@ -76,7 +77,6 @@ namespace DevCycle.SDK.Server.Local.Api
             logger = loggerFactory.CreateLogger<DVCLocalClient>();
             eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
-            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
 
@@ -84,6 +84,7 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
+            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
         }
         
         private void OnTimedEvent(object source, ElapsedEventArgs e)
@@ -98,13 +99,13 @@ namespace DevCycle.SDK.Server.Local.Api
             if (!configManager.Initialized)
             {
                 logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
-
+                
                 eventQueue.QueueAggregateEvent(
                     requestUser,
                     new Event(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-
+                
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
 
@@ -193,6 +194,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public void Track(User user, Event userEvent)
         {
+            if (closing)
+            {
+                logger.LogError("Client is closing, can not track new events");
+                return;
+            }
             BucketedUserConfig config = null;
             var requestUser = new DVCPopulatedUser(user);
 
@@ -237,7 +243,8 @@ namespace DevCycle.SDK.Server.Local.Api
         
         public override void Dispose()
         {
-            eventQueue.FlushEvents().GetAwaiter().GetResult();
+            closing = true;
+            eventQueue.Dispose();
             configManager.Dispose();
             timer.Dispose();
         }

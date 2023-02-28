@@ -15,5 +15,6 @@ public interface ILocalBucketing
     public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr);
     public void StoreConfig(string sdkKey, string config);
     public void SetPlatformData(string platformData);
-
+    public void StartFlush();
+    public void EndFlush();
 }

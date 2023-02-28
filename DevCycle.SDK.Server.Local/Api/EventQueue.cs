@@ -20,12 +20,12 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly DVCEventsApiClient dvcEventsApiClient;
         private readonly ILocalBucketing localBucketing;
         private readonly string sdkKey;
+        private bool closing = false;
 
         private readonly ILogger logger;
 
         private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
-        private bool flushInProgress;
         private event EventHandler<DVCEventArgs> FlushedEvents;
         
         public EventQueue(
@@ -61,7 +61,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual async Task FlushEvents()
         {
-            flushInProgress = true;
+            localBucketing.StartFlush();
             var flushPayloads = GetPayloads();
             var flushResultEvent = new DVCEventArgs
             {
@@ -71,6 +71,7 @@ namespace DevCycle.SDK.Server.Local.Api
             if (flushPayloads.Count == 0)
             {
                 OnFlushedEvents(flushResultEvent);
+                localBucketing.EndFlush();
                 return;
             }
 
@@ -110,7 +111,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
             }
             OnFlushedEvents(flushResultEvent);
-            flushInProgress = false;
+            localBucketing.EndFlush();
         }
 
         private List<FlushPayload> GetPayloads()
@@ -131,6 +132,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public virtual void QueueEvent(DVCPopulatedUser user, Event @event, bool throwOnQueueMax = false)
         {
+            if (closing)
+            {
+                return;
+            }
+            
             if (user is null)
             {
                 throw new Exception("User can't be null");
@@ -161,6 +167,10 @@ namespace DevCycle.SDK.Server.Local.Api
          */
         public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
+            if (closing)
+            {
+                return;
+            }
             if (CheckEventQueueSize())
             {
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
@@ -211,10 +221,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var queueSize = localBucketing.EventQueueSize(this.sdkKey);
             if (queueSize >= localOptions.FlushEventQueueSize)
             {
-                if (!this.flushInProgress)
-                {
-                    ScheduleFlush();
-                }
+                ScheduleFlush();
                 if (queueSize >= localOptions.MaxEventsInQueue)
                 {
                     return true;
@@ -229,7 +236,6 @@ namespace DevCycle.SDK.Server.Local.Api
             if (schedulerIsRunning && !queueRequest) return;
 
             schedulerIsRunning = true;
-            flushInProgress = true;
             tokenSource = new CancellationTokenSource();
 
             Task.Run(async delegate
@@ -255,6 +261,12 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             if (FlushedEvents?.Target == null) return;
             FlushedEvents?.Invoke(this, e);
+        }
+
+        public void Dispose()
+        {
+            closing = true;
+            FlushEvents().GetAwaiter().GetResult();
         }
     }
 }

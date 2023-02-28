@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var cfgManager = new EnvironmentConfigManager(sdkKey, new DVCLocalOptions(),
                 loggerFactory, new LocalBucketing(), restClientOptions: new DVCRestClientOptions()
                     {ConfigureMessageHandler = _ => mockHttp},
-                initializedHandler: isError ? DidNotInitializeSubscriber : DidInitializeSubscriber);
+                initializedHandler: (isError && !isRetryableError) ? DidNotInitializeSubscriber : DidInitializeSubscriber);
 
             return new Tuple<EnvironmentConfigManager, MockHttpMessageHandler, MockedRequest>(cfgManager, mockHttp,
                 req);
