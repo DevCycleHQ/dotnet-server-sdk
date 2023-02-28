@@ -18,7 +18,7 @@ namespace DevCycle.SDK.Server.Local.Api
     {
         private readonly DVCLocalOptions localOptions;
         private readonly DVCEventsApiClient dvcEventsApiClient;
-        private readonly ILocalBucketing localBucketing;
+        private readonly LocalBucketing localBucketing;
         private readonly string sdkKey;
         private bool closing = false;
 
@@ -32,7 +32,7 @@ namespace DevCycle.SDK.Server.Local.Api
             string sdkKey, 
             DVCLocalOptions localOptions,
             ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing,
+            LocalBucketing localBucketing,
             DVCRestClientOptions restClientOptions = null
         ) {
             dvcEventsApiClient = new DVCEventsApiClient(sdkKey, localOptions, restClientOptions);

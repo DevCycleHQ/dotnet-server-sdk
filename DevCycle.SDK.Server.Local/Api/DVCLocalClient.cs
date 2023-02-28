@@ -14,7 +14,7 @@ namespace DevCycle.SDK.Server.Local.Api
     public class DVCLocalClientBuilder : DVCClientBuilder<DVCLocalClient, DVCLocalOptions, DVCLocalClientBuilder>
     {
         private EnvironmentConfigManager configManager;
-        private ILocalBucketing localBucketing;
+        private LocalBucketing localBucketing;
         
         protected override DVCLocalClientBuilder BuilderInstance => this;
 
@@ -24,7 +24,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public DVCLocalClientBuilder SetLocalBucketing(ILocalBucketing localBucketingWrapper)
+        public DVCLocalClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
         {
             localBucketing = localBucketingWrapper;
             return this;
@@ -57,7 +57,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly string sdkKey;
         private readonly EnvironmentConfigManager configManager;
         private readonly EventQueue eventQueue;
-        private readonly ILocalBucketing localBucketing;
+        private readonly LocalBucketing localBucketing;
         private readonly ILogger logger;
         private readonly Timer timer;
         private bool closing;
@@ -67,7 +67,7 @@ namespace DevCycle.SDK.Server.Local.Api
             DVCLocalOptions dvcLocalOptions, 
             ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, 
-            ILocalBucketing localBucketing,
+            LocalBucketing localBucketing,
             DVCRestClientOptions restClientOptions = null
         )  {
             ValidateSDKKey(sdkKey);

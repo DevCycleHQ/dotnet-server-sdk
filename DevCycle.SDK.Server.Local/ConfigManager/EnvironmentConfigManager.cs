@@ -11,7 +11,6 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Common.Policies;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
 using Wasmtime;
@@ -27,8 +26,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly int requestTimeoutMs;
         private readonly RestClient restClient;
         private readonly ILogger logger;
-        private readonly ILocalBucketing localBucketing;
         private readonly DVCEventArgs initializationEvent;
+        private readonly LocalBucketing localBucketing;
         private readonly EventHandler<DVCEventArgs> initializedHandler;
         private readonly DVCLocalOptions localOptions;
         private Timer pollingTimer;
@@ -44,7 +43,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             string sdkKey,
             DVCLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
-            ILocalBucketing localBucketing,
+            LocalBucketing localBucketing,
             EventHandler<DVCEventArgs> initializedHandler = null,
             DVCRestClientOptions restClientOptions = null
         )
