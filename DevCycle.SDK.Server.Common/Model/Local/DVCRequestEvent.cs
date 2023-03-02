@@ -32,10 +32,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("user_id")]
         public string UserId { get; set; }
         
-        [DataMember(Name="date", EmitDefaultValue=false)]
-        [JsonProperty("date")]
-        public DateTime Date { get; set; }
-        
         [DataMember(Name="clientDate", EmitDefaultValue=false)]
         [JsonProperty("clientDate")]
         public DateTime ClientDate { get; set; }
@@ -71,8 +67,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             Type = !eventTypes.Contains(Type) ? "customEvent" : @event.Type;
             Target = @event.Target;
             UserId = userId;
-            Date = DateTimeOffset.UtcNow.DateTime;
-            ClientDate = @event.Date ?? DateTimeOffset.UtcNow.DateTime;
+            ClientDate = DateTimeOffset.UtcNow.DateTime;
             Value = @event.Value;
             FeatureVars = featureVars;
             MetaData = @event.MetaData;
