@@ -15,10 +15,10 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <param name="type">Custom event type (required).</param>
         /// <param name="target">Custom event target / subject of event. Contextual to event type.</param>
-        /// <param name="date">Unix epoch time the event occurred according to client.</param>
+        /// <param name="clientDate">Unix epoch time the event occurred according to client.</param>
         /// <param name="value">Value for numerical events. Contextual to event type.</param>
         /// <param name="metaData">Extra JSON metadata for event. Contextual to event type.</param>
-        public Event(string type = default, string target = default, DateTime? date = default, double value = default,
+        public Event(string type = default, string target = default, DateTime? clientDate = default, double value = default,
             Dictionary<string, object> metaData = default)
         {
             // to ensure "type" is required (not null)
@@ -30,7 +30,7 @@ namespace DevCycle.SDK.Server.Common.Model
             Type = type;
 
             Target = target;
-            Date = date;
+            ClientDate = ClientDate;
             Value = value;
             MetaData = metaData;
         }
@@ -57,10 +57,10 @@ namespace DevCycle.SDK.Server.Common.Model
         /// Unix epoch time the event occurred according to client
         /// </summary>
         /// <value>Unix epoch time the event occurred according to client</value>
-        [DataMember(Name = "date", EmitDefaultValue = false)]
-        [JsonProperty("date")]
+        [DataMember(Name = "clientDate", EmitDefaultValue = false)]
+        [JsonProperty("clientDate")]
 
-        public DateTime? Date { get; set; }
+        public DateTime? ClientDate { get; set; }
 
         /// <summary>
         /// Value for numerical events. Contextual to event type
@@ -90,7 +90,7 @@ namespace DevCycle.SDK.Server.Common.Model
             sb.Append("class Event {\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Target: ").Append(Target).Append("\n");
-            sb.Append("  Date: ").Append(Date).Append("\n");
+            sb.Append("  ClientDate: ").Append(ClientDate).Append("\n");
             sb.Append("  Value: ").Append(Value).Append("\n");
             sb.Append("  MetaData: ").Append(MetaData).Append("\n");
             sb.Append("}\n");
@@ -138,9 +138,9 @@ namespace DevCycle.SDK.Server.Common.Model
                      Target.Equals(input.Target))
                 ) &&
                 (
-                    Date == input.Date ||
-                    (Date != null &&
-                     Date.Equals(input.Date))
+                    ClientDate == input.ClientDate ||
+                    (ClientDate != null &&
+                     ClientDate.Equals(input.ClientDate))
                 ) &&
                 (
                     Value == input.Value ||
@@ -167,8 +167,8 @@ namespace DevCycle.SDK.Server.Common.Model
                     hashCode = hashCode * 59 + Type.GetHashCode();
                 if (Target != null)
                     hashCode = hashCode * 59 + Target.GetHashCode();
-                if (Date != null)
-                    hashCode = hashCode * 59 + Date.GetHashCode();
+                if (ClientDate != null)
+                    hashCode = hashCode * 59 + ClientDate.GetHashCode();
                 if (Value != null)
                     hashCode = hashCode * 59 + Value.GetHashCode();
                 if (MetaData != null)

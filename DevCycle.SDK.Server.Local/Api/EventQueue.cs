@@ -198,7 +198,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             var eventCopy = @event.Clone();
-            eventCopy.Date = DateTimeOffset.UtcNow.DateTime;
+            eventCopy.ClientDate = DateTimeOffset.UtcNow.DateTime;
             eventCopy.Value = 1;
 
             localBucketing.QueueAggregateEvent(
