@@ -28,8 +28,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("appVersion")]
         public string AppVersion;
         [DataMember(Name = "appBuild", EmitDefaultValue = false)]
-        [JsonProperty("appBuild")]
-        public double AppBuild;
+        [JsonProperty("appBuild", NullValueHandling=NullValueHandling.Ignore)]
+        public Nullable<double> AppBuild;
         [DataMember(Name = "customData", EmitDefaultValue = false)]
         [JsonProperty("customData")]
         public object CustomData;
@@ -88,7 +88,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             Language = user.Language;
             Country = user.Country;
             AppVersion = user.AppVersion;
-            AppBuild = user.AppBuild;
+            AppBuild = user.AppBuild > 0 ? user.AppBuild : (double?)null;
             CustomData = user.CustomData;
             PrivateCustomData = user.PrivateCustomData;
             LastSeenDate = DateTimeOffset.UtcNow.DateTime;
