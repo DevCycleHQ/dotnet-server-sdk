@@ -22,9 +22,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
     public class DVCTest
     {
         private DVCLocalClient getTestClient(
-            DVCLocalOptions options = null)
+            DVCLocalOptions options = null, string config = null)
         {
-            string config = new string(Fixtures.Config());
+            if (config == null)
+            {
+                config = new string(Fixtures.Config());
+            }
+            
             var mockHttp = new MockHttpMessageHandler();
 
             mockHttp.When("https://config-cdn*")
@@ -130,6 +134,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsTrue(result.Value);
         }
 
+        [TestMethod]
+        public async Task GetVariableByKeySpecialCharactersTestAsync()
+        {
+            using DVCLocalClient api = getTestClient(config: Fixtures.ConfigWithSpecialCharacters());
+            var user = new User("j_test");
+            string key = Fixtures.VariableKey;
+            await Task.Delay(3000);
+            var result = api.Variable<string>(user, key, "default_value");
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.Value);
+            Assert.AreEqual("öé 🐍 ¥", result.Value);
+        }
+        
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultArrayTest()
         {

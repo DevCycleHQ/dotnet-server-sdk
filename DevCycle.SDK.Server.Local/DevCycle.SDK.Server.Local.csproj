@@ -39,6 +39,7 @@
     <DebugType></DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
     <PackageReference Include="Wasmtime" Version="3.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta2" />

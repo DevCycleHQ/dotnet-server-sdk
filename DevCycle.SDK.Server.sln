@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle.SDK.Server.Local.E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle.SDK.Server.Cloud.Example", "DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj", "{A7FC1B2B-B29F-4735-B252-58BEF3167533}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevCycle.SDK.Server.Local.Benchmark", "DevCycle.SDK.Server.Local.Benchmark\DevCycle.SDK.Server.Local.Benchmark.csproj", "{C8132269-BAB7-4671-80F5-9017333825BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{A7FC1B2B-B29F-4735-B252-58BEF3167533}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7FC1B2B-B29F-4735-B252-58BEF3167533}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7FC1B2B-B29F-4735-B252-58BEF3167533}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8132269-BAB7-4671-80F5-9017333825BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8132269-BAB7-4671-80F5-9017333825BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8132269-BAB7-4671-80F5-9017333825BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8132269-BAB7-4671-80F5-9017333825BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
