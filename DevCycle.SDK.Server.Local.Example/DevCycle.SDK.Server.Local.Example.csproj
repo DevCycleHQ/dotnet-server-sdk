@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
     <PackageReference Include="DevCycle.SDK.Server.Common" Version="1.5.0" />
     <PackageReference Include="DevCycle.SDK.Server.Local" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta2" />
