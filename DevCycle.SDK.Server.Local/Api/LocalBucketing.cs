@@ -308,6 +308,23 @@ namespace DevCycle.SDK.Server.Local.Api
             ReleaseMutex();
         }
 
+        public void SetClientCustomData(string sdkKey, string customData)
+        {
+            WaitForMutex();
+
+            handleError = (message) =>
+            {
+                ReleaseMutex();
+                throw new LocalBucketingException(message);
+            };
+            var customDataAddress = GetParameter(customData);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var setCustomData = GetFunction("setClientCustomData");
+            setCustomData.Invoke(sdkKeyAddress, customDataAddress);
+
+            ReleaseMutex();
+        }
+        
         private Function GetFunction(string name)
         {
             var function = WASMInstance.GetFunction(name);
