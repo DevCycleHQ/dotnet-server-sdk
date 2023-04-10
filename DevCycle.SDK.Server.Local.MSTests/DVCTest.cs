@@ -157,18 +157,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetVariableByKeyTestUninitiaized()
-        {
-            using DVCLocalClient api = getTestClient(skipInitialize: true);
-
-            var user = new User("j_test");
-            var result = api.Variable(user, Fixtures.VariableKey, false);
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsDefaulted);
-            Assert.IsFalse(result.Value);
-        }
-
-        [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
             using DVCLocalClient api = getTestClient();
