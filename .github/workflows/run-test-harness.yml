@@ -2,11 +2,6 @@ name: Run Test Harness
 on:
   pull_request:
     branches: [main]
-    paths:
-      - DevCycle.SDK.Server.Cloud/**
-      - DevCycle.SDK.Server.Local/**
-      - DevCycle.SDK.Server.Common/**
-      - .github/**
 
 jobs:
   harness-tests:

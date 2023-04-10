@@ -35,4 +35,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="fixtures\large_config.json" />
+    <EmbeddedResource Include="fixtures\config_special_characters.json" />
+    <None Remove="fixture_large_config.json.txt" />
+    <None Remove="fixture_small_config_special_characters.json" />
+    <None Remove="fixture_small_config.json" />
+  </ItemGroup>
 </Project>
