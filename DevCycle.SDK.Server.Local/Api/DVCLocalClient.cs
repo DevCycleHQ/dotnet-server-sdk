@@ -100,55 +100,41 @@ namespace DevCycle.SDK.Server.Local.Api
             if (!configManager.Initialized)
             {
                 logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
-                
-                eventQueue.QueueAggregateEvent(
-                    requestUser,
-                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
-                    null
-                );
-                
+               
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
-
-
-            BucketedUserConfig config = null;
-
+            
+            Variable<T> existingVariable = null;
+            
             try
             {
-                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
+                var type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
+                var userJson = requestUser.ToJson();
+                var varJsonData = localBucketing.GetVariable(sdkKey, userJson, key, type, true);
+
+                if (varJsonData == null)
+                {
+                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                }
+                
+                ReadOnlyVariable<object> readOnlyVariable = JsonConvert.DeserializeObject<ReadOnlyVariable<object>>(varJsonData);
+                existingVariable = new Variable<T>(readOnlyVariable, defaultValue);
+            }
+            catch (InvalidCastException)
+            {
+                logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
             }
             catch (Exception e)
             {
-                logger.LogError("Unexpected exception generating bucketed config: {Exception}", e.Message);
-            }
-
-            Variable<T> existingVariable = null;
-
-            if (config?.Variables != null && config.Variables.ContainsKey(key))
-            {
-                try
-                {
-                    ReadOnlyVariable<object> readOnlyVariable = config.Variables[key];
-                    existingVariable = new Variable<T>(readOnlyVariable, defaultValue);                
-                }
-                catch (InvalidCastException)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                }
+                logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
+                return null;
             }
 
             var variable = Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
-
-            var @event = new Event(type: variable.IsDefaulted
-                    ? EventTypes.aggVariableDefaulted
-                    : EventTypes.aggVariableEvaluated,
-                target: variable.Key);
-
-            eventQueue.QueueAggregateEvent(requestUser, @event, config);
-
+            
             return variable;
         }
-
+        
         public Dictionary<string, Feature> AllFeatures(User user)
         {
             if (!configManager.Initialized)
