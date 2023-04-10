@@ -21,14 +21,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class DVCTest
     {
-        private DVCLocalClient getTestClient(
-            DVCLocalOptions options = null, string config = null)
+        private DVCLocalClient getTestClient(DVCLocalOptions options = null, string config = null,
+            bool skipInitialize = false)
         {
             if (config == null)
             {
                 config = new string(Fixtures.Config());
             }
-            
+
             var mockHttp = new MockHttpMessageHandler();
 
             mockHttp.When("https://config-cdn*")
@@ -39,16 +39,25 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     "{}");
             var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
+            var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-', '_')}_hash";
             localBucketing.StoreConfig(sdkKey, config);
             var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DVCLocalOptions(),
                 new NullLoggerFactory(),
-                localBucketing, restClientOptions: new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
-            configManager.Initialized = true;
+                localBucketing,
+                restClientOptions: new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
+            if (skipInitialize)
+            {
+                configManager.Initialized = false;
+            }
+            else
+            {
+                configManager.Initialized = true;
+            }
+
             DVCLocalClient api = new DVCLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
-                .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetRestClientOptions(new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp })
                 .SetOptions(options ?? new DVCLocalOptions())
                 .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)
@@ -63,15 +72,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
             const string slug = "/slug";
             var testClient = new DVCLocalClientBuilder()
                 .SetOptions(new DVCLocalOptions()
-                    {
-                        CdnUri = baseurl,
-                        CdnSlug = slug
-                    })
-                    .SetInitializedSubscriber((_, args) =>
-                    {
-                        Assert.IsTrue(args.Errors.Count != 0); 
-                        Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
-                    })
+                {
+                    CdnUri = baseurl,
+                    CdnSlug = slug
+                })
+                .SetInitializedSubscriber((_, args) =>
+                {
+                    Assert.IsTrue(args.Errors.Count != 0);
+                    Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
+                })
                 .SetSDKKey("dvc_server_CustomCDNURITest")
                 .Build();
             await Task.Delay(5000);
@@ -146,7 +155,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(result.Value);
             Assert.AreEqual("öé 🐍 ¥", result.Value);
         }
-        
+
+        [TestMethod]
+        public void GetVariableByKeyTestUninitiaized()
+        {
+            using DVCLocalClient api = getTestClient(skipInitialize: true);
+
+            var user = new User("j_test");
+            var result = api.Variable(user, Fixtures.VariableKey, false);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.IsDefaulted);
+            Assert.IsFalse(result.Value);
+        }
+
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
@@ -164,7 +185,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsTrue(result.IsDefaulted);
             Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
         }
-        
+
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultObjectTest()
         {
@@ -187,12 +208,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task GetVariablesTest()
         {
             using DVCLocalClient api = getTestClient();
-            
+
             User user = new User("j_test");
             // Bucketing needs time to work.
             await Task.Delay(5000);
             var result = api.AllVariables(user);
-            
+
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsNotNull(result);
             var variable = result["test"];
@@ -204,15 +225,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task PostEventsTest()
         {
             using DVCLocalClient api = getTestClient();
-        
+
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
             User user = new User("j_test");
-            Event userEvent = new Event("test event", "test target", now.DateTime, 600);    
+            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
             await Task.Delay(5000);
             api.Track(user, userEvent);
-        
+
         }
 
         [TestMethod]
@@ -257,4 +278,4 @@ namespace DevCycle.SDK.Server.Local.MSTests
             api.SetClientCustomData(customData);
         }
     }
-}
+}  
