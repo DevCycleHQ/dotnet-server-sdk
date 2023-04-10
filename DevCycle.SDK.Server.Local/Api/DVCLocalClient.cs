@@ -106,7 +106,6 @@ namespace DevCycle.SDK.Server.Local.Api
                     new Event(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-               
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
            
@@ -116,14 +115,15 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 var type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
                 var userJson = requestUser.ToJson();
-                var varJsonData = localBucketing.GetVariable(sdkKey, userJson, key, type, true);
+                var variableJsonData = localBucketing.GetVariable(sdkKey, userJson, key, type, true);
 
-                if (varJsonData == null)
+                if (variableJsonData == null)
                 {
+                    // no matching variable found, return default value
                     return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
                 }
                 
-                ReadOnlyVariable<object> readOnlyVariable = JsonConvert.DeserializeObject<ReadOnlyVariable<object>>(varJsonData);
+                ReadOnlyVariable<object> readOnlyVariable = JsonConvert.DeserializeObject<ReadOnlyVariable<object>>(variableJsonData);
                 existingVariable = new Variable<T>(readOnlyVariable, defaultValue);
             }
             catch (InvalidCastException)
@@ -136,9 +136,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 return null;
             }
 
-            var variable = Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
-            
-            return variable;
+            return Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
         }
         
         public Dictionary<string, Feature> AllFeatures(User user)

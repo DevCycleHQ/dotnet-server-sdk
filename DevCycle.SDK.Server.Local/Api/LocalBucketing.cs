@@ -327,6 +327,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
             var userAddress = GetParameter(userJSON);
             var keyAddress = GetParameter(key);
+            // convert to the native variable types in the WASM binary
             int varType = variableTypeMap[variableType];
 
             var getVariable = GetFunction("variableForUser");
