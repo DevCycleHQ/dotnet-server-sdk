@@ -37,7 +37,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private Memory WASMMemory { get; }
         private Instance WASMInstance { get; }
         private Random random;
-
+        private Dictionary<TypeEnum, int> variableTypeMap = new Dictionary<TypeEnum, int>();
+        
         public LocalBucketing()
         {
             WasmMutex.Wait();
@@ -47,6 +48,7 @@ namespace DevCycle.SDK.Server.Local.Api
             
             Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
+            
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
             if (wasmResource == null)
             {
@@ -118,10 +120,15 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
             }
+
+            variableTypeMap.Add(TypeEnum.Boolean, GetGlobalValue<int>("VariableType.Boolean"));
+            variableTypeMap.Add(TypeEnum.Number, GetGlobalValue<int>("VariableType.Number"));
+            variableTypeMap.Add(TypeEnum.String, GetGlobalValue<int>("VariableType.String"));
+            variableTypeMap.Add(TypeEnum.JSON, GetGlobalValue<int>("VariableType.JSON"));
             
             ReleaseMutex();
         }
-
+        
         public void InitEventQueue(string sdkKey, string options)
         {
             WaitForMutex();
@@ -308,6 +315,33 @@ namespace DevCycle.SDK.Server.Local.Api
             ReleaseMutex();
         }
 
+        public string GetVariable(string sdkKey, string userJSON, string key, TypeEnum variableType, bool shouldTrackEvent)
+        {
+            WaitForMutex();
+
+            handleError = (message) =>
+            {
+                ReleaseMutex();
+                throw new LocalBucketingException(message);
+            };
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var userAddress = GetParameter(userJSON);
+            var keyAddress = GetParameter(key);
+            // convert to the native variable types in the WASM binary
+            int varType = variableTypeMap[variableType];
+
+            var getVariable = GetFunction("variableForUser");
+            var variableAddress = getVariable.Invoke(sdkKeyAddress, userAddress, keyAddress, varType, shouldTrackEvent ? 1 : 0);
+            string varJSON = null;
+            if ((int)variableAddress > 0)
+            {
+                varJSON = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)variableAddress!);    
+            }
+            
+            ReleaseMutex();
+            return varJSON;
+        }
+
         public void SetClientCustomData(string sdkKey, string customData)
         {
             WaitForMutex();
@@ -324,7 +358,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             ReleaseMutex();
         }
-        
+            
         private Function GetFunction(string name)
         {
             var function = WASMInstance.GetFunction(name);
@@ -420,6 +454,27 @@ namespace DevCycle.SDK.Server.Local.Api
         private void ReleaseMutex()
         {
             WasmMutex.Release();
+        }
+        
+        /**
+         * Gets a global value from the WebAssembly binary.
+         * @param name The name of the global value to retrieve.
+         * @returns The value of the global.
+         */
+        private T GetGlobalValue<T>(string name)
+        {
+            var global = WASMInstance.GetGlobal(name);
+            if (global == null)
+                throw new DVCException(new ErrorResponse($"Cannot get {name} global value from WebAssembly binary."));
+            var globalValue = global.GetValue();
+            if (globalValue is T val)
+            {
+                return val;
+            }
+            else
+            {
+                throw new DVCException(new ErrorResponse($"{name} global value from WebAssembly binary is wrong type: " + global.Kind.ToString()));
+            }
         }
     }
 }
