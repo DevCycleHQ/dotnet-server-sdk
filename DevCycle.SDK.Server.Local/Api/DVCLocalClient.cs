@@ -7,6 +7,7 @@ using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -192,6 +193,25 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
+        public void SetClientCustomData(Dictionary<string,object> customData)
+        {
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("SetClientCustomData called before DVCClient has initialized");
+                return;
+            }
+            
+            string data = JsonConvert.SerializeObject(customData);
+            try
+            {
+                localBucketing.SetClientCustomData(sdkKey, data);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception setting client custom data {Exception}", e.Message);
+            }
+        }
+        
         public void Track(User user, Event userEvent)
         {
             if (closing)

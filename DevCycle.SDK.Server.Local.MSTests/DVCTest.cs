@@ -242,5 +242,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
                              + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
             });
         }
+        
+        [TestMethod]
+        public void SetClientCustomDataTest()
+        {
+            using DVCLocalClient api = getTestClient();
+            
+            Dictionary<string, object> customData = new Dictionary<string, object>();
+            customData.Add("strProp", "value");
+            customData.Add("numProp", 100);
+            customData.Add("boolProp", true);
+            customData.Add("nullProp", null);
+            
+            api.SetClientCustomData(customData);
+        }
     }
 }
