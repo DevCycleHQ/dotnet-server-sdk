@@ -163,10 +163,10 @@ namespace DevCycle.SDK.Server.Local.Api
             QueueAggregateEventFunc = GetFunction("queueAggregateEvent");
             VariableForUserFunc = GetFunction("variableForUser");
             VariableForUserProtobufFunc = GetFunction("variableForUser_PB");
-            SetConfigDataFunc = GetFunction("setConfigData");
-            SetPlatformDataFunc = GetFunction("setPlatformData");
-            SetClientCustomDataFunc = GetFunction("setClientCustomData");
-            GenerateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUser");
+            SetConfigDataFunc = GetFunction("setConfigDataUTF8");
+            SetPlatformDataFunc = GetFunction("setPlatformDataUTF8");
+            SetClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
+            GenerateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
         
             ReleaseMutex();
         }
@@ -197,10 +197,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var userAddress = GetParameter(user);
-
+            var userAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(user));
             var result = GenerateBucketedConfigForUserFunc.Invoke(sdkKeyAddress, userAddress);
-            var stringResp = ReadAssemblyScriptString(WASMMemory, (int)result!);
+            var byteResp = ReadAssemblyScriptByteArray(WASMMemory, (int)result!);
+            var stringResp = Encoding.UTF8.GetString(byteResp);
+            
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.Initialize();
 
@@ -324,7 +325,7 @@ namespace DevCycle.SDK.Server.Local.Api
             };
             
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var configAddress = GetParameter(config);
+            var configAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(config));
 
             SetConfigDataFunc.Invoke(sdkKeyAddress, configAddress);
             
@@ -340,7 +341,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 ReleaseMutex();
                 throw new LocalBucketingException(message);
             };
-            var platformDataAddress = GetParameter(platformData);
+            var platformDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(platformData));
             SetPlatformDataFunc.Invoke(platformDataAddress);
 
             ReleaseMutex();
@@ -404,7 +405,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 ReleaseMutex();
                 throw new LocalBucketingException(message);
             };
-            var customDataAddress = GetParameter(customData);
+            var customDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(customData));
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
             SetClientCustomDataFunc.Invoke(sdkKeyAddress, customDataAddress);
 
