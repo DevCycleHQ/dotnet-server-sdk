@@ -144,6 +144,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
+        public async Task GetVariableByKeyProtobufTestAsync()
+        {
+            using DVCLocalClient api = getTestClient();
+
+            var user = new User("j_test");
+            string key = Fixtures.VariableKey;
+            await Task.Delay(3000);
+            var result = api.VariableForUserProtobuf(user, key, false);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Value);
+        }
+        
+        [TestMethod]
         public async Task GetVariableByKeySpecialCharactersTestAsync()
         {
             using DVCLocalClient api = getTestClient(config: Fixtures.ConfigWithSpecialCharacters());

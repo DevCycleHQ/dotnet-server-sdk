@@ -6,6 +6,9 @@ using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
+using DevCycle.SDK.Server.Local.Protobuf;
+using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
@@ -92,6 +95,69 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             eventQueue?.ScheduleFlush();
         }
+        
+        
+        private NullableString CreateNullableString(string value)
+        {
+            return value == null ? new NullableString(){IsNull = true} : new NullableString() { IsNull = false, Value = value };
+        }
+
+        private NullableDouble CreateNullableDouble(double value)
+        {
+            return !Double.IsNaN(value) ? new NullableDouble() { IsNull = false, Value = value } : new NullableDouble() { IsNull = true };
+        }
+        
+        private NullableCustomData CreateNullableCustomData(Dictionary<string, object> customData)
+        {
+            if (customData == null)
+            {
+                return new NullableCustomData() { IsNull = true };
+            }
+            else
+            {
+                NullableCustomData nullableCustomData = new NullableCustomData() { IsNull = false};
+                foreach(KeyValuePair<string, object> entry in customData)
+                {
+                    if(entry.Value == null)
+                    {
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { Type = CustomDataType.Null };
+                    }
+                    else if (entry.Value is string strValue)
+                    {
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { StringValue = strValue, Type = CustomDataType.Str };
+                    }
+                    else if (entry.Value is double numValue)
+                    {
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { DoubleValue = numValue, Type = CustomDataType.Num };
+                    }
+                    else if (entry.Value is bool boolValue)
+                    {
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { BoolValue = boolValue, Type = CustomDataType.Bool };
+                    }
+
+                }
+                return nullableCustomData;
+            }
+        }
+        
+        private VariableType_PB TypeEnumToVariableTypeProtobuf(TypeEnum type)
+        {
+            switch (type)
+            {
+                case TypeEnum.Boolean:
+                    return VariableType_PB.Boolean;
+                case TypeEnum.String:
+                    return VariableType_PB.String;
+                case TypeEnum.Number:
+                    return VariableType_PB.Number;
+                case TypeEnum.JSON:
+                    return VariableType_PB.Json;
+                default:
+                    throw new ArgumentOutOfRangeException("Unknown variable type: "+type);
+            }
+        }
+        
+        
 
         public Variable<T> Variable<T>(User user, string key, T defaultValue)
         {
@@ -137,6 +203,93 @@ namespace DevCycle.SDK.Server.Local.Api
             }
 
             return Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
+        }
+
+        public Variable<T> VariableForUserProtobuf<T>(User user, string key, T defaultValue) {
+            var requestUser = new DVCPopulatedUser(user);
+            
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
+                
+                eventQueue.QueueAggregateEvent(
+                    requestUser,
+                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
+                    null
+                );
+                return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+            }
+            
+            DVCUser_PB userPb = new DVCUser_PB()
+            {
+                UserId = user.UserId,
+                Email = CreateNullableString(user.Email),
+                Name = CreateNullableString(user.Name),
+                Language = CreateNullableString(user.Language),
+                Country = CreateNullableString(user.Country),
+                AppBuild = CreateNullableDouble(user.AppBuild),
+                AppVersion = CreateNullableString(user.AppVersion),
+                DeviceModel = CreateNullableString(user.DeviceModel),
+                CustomData = CreateNullableCustomData(user.CustomData),
+                PrivateCustomData = CreateNullableCustomData(user.PrivateCustomData)
+            };
+
+            var type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
+            VariableType_PB variableType = TypeEnumToVariableTypeProtobuf(type);
+            
+            VariableForUserParams_PB paramsPb = new VariableForUserParams_PB()
+            {
+                SdkKey = sdkKey,
+                User = userPb,
+                VariableKey = key,
+                VariableType = variableType,
+                ShouldTrackEvent = true
+            };
+            
+            Variable<T> existingVariable = null;
+            try
+            {
+                var paramsBuffer = paramsPb.ToByteArray();
+            
+                byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams:paramsBuffer);
+            
+                if (variableData == null)
+                {
+                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                }
+            
+                SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
+            
+                if(variableType != sdkVariable.Type)
+                {
+                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
+                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                }
+            
+                switch (sdkVariable.Type)
+                {
+                    case VariableType_PB.Boolean:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.Number:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.DoubleValue, typeof(T)), defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.String:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)), defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.Json:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)), defaultValue: defaultValue);
+                        break;  
+                    default:
+                        throw new ArgumentOutOfRangeException("Unknown variable type: "+sdkVariable.Type);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
+                return null;
+            }
+            return existingVariable;
         }
         
         public Dictionary<string, Feature> AllFeatures(User user)
