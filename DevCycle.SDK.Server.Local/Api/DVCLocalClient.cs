@@ -230,7 +230,9 @@ namespace DevCycle.SDK.Server.Local.Api
                         existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)), defaultValue: defaultValue);
                         break;
                     case VariableType_PB.Json:
-                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)), defaultValue: defaultValue);
+                        // T is expected to be a JObject or JArray 
+                        var jsonObj = JsonConvert.DeserializeObject<T>(sdkVariable.StringValue);
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: jsonObj, defaultValue: defaultValue);
                         break;  
                     default:
                         throw new ArgumentOutOfRangeException("Unknown variable type: "+sdkVariable.Type);
