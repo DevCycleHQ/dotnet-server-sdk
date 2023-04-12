@@ -157,55 +157,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
         
-        
-
-        public Variable<T> Variable<T>(User user, string key, T defaultValue)
-        {
-            var requestUser = new DVCPopulatedUser(user);
-            
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
-                
-                eventQueue.QueueAggregateEvent(
-                    requestUser,
-                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
-                    null
-                );
-                return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-            }
-           
-            Variable<T> existingVariable = null;
-            
-            try
-            {
-                var type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
-                var userJson = requestUser.ToJson();
-                var variableJsonData = localBucketing.GetVariable(sdkKey, userJson, key, type, true);
-
-                if (variableJsonData == null)
-                {
-                    // no matching variable found, return default value
-                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-                }
-                
-                ReadOnlyVariable<object> readOnlyVariable = JsonConvert.DeserializeObject<ReadOnlyVariable<object>>(variableJsonData);
-                existingVariable = new Variable<T>(readOnlyVariable, defaultValue);
-            }
-            catch (InvalidCastException)
-            {
-                logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
-                return null;
-            }
-
-            return Common.Model.Local.Variable<T>.InitializeFromVariable(existingVariable, key, defaultValue);
-        }
-
-        public Variable<T> VariableForUserProtobuf<T>(User user, string key, T defaultValue) {
+        public Variable<T> Variable<T>(User user, string key, T defaultValue) {
             var requestUser = new DVCPopulatedUser(user);
             
             if (!configManager.Initialized)
