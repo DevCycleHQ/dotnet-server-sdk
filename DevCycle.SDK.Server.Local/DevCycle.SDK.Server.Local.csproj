@@ -96,6 +96,6 @@
     <ProjectReference Include="..\DevCycle.SDK.Server.Common\DevCycle.SDK.Server.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Protobuf Include="Protobuf\variableForuserParams.proto" />
+    <Protobuf Include="variableForuserParams.proto" />
   </ItemGroup>
 </Project>
