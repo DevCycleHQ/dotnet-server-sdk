@@ -444,35 +444,39 @@ namespace DevCycle.SDK.Server.Local.Api
             int length = paramData.Length;
             
             var headerAddr = (int)NewFunc.Invoke(12, WasmObjectIdUint8Array)!;
-            PinParameter(headerAddr);
-            
-            var dataBufferAddr = (int)NewFunc.Invoke(length, WasmObjectIdString);
-
-            Span<byte> headerSpan = WASMMemory.GetSpan(headerAddr, 12);
-            
-            byte[] bufferAddrBytes = new byte[4];
-            byte[] lengthBytes = new byte[4];
-            BinaryPrimitives.WriteInt32LittleEndian(bufferAddrBytes, dataBufferAddr);
-            BinaryPrimitives.WriteInt32LittleEndian(lengthBytes, length << 0);
-            // Into the header need to write 12 bytes
-            for(int i = 0; i < 4; i++)
+            try
             {
-                // 0-3 = buffer address,little endian
-                headerSpan[i] = bufferAddrBytes[i];
-                // 4-7 = buffer address again, little endian
-                headerSpan[i + 4] = bufferAddrBytes[i];
-                // 8-11 = length, little endian, aligned 0
-                headerSpan[i + 8] = lengthBytes[i];
-            }
-            // Now write the buffer data into memory
-            Span<byte> dataSpan = WASMMemory.GetSpan(dataBufferAddr, length);
-            for(int i = 0; i < length; i++)
-            {
-                dataSpan[i] = paramData[i];
-            }
-            
-            UnpinParameter(headerAddr);
+                PinParameter(headerAddr);
+                
+                var dataBufferAddr = (int)NewFunc.Invoke(length, WasmObjectIdString);
 
+                Span<byte> headerSpan = WASMMemory.GetSpan(headerAddr, 12);
+                
+                byte[] bufferAddrBytes = new byte[4];
+                byte[] lengthBytes = new byte[4];
+                BinaryPrimitives.WriteInt32LittleEndian(bufferAddrBytes, dataBufferAddr);
+                BinaryPrimitives.WriteInt32LittleEndian(lengthBytes, length << 0);
+                // Into the header need to write 12 bytes
+                for(int i = 0; i < 4; i++)
+                {
+                    // 0-3 = buffer address,little endian
+                    headerSpan[i] = bufferAddrBytes[i];
+                    // 4-7 = buffer address again, little endian
+                    headerSpan[i + 4] = bufferAddrBytes[i];
+                    // 8-11 = length, little endian, aligned 0
+                    headerSpan[i + 8] = lengthBytes[i];
+                }
+                // Now write the buffer data into memory
+                Span<byte> dataSpan = WASMMemory.GetSpan(dataBufferAddr, length);
+                for(int i = 0; i < length; i++)
+                {
+                    dataSpan[i] = paramData[i];
+                }
+            }
+            finally
+            {
+                UnpinParameter(headerAddr);
+            }
             return headerAddr;
         }
         
