@@ -5720,7 +5720,7 @@
           "variables": [
             {
               "_var": "8aa609cb010e46dcbaebdd14d319ce4a",
-              "value": "WeJfVe6Vz5zCWMWTIUzG"
+              "value": {"sample":"A"}
             }
           ],
           "_id": "703f7830b7f14a45877861423e7fa62e"
@@ -5731,7 +5731,7 @@
           "variables": [
             {
               "_var": "8aa609cb010e46dcbaebdd14d319ce4a",
-              "value": "IW4tT4kePXxIJNpvNcCY"
+              "value": {"sample":"B"}
             }
           ],
           "_id": "8331174065c9438baf48f26f1af7e186"
@@ -5742,7 +5742,7 @@
           "variables": [
             {
               "_var": "8aa609cb010e46dcbaebdd14d319ce4a",
-              "value": "W9ePPnBNmDXcGGCpiqgW"
+              "value": {"sample":"C"}
             }
           ],
           "_id": "bd6ab058d9114c399713d3f82308dec0"
@@ -5753,7 +5753,7 @@
           "variables": [
             {
               "_var": "8aa609cb010e46dcbaebdd14d319ce4a",
-              "value": "VEW8tUDnatw38XfBwl4P"
+              "value": {"sample":"D"}
             }
           ],
           "_id": "85207fa1106e4873a1668584696c29fb"
@@ -5764,7 +5764,7 @@
           "variables": [
             {
               "_var": "8aa609cb010e46dcbaebdd14d319ce4a",
-              "value": "custom-variation-20"
+              "value": {"sample":"E"}
             }
           ],
           "_id": "70649623e9444a678697345b17c6dfe0"
@@ -7346,7 +7346,7 @@
     {
       "_id": "8aa609cb010e46dcbaebdd14d319ce4a",
       "key": "v-key-9",
-      "type": "String"
+      "type": "JSON"
     },
     {
       "_id": "77c6940f85ae48119b0317b98e7fd92b",

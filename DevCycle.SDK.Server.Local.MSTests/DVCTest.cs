@@ -142,7 +142,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Value);
         }
-
+        
         [TestMethod]
         public async Task GetVariableByKeySpecialCharactersTestAsync()
         {
@@ -155,7 +155,22 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(result.Value);
             Assert.AreEqual("öé 🐍 ¥", result.Value);
         }
+        
+        [TestMethod]
+        public async Task GetVariableByKeyJsonObjTestAsync()
+        {
+            using DVCLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
+            var user = new User("j_test");
+            string key = Fixtures.VariableKey;
+            await Task.Delay(3000);
+            var expectedValue = JObject.Parse("{\"sample\": \"A\"}");
+            var result = api.Variable<JObject>(user, key, defaultValue:JObject.Parse("{\"key\": \"default\"}"));
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.Value);
+            Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
+        }
 
+        
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
@@ -184,7 +199,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             string json = "{\"key\": \"value\"}";
             var expectedValue = JObject.Parse(json);
-
+            
             var result = api.Variable(user, key, JObject.Parse(json));
 
             Assert.IsNotNull(result);

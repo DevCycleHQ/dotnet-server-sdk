@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -38,6 +39,28 @@ namespace DevCycle.SDK.Server.Local.Api
         private Instance WASMInstance { get; }
         private Random random;
         private Dictionary<TypeEnum, int> variableTypeMap = new Dictionary<TypeEnum, int>();
+        
+        
+        private Function PinFunc { get; }
+        private Function UnPinFunc { get; }
+        private Function NewFunc { get; }
+        private Function CollectFunc { get; }
+        private Function FlushEventQueueFunc { get; }
+        private Function EventQueueSizeFunc { get; }
+        private Function MarkPayloadSuccessFunc { get; }
+        private Function QueueEventFunc { get; }
+        private Function MarkPayloadFailureFunc { get; }
+        private Function InitEventQueueFunc { get; }
+        private Function QueueAggregateEventFunc { get; }
+        private Function VariableForUserFunc { get; }
+        private Function VariableForUserProtobufFunc { get; }
+        private Function SetConfigDataFunc { get; }
+        private Function SetPlatformDataFunc { get; }
+        private Function SetClientCustomDataFunc   { get; }
+        private Function GenerateBucketedConfigForUserFunc { get; }
+        
+        private const int WasmObjectIdString = 1;
+        private const int WasmObjectIdUint8Array = 9;
         
         public LocalBucketing()
         {
@@ -79,8 +102,8 @@ namespace DevCycle.SDK.Server.Local.Api
                             throw new InvalidOperationException();
                         }
 
-                        var message = ReadAssemblyScriptString(caller, memory, messagePtr);
-                        var filename = ReadAssemblyScriptString(caller, memory, filenamePtr);
+                        var message = ReadAssemblyScriptString(memory, messagePtr);
+                        var filename = ReadAssemblyScriptString(memory, filenamePtr);
                         handleError($"WASM Error: {message} ({filename}:{linenum}:{colnum})");
                     })
             );
@@ -96,7 +119,7 @@ namespace DevCycle.SDK.Server.Local.Api
                             throw new InvalidOperationException();
                         }
 
-                        var message = ReadAssemblyScriptString(caller, memory, messagePtr);
+                        var message = ReadAssemblyScriptString(memory, messagePtr);
                         Console.WriteLine(message);
                     })
             );
@@ -126,6 +149,25 @@ namespace DevCycle.SDK.Server.Local.Api
             variableTypeMap.Add(TypeEnum.String, GetGlobalValue<int>("VariableType.String"));
             variableTypeMap.Add(TypeEnum.JSON, GetGlobalValue<int>("VariableType.JSON"));
             
+            // cache the various functions from WASM
+            PinFunc = GetFunction("__pin");
+            UnPinFunc = GetFunction("__unpin");
+            NewFunc = GetFunction("__new");
+            CollectFunc = GetFunction("__collect");
+            FlushEventQueueFunc = GetFunction("flushEventQueue");
+            EventQueueSizeFunc = GetFunction("eventQueueSize");
+            MarkPayloadSuccessFunc = GetFunction("onPayloadSuccess");
+            QueueEventFunc = GetFunction("queueEvent");
+            MarkPayloadFailureFunc = GetFunction("onPayloadFailure");
+            InitEventQueueFunc = GetFunction("initEventQueue");
+            QueueAggregateEventFunc = GetFunction("queueAggregateEvent");
+            VariableForUserFunc = GetFunction("variableForUser");
+            VariableForUserProtobufFunc = GetFunction("variableForUser_PB");
+            SetConfigDataFunc = GetFunction("setConfigDataUTF8");
+            SetPlatformDataFunc = GetFunction("setPlatformDataUTF8");
+            SetClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
+            GenerateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
+        
             ReleaseMutex();
         }
         
@@ -140,8 +182,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
             var optionsAddress = GetParameter(options);
 
-            var initEventQueue = GetFunction("initEventQueue");
-            initEventQueue.Invoke(sdkKeyAddress, optionsAddress);
+            InitEventQueueFunc.Invoke(sdkKeyAddress, optionsAddress);
 
             ReleaseMutex();
         }
@@ -156,11 +197,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var userAddress = GetParameter(user);
-
-            var generateBucketedConfig = GetFunction("generateBucketedConfigForUser");
-            var result = generateBucketedConfig.Invoke(sdkKeyAddress, userAddress);
-            var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
+            var userAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(user));
+            var result = GenerateBucketedConfigForUserFunc.Invoke(sdkKeyAddress, userAddress);
+            var byteResp = ReadAssemblyScriptByteArray(WASMMemory, (int)result!);
+            var stringResp = Encoding.UTF8.GetString(byteResp);
+            
             var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
             config?.Initialize();
 
@@ -179,8 +220,7 @@ namespace DevCycle.SDK.Server.Local.Api
             };
             
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var eventQueueSize = GetFunction("eventQueueSize");
-            var result = (int)eventQueueSize.Invoke(sdkKeyAddress);
+            var result = (int)EventQueueSizeFunc.Invoke(sdkKeyAddress);
 
             ReleaseMutex();
             return result;
@@ -200,8 +240,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var userAddress = GetParameterPinned(user);
             var eventAddress = GetParameter(eventString);
 
-            var initEventQueue = GetFunction("queueEvent");
-            initEventQueue.Invoke(sdkKeyAddress, userAddress, eventAddress);
+            QueueEventFunc.Invoke(sdkKeyAddress, userAddress, eventAddress);
      
             ReleaseMutex();
         }
@@ -220,8 +259,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var eventAddress = GetParameterPinned(eventString);
             var variableMapAddress = GetParameter(variableVariationMapStr);
 
-            var queueAggregateEvent = GetFunction("queueAggregateEvent");
-            queueAggregateEvent.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
+            QueueAggregateEventFunc.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
       
             ReleaseMutex();
         }
@@ -236,10 +274,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var flushEventQueue = GetFunction("flushEventQueue");
-
-            var result = flushEventQueue.Invoke(sdkKeyAddress);
-            var stringResp = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)result!);
+            var result = FlushEventQueueFunc.Invoke(sdkKeyAddress);
+            var stringResp = ReadAssemblyScriptString(WASMMemory, (int)result!);
             var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
 
             ReleaseMutex();
@@ -257,8 +293,7 @@ namespace DevCycle.SDK.Server.Local.Api
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
-            var markPayloadSuccess = GetFunction("onPayloadSuccess");
-            markPayloadSuccess.Invoke(sdkKeyAddress, payloadIdAddress);
+            MarkPayloadSuccessFunc.Invoke(sdkKeyAddress, payloadIdAddress);
 
             ReleaseMutex();
         }
@@ -274,8 +309,7 @@ namespace DevCycle.SDK.Server.Local.Api
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
             var payloadIdAddress = GetParameter(payloadId);
-            var markPayloadFailure = GetFunction("onPayloadFailure");
-            markPayloadFailure.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
+            MarkPayloadFailureFunc.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
 
             ReleaseMutex();
         }
@@ -291,10 +325,9 @@ namespace DevCycle.SDK.Server.Local.Api
             };
             
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var configAddress = GetParameter(config);
+            var configAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(config));
 
-            var setConfigData = GetFunction("setConfigData");
-            setConfigData.Invoke(sdkKeyAddress, configAddress);
+            SetConfigDataFunc.Invoke(sdkKeyAddress, configAddress);
             
             ReleaseMutex();
         }
@@ -308,9 +341,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 ReleaseMutex();
                 throw new LocalBucketingException(message);
             };
-            var platformDataAddress = GetParameter(platformData);
-            var setPlatformData = GetFunction("setPlatformData");
-            setPlatformData.Invoke(platformDataAddress);
+            var platformDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(platformData));
+            SetPlatformDataFunc.Invoke(platformDataAddress);
 
             ReleaseMutex();
         }
@@ -330,18 +362,40 @@ namespace DevCycle.SDK.Server.Local.Api
             // convert to the native variable types in the WASM binary
             int varType = variableTypeMap[variableType];
 
-            var getVariable = GetFunction("variableForUser");
-            var variableAddress = getVariable.Invoke(sdkKeyAddress, userAddress, keyAddress, varType, shouldTrackEvent ? 1 : 0);
+            var variableAddress = VariableForUserFunc.Invoke(sdkKeyAddress, userAddress, keyAddress, varType, shouldTrackEvent ? 1 : 0);
             string varJSON = null;
             if ((int)variableAddress > 0)
             {
-                varJSON = ReadAssemblyScriptString(WASMStore, WASMMemory, (int)variableAddress!);    
+                varJSON = ReadAssemblyScriptString(WASMMemory, (int)variableAddress!);    
             }
             
             ReleaseMutex();
             return varJSON;
         }
 
+        public byte[] GetVariableForUserProtobuf(byte[] serializedParams)
+        {
+            WaitForMutex();
+
+            handleError = (message) =>
+            {
+                ReleaseMutex();
+                throw new LocalBucketingException(message);
+            };
+
+            var paramsAddr = GetUint8ArrayParameter(serializedParams);
+            var variableAddress = VariableForUserProtobufFunc.Invoke(paramsAddr);
+
+            byte[] varBytes = null;
+            if ((int)variableAddress > 0)
+            {
+                varBytes = ReadAssemblyScriptByteArray(WASMMemory, (int)variableAddress!);
+            }
+
+            ReleaseMutex();
+            return varBytes;
+        }
+        
         public void SetClientCustomData(string sdkKey, string customData)
         {
             WaitForMutex();
@@ -351,10 +405,9 @@ namespace DevCycle.SDK.Server.Local.Api
                 ReleaseMutex();
                 throw new LocalBucketingException(message);
             };
-            var customDataAddress = GetParameter(customData);
+            var customDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(customData));
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var setCustomData = GetFunction("setClientCustomData");
-            setCustomData.Invoke(sdkKeyAddress, customDataAddress);
+            SetClientCustomDataFunc.Invoke(sdkKeyAddress, customDataAddress);
 
             ReleaseMutex();
         }
@@ -373,19 +426,61 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private int GetParameter(string param)
         {
-            const int objectIdString = 1;
-
-            // ReSharper disable once InconsistentNaming
-            var __new = GetFunction("__new");
-
             var paramAddress =
-                (int)__new.Invoke(Encoding.Unicode.GetByteCount(param), objectIdString)!;
+                (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
 
             Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
 
             return paramAddress;
         }
+        
+        /// <summary>
+        /// Writes the bytes to WASM memory as a Uint8Array object and returns the header pointer
+        /// </summary>
+        /// <param name="paramData">An array of bytes to set in WASM memory</param>
+        /// <returns>A WASM memory pointer</returns>
+        private int GetUint8ArrayParameter(byte[] paramData)
+        {
+            int length = paramData.Length;
+            
+            var headerAddr = (int)NewFunc.Invoke(12, WasmObjectIdUint8Array)!;
+            try
+            {
+                PinParameter(headerAddr);
+                
+                var dataBufferAddr = (int)NewFunc.Invoke(length, WasmObjectIdString);
 
+                Span<byte> headerSpan = WASMMemory.GetSpan(headerAddr, 12);
+                
+                byte[] bufferAddrBytes = new byte[4];
+                byte[] lengthBytes = new byte[4];
+                BinaryPrimitives.WriteInt32LittleEndian(bufferAddrBytes, dataBufferAddr);
+                BinaryPrimitives.WriteInt32LittleEndian(lengthBytes, length << 0);
+                // Into the header need to write 12 bytes
+                for(int i = 0; i < 4; i++)
+                {
+                    // 0-3 = buffer address,little endian
+                    headerSpan[i] = bufferAddrBytes[i];
+                    // 4-7 = buffer address again, little endian
+                    headerSpan[i + 4] = bufferAddrBytes[i];
+                    // 8-11 = length, little endian, aligned 0
+                    headerSpan[i + 8] = lengthBytes[i];
+                }
+                // Now write the buffer data into memory
+                Span<byte> dataSpan = WASMMemory.GetSpan(dataBufferAddr, length);
+                for(int i = 0; i < length; i++)
+                {
+                    dataSpan[i] = paramData[i];
+                }
+            }
+            finally
+            {
+                UnpinParameter(headerAddr);
+            }
+            return headerAddr;
+        }
+        
+        
         private int GetParameterPinned(string param)
         {
             var addr = GetParameter(param);
@@ -396,14 +491,12 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private void PinParameter(int address)
         {
-            var pin = GetFunction("__pin");
-            pin.Invoke(address);
+            PinFunc.Invoke(address);
         }
 
         private void UnpinParameter(int address)
         {
-            var unpin = GetFunction("__unpin");
-            unpin.Invoke(address);
+            UnPinFunc.Invoke(address);
         }
 
         private void UnpinAll()
@@ -428,13 +521,22 @@ namespace DevCycle.SDK.Server.Local.Api
             return sdkKeyAddresses[sdkKey];
         }
 
-        private static string ReadAssemblyScriptString(IStore store, Memory memory, int address)
+        private static string ReadAssemblyScriptString(Memory memory, int address)
         {
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
             var length = memory.ReadInt32(address - 4);
             return Encoding.Unicode.GetString(memory.GetSpan(address, length));
         }
 
+        private static byte[] ReadAssemblyScriptByteArray(Memory memory, int address)
+        {
+            Span<byte> headerData = memory.GetSpan<byte>(address, 12);
+            int bufferAddress = BinaryPrimitives.ReadInt32LittleEndian(headerData.Slice(0, 4));
+            int dataLength = BinaryPrimitives.ReadInt32LittleEndian(headerData.Slice(8, 4));
+            Span<byte> bufferData = memory.GetSpan<byte>(bufferAddress, dataLength);
+            return bufferData.ToArray();
+        }
+        
         public void StartFlush()
         {
             FlushMutex.Wait();
