@@ -214,7 +214,7 @@ namespace DevCycle.SDK.Server.Local.Api
             
                 if(variableType != sdkVariable.Type)
                 {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
+                    logger.LogWarning("Type of Variable ["+sdkVariable.Type+"] does not match DevCycle configuration. Using default value");
                     return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
                 }
             
