@@ -156,6 +156,10 @@ namespace DevCycle.SDK.Server.Local.Api
                     throw new ArgumentOutOfRangeException("Unknown variable type: "+type);
             }
         }
+
+        public T VariableValue<T>(User user, string key, T defaultValue) {
+            return Variable(user, key, defaultValue).Value;
+        }
         
         public Variable<T> Variable<T>(User user, string key, T defaultValue) {
             var requestUser = new DVCPopulatedUser(user);

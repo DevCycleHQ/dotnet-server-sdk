@@ -138,9 +138,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new User("j_test");
             string key = "test";
             await Task.Delay(3000);
-            var result = api.Variable(user, key, false);
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Value);
+            
+            var variable = api.Variable(user, key, false);
+            Assert.IsNotNull(variable);
+            Assert.IsTrue(variable.Value);
+
+            var value = api.VariableValue(user, key, false);
+            Assert.IsTrue(value);
         }
         
         [TestMethod]
@@ -150,10 +154,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new User("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
-            var result = api.Variable<string>(user, key, "default_value");
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.Value);
-            Assert.AreEqual("öé 🐍 ¥", result.Value);
+            
+            var variable = api.Variable<string>(user, key, "default_value");
+            Assert.IsNotNull(variable);
+            Assert.IsNotNull(variable.Value);
+            Assert.AreEqual("öé 🐍 ¥", variable.Value);
+            
+            var value = api.VariableValue(user, key, "default_value");
+            Assert.IsNotNull(value);
+            Assert.AreEqual("öé 🐍 ¥", value);
         }
         
         [TestMethod]
@@ -163,11 +172,17 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new User("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
+            
             var expectedValue = JObject.Parse("{\"sample\": \"A\"}");
-            var result = api.Variable<JObject>(user, key, defaultValue:JObject.Parse("{\"key\": \"default\"}"));
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.Value);
-            Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
+            var defaultValue = JObject.Parse("{\"key\": \"default\"}");
+            var variable = api.Variable<JObject>(user, key, defaultValue);
+            Assert.IsNotNull(variable);
+            Assert.IsNotNull(variable.Value);
+            Assert.AreEqual(expectedValue.ToString(), variable.Value.ToString());
+
+            var value = api.VariableValue(user, key, defaultValue);
+            Assert.IsNotNull(value);
+            Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
 
         
@@ -200,11 +215,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string json = "{\"key\": \"value\"}";
             var expectedValue = JObject.Parse(json);
             
-            var result = api.Variable(user, key, JObject.Parse(json));
+            var variable = api.Variable(user, key, JObject.Parse(json));
+            Assert.IsNotNull(variable);
+            Assert.IsTrue(variable.IsDefaulted);
+            Assert.AreEqual(expectedValue.ToString(), variable.Value.ToString());
 
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsDefaulted);
-            Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
+            var value = api.VariableValue(user, key, JObject.Parse(json));
+            Assert.IsNotNull(value);
+            Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
 
         [TestMethod]

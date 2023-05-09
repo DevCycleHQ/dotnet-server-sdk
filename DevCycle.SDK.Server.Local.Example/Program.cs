@@ -76,6 +76,7 @@ namespace Example
             } 
             
             Console.WriteLine(api.Variable(user, "test-variable", true));
+            Console.WriteLine(api.VariableValue(user, "test-variable", true));
             Console.WriteLine(api.AllVariables(user));
         }
     }
