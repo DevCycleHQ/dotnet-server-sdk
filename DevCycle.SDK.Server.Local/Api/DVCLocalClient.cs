@@ -245,7 +245,7 @@ namespace DevCycle.SDK.Server.Local.Api
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
-                return null;
+                return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
             }
             return existingVariable;
         }
