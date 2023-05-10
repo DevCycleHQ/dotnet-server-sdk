@@ -77,6 +77,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
             
         }
 
+        public async Task<T> VariableValueAsync<T>(User user, string key, T defaultValue)
+        {
+            return (await VariableAsync(user, key, defaultValue)).Value;
+        }
+        
         public async Task<Variable<T>> VariableAsync<T>(User user, string key, T defaultValue)
         {
             ValidateUser(user);

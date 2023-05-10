@@ -86,11 +86,12 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             const string key = "show-quickstart";
             var result = await api.VariableAsync(user, key, true);
-
             AssertUserDefaultsCorrect(user);
-
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Value);
+
+            var value = await api.VariableValueAsync(user, key, true);
+            Assert.IsFalse(value);
         }
 
         [TestMethod]
