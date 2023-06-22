@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
-using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
@@ -27,9 +25,10 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             // to ensure "value" is required (not null)
             Value = value ??
                     throw new InvalidDataException("value is a required property for Variable and cannot be null");
-            
+
             DefaultValue = defaultValue ??
-                    throw new InvalidDataException("defaultValue is a required property for Variable and cannot be null");
+                           throw new InvalidDataException(
+                               "defaultValue is a required property for Variable and cannot be null");
 
             IsDefaulted = false;
         }
@@ -88,14 +87,13 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [DataMember(Name = "value")]
         public T Value { get; set; }
 
-        [DataMember(Name = "defaultValue")]
-        public T DefaultValue { get; set; }
+        [DataMember(Name = "defaultValue")] public T DefaultValue { get; set; }
 
         /// <summary>
         /// Variable type
         /// </summary>
         /// <value>Variable type</value>
-        [DataMember(Name="type")]
+        [DataMember(Name = "type")]
         public TypeEnum Type { get; set; }
 
         /// <summary>
@@ -104,29 +102,27 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         /// <value>Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id.</value>
         [DataMember(Name = "key")]
         public string Key { get; set; }
-        
-        [DataMember(Name = "isDefaulted")]
-        public bool IsDefaulted { get; set; }
+
+        [DataMember(Name = "isDefaulted")] public bool IsDefaulted { get; set; }
         public string EvalReason { get; set; }
 
         public static TypeEnum DetermineType(T variableValue)
         {
             TypeEnum typeEnum;
-    
+
             try
             {
                 var baseType = variableValue.GetType();
-                var type = baseType.GetExtendedType();
 
-                if (type == typeof(string))
+                if (baseType == typeof(string))
                 {
                     typeEnum = TypeEnum.String;
                 }
-                else if (type.IsNumericType)
+                else if (IsNumericType(baseType))
                 {
                     typeEnum = TypeEnum.Number;
                 }
-                else if (type == typeof(bool))
+                else if (baseType == typeof(bool))
                 {
                     typeEnum = TypeEnum.Boolean;
                 }
@@ -137,7 +133,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
                 else
                 {
                     throw new ArgumentException(
-                        $"{type} is not a valid type. Must be String / Number / Boolean or a subclass of a JObject");
+                        $"{baseType} is not a valid type. Must be String / Number / Boolean or a subclass of a JObject");
                 }
 
                 return typeEnum;
@@ -146,7 +142,39 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             {
                 Console.WriteLine(variableValue);
                 Console.WriteLine(e);
-                throw e;
+                throw;
+            }
+        }
+
+        private static bool IsNumericType(Type type)
+        {
+            if (type == null)
+            {
+                return false;
+            }
+
+            switch (System.Type.GetTypeCode(type))
+            {
+                case TypeCode.Byte:
+                case TypeCode.Decimal:
+                case TypeCode.Double:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                case TypeCode.SByte:
+                case TypeCode.Single:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                    return true;
+                case TypeCode.Object:
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        return IsNumericType(Nullable.GetUnderlyingType(type));
+                    }
+
+                    return false;
+                default: return false;
             }
         }
     }
