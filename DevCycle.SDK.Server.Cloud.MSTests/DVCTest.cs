@@ -9,9 +9,7 @@ using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-using RestSharp;
 using RichardSzalay.MockHttp;
-using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {

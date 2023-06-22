@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
-using RestSharp;
 using Environment = System.Environment;
 
 namespace Example
@@ -16,13 +14,13 @@ namespace Example
     {
         private static DVCLocalClient api;
 
-        static async Task Main()
+        public static void Main()
         {
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
             var user = new User("testing");
 
-            DVCLocalClientBuilder apiBuilder = new DVCLocalClientBuilder();
-            api = (DVCLocalClient) apiBuilder
+            var apiBuilder = new DVCLocalClientBuilder();
+            api = apiBuilder
                 .SetOptions(new DVCLocalOptions())
                 .SetInitializedSubscriber((o, e) =>
                 {
@@ -43,38 +41,27 @@ namespace Example
                 .SetEnvironmentKey(SDK_ENV_VAR)
                 .SetLogger(LoggerFactory.Create(builder => builder.AddConsole()))
                 .Build();
-            
+
             api.AddFlushedEventSubscriber((sender, dvcEventArgs) =>
             {
-                if(dvcEventArgs.Errors.Count > 0)
-                {
-                    Console.WriteLine($"Some events were not flushed. Errors: {dvcEventArgs.Errors}");
-                }
-                else
-                {
-                    Console.WriteLine("Events flushed successfully");
-                }
+                Console.WriteLine(dvcEventArgs.Errors.Count > 0
+                    ? $"Some events were not flushed. Errors: {dvcEventArgs.Errors}"
+                    : "Events flushed successfully");
             });
 
-            try
-            {
-                await Task.Delay(15000);
-            }
-            catch (TaskCanceledException)
-            {
-                System.Environment.Exit(0);
-            }
+
+            Task.Delay(15000).Wait();
         }
 
         private static void ClientInitialized(User user)
         {
-            Dictionary<string, Feature> result = api.AllFeatures(user);
+            var result = api.AllFeatures(user);
 
-            foreach (KeyValuePair<string, Feature> entry in result)
+            foreach (var entry in result)
             {
                 Console.WriteLine(entry.Key + " : " + entry.Value);
-            } 
-            
+            }
+
             Console.WriteLine(api.Variable(user, "test-variable", true));
             Console.WriteLine(api.AllVariables(user));
         }

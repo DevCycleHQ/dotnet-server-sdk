@@ -1,11 +1,6 @@
-using System;
-using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
-using DevCycle.SDK.Server.Common.Model.Local;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using TypeSupport.Extensions;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
