@@ -1,14 +1,28 @@
 name: Publish to NuGet
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: 
+
+permissions: 
+  contents: write
 jobs:
   publish:
     name: build, pack & publish
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.AUTOMATION_USER_GHA }}
+
+      - name: Get current version of Cloud SDK
+        id: cloud-version
+        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj)" >> "$GITHUB_OUTPUT"    
+      - name: Get current version of Common Library
+        id: common-version
+        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj)" >> "$GITHUB_OUTPUT"    
+      - name: Get current version of Local SDK
+        id: local-version
+        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj)" >> "$GITHUB_OUTPUT"
+      - name: Bump All SDK packages    
       - name: Package
         run: dotnet build -c Release
       - name: Publish Local to NuGet
@@ -17,3 +31,5 @@ jobs:
         run: dotnet nuget push DevCycle.SDK.Server.Cloud/bin/Release/DevCycle.SDK.Server.Cloud.*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Common to NuGet
         run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Create GitHub Release
+      
