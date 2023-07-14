@@ -1,4 +1,4 @@
-name: Publish to NuGet
+name: Publish to NuGet and Version Bump
 on:
   workflow_dispatch: 
 
@@ -11,7 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.AUTOMATION_USER_GHA }}
+          token: ${{ secrets.AUTOMATION_USER_TOKEN }}
+      - name: Set Git User Config
+        run: |
+          git config --global user.email "github-tracker-bot@taplytics.com"
+          git config --global user.name "DevCycle Automation"
 
       - name: Get current version of Cloud SDK
         id: cloud-version
@@ -22,7 +26,29 @@ jobs:
       - name: Get current version of Local SDK
         id: local-version
         run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj)" >> "$GITHUB_OUTPUT"
-      - name: Bump All SDK packages    
+      - name: Bump Cloud Version
+        id: semverbump-cloud
+        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        with:
+          version: ${{ steps.cloud-version.outputs.version }}
+      - name: Bump Common Version
+        id: semverbump-common
+        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        with:
+          version: ${{ steps.common-version.outputs.version }}
+      - name: Bump Local Version
+        id: semverbump-local
+        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        with:
+          version: ${{ steps.local-version.outputs.version }}
+      - name: Replace the versions for all SDKs
+        run: |
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.minor }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.minor }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.minor }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
+          git add .
+          git commit -m "Version Bumping"
+          git push -u origin main
       - name: Package
         run: dotnet build -c Release
       - name: Publish Local to NuGet
@@ -32,4 +58,6 @@ jobs:
       - name: Publish Common to NuGet
         run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Create GitHub Release
-      
+        uses: DevCycleHQ/release-action/gh-release@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
