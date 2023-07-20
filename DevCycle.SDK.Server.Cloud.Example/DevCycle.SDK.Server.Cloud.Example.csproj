@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevCycle.SDK.Server.Cloud" Version="1.10.0" />
+    <PackageReference Include="DevCycle.SDK.Server.Cloud" Version="1.10.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
   </ItemGroup>
