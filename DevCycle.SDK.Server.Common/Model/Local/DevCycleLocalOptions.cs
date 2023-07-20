@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
-    public class DVCLocalOptions : IDVCOptions
+    public class DevCycleLocalOptions : IDVCOptions
     {
         [DataMember(Name="configPollingIntervalMS", EmitDefaultValue=false)]
         [JsonProperty("configPollingIntervalMS")]
@@ -54,7 +54,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [IgnoreDataMember]
         public Dictionary<string, string> EventsApiCustomHeaders { get; set; }
 
-        public DVCLocalOptions(
+        public DevCycleLocalOptions(
             int configPollingIntervalMs = 1000,
             int configPollingTimeoutMs = 5000,
             string cdnUri = "https://config-cdn.devcycle.com",

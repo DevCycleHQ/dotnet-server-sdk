@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Local.Benchmark
     public class BenchmarkTests
     {
         private readonly ILogger logger;
-        private DVCLocalClient client;
+        private DevCycleLocalClient client;
 
         public BenchmarkTests()
         {
@@ -28,9 +28,9 @@ namespace DevCycle.SDK.Server.Local.Benchmark
             client = createTestClient();
         }
         
-        private DVCLocalClient createTestClient()
+        private DevCycleLocalClient createTestClient()
         {
-            DVCLocalOptions options = new DVCLocalOptions(disableAutomaticEvents: true, disableCustomEvents:true, configPollingIntervalMs: 60000, eventFlushIntervalMs: 60000);
+            DevCycleLocalOptions options = new DevCycleLocalOptions(disableAutomaticEvents: true, disableCustomEvents:true, configPollingIntervalMs: 60000, eventFlushIntervalMs: 60000);
             string config = new string(Fixtures.LargeConfig());
             var mockHttp = new MockHttpMessageHandler();
 
@@ -47,11 +47,11 @@ namespace DevCycle.SDK.Server.Local.Benchmark
             var configManager = new EnvironmentConfigManager(sdkKey, options, new NullLoggerFactory(),
                 localBucketing, restClientOptions: new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             
-            DVCLocalClient api = new DVCLocalClientBuilder()
+            DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
                 .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
-                .SetOptions(options ?? new DVCLocalOptions())
+                .SetOptions(options ?? new DevCycleLocalOptions())
                 .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)
                 .Build();
@@ -72,7 +72,7 @@ namespace DevCycle.SDK.Server.Local.Benchmark
         [Benchmark]
         public void VariableLocalBenchmark()
         {
-            User testUser = new User("j_test");
+            DevCycleUser testUser = new DevCycleUser("j_test");
             var result = client.Variable(testUser, Fixtures.LargeConfigVariableKey, false);
             if (result.IsDefaulted)
             {

@@ -12,16 +12,16 @@ namespace Example
 {
     class Program
     {
-        private static DVCLocalClient api;
+        private static DevCycleLocalClient api;
 
         public static void Main()
         {
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
-            var user = new User("testing");
+            var user = new DevCycleUser("testing");
 
-            var apiBuilder = new DVCLocalClientBuilder();
+            var apiBuilder = new DevCycleLocalClientBuilder();
             api = apiBuilder
-                .SetOptions(new DVCLocalOptions())
+                .SetOptions(new DevCycleLocalOptions())
                 .SetInitializedSubscriber((o, e) =>
                 {
                     if (e.Success)
@@ -53,7 +53,7 @@ namespace Example
             Task.Delay(15000).Wait();
         }
 
-        private static void ClientInitialized(User user)
+        private static void ClientInitialized(DevCycleUser user)
         {
             var result = api.AllFeatures(user);
 

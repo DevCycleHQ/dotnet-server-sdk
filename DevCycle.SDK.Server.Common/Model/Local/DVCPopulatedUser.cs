@@ -69,7 +69,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public DVCPopulatedUser()
         {
         }
-        public DVCPopulatedUser(User user)
+        public DVCPopulatedUser(DevCycleUser user)
         {
             if (user == null)
             {

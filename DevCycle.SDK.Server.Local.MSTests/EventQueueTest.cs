@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     {
         private Tuple<EventQueue, MockHttpMessageHandler, MockedRequest> getTestQueue(bool isError = false,
             bool isRetryableError = false, LogLevel logLevel = LogLevel.Information,
-            DVCLocalOptions localOptions = null)
+            DevCycleLocalOptions localOptions = null)
         {
             var mockHttp = new MockHttpMessageHandler();
             var sdkKey = $"server-{Guid.NewGuid()}";
@@ -35,7 +35,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     .Respond(statusCode,
                         "application/json",
                         "{}");
-            localOptions ??= new DVCLocalOptions(10, 10);
+            localOptions ??= new DevCycleLocalOptions(10, 10);
             var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
@@ -62,21 +62,21 @@ namespace DevCycle.SDK.Server.Local.MSTests
             completion.WaitOne();
         }
 
-        private void QueueSimpleEvent(EventQueue eventQueue, Event @event = null)
+        private void QueueSimpleEvent(EventQueue eventQueue, DevCycleEvent @event = null)
         {
-            @event ??= new Event("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
-            var user = new User("1");
+            @event ??= new DevCycleEvent("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
+            var user = new DevCycleUser("1");
 
             var dvcPopulatedUser = new DVCPopulatedUser(user);
             eventQueue.QueueEvent(dvcPopulatedUser, @event);
         }
-        private void QueueSimpleAggregateEvent(EventQueue eventQueue, Event @event = null)
+        private void QueueSimpleAggregateEvent(EventQueue eventQueue, DevCycleEvent @event = null)
         {
-            @event ??= new Event(
+            @event ??= new DevCycleEvent(
                 "aggVariableEvaluated",
                 Fixtures.VariableKey,
                 metaData: new Dictionary<string, object> { { "test", "value" } });
-            var user = new User("1");
+            var user = new DevCycleUser("1");
             
             var config = new BucketedUserConfig
             {

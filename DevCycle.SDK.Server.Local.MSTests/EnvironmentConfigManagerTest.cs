@@ -38,7 +38,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             var sdkKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var cfgManager = new EnvironmentConfigManager(sdkKey, new DVCLocalOptions(),
+            var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
                 loggerFactory, new LocalBucketing(), restClientOptions: new DVCRestClientOptions()
                     {ConfigureMessageHandler = _ => mockHttp},
                 initializedHandler: (isError && !isRetryableError) ? DidNotInitializeSubscriber : DidInitializeSubscriber);

@@ -29,7 +29,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly DVCEventArgs initializationEvent;
         private readonly LocalBucketing localBucketing;
         private readonly EventHandler<DVCEventArgs> initializedHandler;
-        private readonly DVCLocalOptions localOptions;
+        private readonly DevCycleLocalOptions localOptions;
         private Timer pollingTimer;
 
         public virtual string Config { get; private set; }
@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public EnvironmentConfigManager(
             string sdkKey,
-            DVCLocalOptions dvcLocalOptions,
+            DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             LocalBucketing localBucketing,
             EventHandler<DVCEventArgs> initializedHandler = null,

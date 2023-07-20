@@ -13,23 +13,23 @@ using RestSharp;
 namespace DevCycle.SDK.Server.Cloud.Api
 {
 
-    public class DVCCloudClientBuilder : DVCClientBuilder<DVCCloudClient, DVCCloudOptions, DVCCloudClientBuilder>
+    public class DevCycleCloudClientBuilder : DVCClientBuilder<DevCycleCloudClient, DVCCloudOptions, DevCycleCloudClientBuilder>
     {
-        protected override DVCCloudClientBuilder BuilderInstance => this;
+        protected override DevCycleCloudClientBuilder BuilderInstance => this;
 
-        public override DVCCloudClient Build()
+        public override DevCycleCloudClient Build()
         {
-            return new DVCCloudClient(sdkKey, loggerFactory, options, restClientOptions);
+            return new DevCycleCloudClient(sdkKey, loggerFactory, options, restClientOptions);
         }
     }
-    public sealed class DVCCloudClient : DVCBaseClient
+    public sealed class DevCycleCloudClient : DVCBaseClient
     {
         private readonly DVCApiClient apiClient;
         private readonly ILogger logger;
 
         private readonly DVCCloudOptions options;
 
-        internal DVCCloudClient(
+        internal DevCycleCloudClient(
             string sdkKey,
             ILoggerFactory loggerFactory, 
             IDVCOptions options=null,
@@ -37,7 +37,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
         ) {
             ValidateSDKKey(sdkKey);
             apiClient = new DVCApiClient(sdkKey, restClientOptions);
-            logger = loggerFactory.CreateLogger<DVCCloudClient>();
+            logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
             this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();
         }
         
@@ -51,7 +51,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return apiClient;
         }
 
-        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(User user)
+        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(DevCycleUser user)
         {
             ValidateUser(user);
 
@@ -77,12 +77,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
             
         }
 
-        public async Task<T> VariableValueAsync<T>(User user, string key, T defaultValue)
+        public async Task<T> VariableValueAsync<T>(DevCycleUser user, string key, T defaultValue)
         {
             return (await VariableAsync(user, key, defaultValue)).Value;
         }
         
-        public async Task<Variable<T>> VariableAsync<T>(User user, string key, T defaultValue)
+        public async Task<Variable<T>> VariableAsync<T>(DevCycleUser user, string key, T defaultValue)
         {
             ValidateUser(user);
 
@@ -139,7 +139,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return variable;
         }
 
-        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(DevCycleUser user)
         {
             ValidateUser(user);
 
@@ -165,7 +165,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
         }
 
-        public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
+        public async Task<DVCResponse> TrackAsync(DevCycleUser user, DevCycleEvent userEvent)
         {
             ValidateUser(user);
 
@@ -175,7 +175,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            UserAndEvents userAndEvents = new UserAndEvents(new List<Event>() {userEvent}, user);
+            UserAndEvents userAndEvents = new UserAndEvents(new List<DevCycleEvent>() {userEvent}, user);
 
             try 
             {

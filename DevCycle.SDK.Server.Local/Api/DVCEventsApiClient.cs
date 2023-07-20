@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private string SdkKey { get; set; }
         private RestClient restClient { get; set; }
         private bool _disposed = false;
-        private DVCLocalOptions sdkOptions { get; set; }
+        private DevCycleLocalOptions sdkOptions { get; set; }
 
 
         // internal parameterless constructor for testing
@@ -21,9 +21,9 @@ namespace DevCycle.SDK.Server.Local.Api
         {
         }
 
-        public DVCEventsApiClient(string sdkKey, DVCLocalOptions options = null, DVCRestClientOptions restClientOptions = null)
+        public DVCEventsApiClient(string sdkKey, DevCycleLocalOptions options = null, DVCRestClientOptions restClientOptions = null)
         {
-            options ??= new DVCLocalOptions();
+            options ??= new DevCycleLocalOptions();
             DVCRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DVCRestClientOptions();
             if (string.IsNullOrEmpty(clientOptions.BaseUrl?.ToString()))
                 clientOptions.BaseUrl = new Uri(options.EventsApiUri);

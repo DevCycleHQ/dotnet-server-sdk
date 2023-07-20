@@ -53,7 +53,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             
         }
 
-        public DVCRequestEvent(Event @event, string userId, Dictionary<string, string> featureVars)
+        public DVCRequestEvent(DevCycleEvent @event, string userId, Dictionary<string, string> featureVars)
         {
             if (@event.Type == null)
             {

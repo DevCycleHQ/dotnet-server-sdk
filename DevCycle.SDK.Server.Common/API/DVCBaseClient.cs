@@ -14,12 +14,12 @@ namespace DevCycle.SDK.Server.Common.API
         private string SdkPlatform => $"C# {Platform()}";
         private static string CSharpVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
         private static string SdkVersion => typeof(IDVCClient).Assembly.GetName().Version.ToString();
-        private static User.SdkTypeEnum SdkType => User.SdkTypeEnum.Server;
+        private static DevCycleUser.SdkTypeEnum SdkType => DevCycleUser.SdkTypeEnum.Server;
         public abstract void Dispose();
         public abstract string Platform();
         public abstract IDVCApiClient GetApiClient();
 
-        protected void AddDefaults(User user)
+        protected void AddDefaults(DevCycleUser user)
         {
             if (string.IsNullOrEmpty(user.Platform))
             {
@@ -39,7 +39,7 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        protected void ValidateUser(User user)
+        protected void ValidateUser(DevCycleUser user)
         {
             if (user == null)
             {

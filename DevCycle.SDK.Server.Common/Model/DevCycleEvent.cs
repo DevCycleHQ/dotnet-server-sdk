@@ -8,17 +8,17 @@ using Newtonsoft.Json;
 namespace DevCycle.SDK.Server.Common.Model
 {
     [DataContract]
-    public class Event : IEquatable<Event>
+    public class DevCycleEvent : IEquatable<DevCycleEvent>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Event" /> class.
+        /// Initializes a new instance of the <see cref="DevCycleEvent" /> class.
         /// </summary>
         /// <param name="type">Custom event type (required).</param>
         /// <param name="target">Custom event target / subject of event. Contextual to event type.</param>
         /// <param name="clientDate">Unix epoch time the event occurred according to client.</param>
         /// <param name="value">Value for numerical events. Contextual to event type.</param>
         /// <param name="metaData">Extra JSON metadata for event. Contextual to event type.</param>
-        public Event(string type = default, string target = default, DateTime? clientDate = default, double value = default,
+        public DevCycleEvent(string type = default, string target = default, DateTime? clientDate = default, double value = default,
             Dictionary<string, object> metaData = default)
         {
             // to ensure "type" is required (not null)
@@ -87,7 +87,7 @@ namespace DevCycle.SDK.Server.Common.Model
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class Event {\n");
+            sb.Append("class DevCycleEvent {\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Target: ").Append(Target).Append("\n");
             sb.Append("  ClientDate: ").Append(ClientDate).Append("\n");
@@ -113,7 +113,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <returns>Boolean</returns>
         public override bool Equals(object input)
         {
-            return Equals(input as Event);
+            return Equals(input as DevCycleEvent);
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <param name="input">Instance of ModelEvent to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Event input)
+        public bool Equals(DevCycleEvent input)
         {
             if (input == null)
                 return false;
@@ -177,9 +177,9 @@ namespace DevCycle.SDK.Server.Common.Model
             }
         }
 
-        public Event Clone()
+        public DevCycleEvent Clone()
         {
-            return (Event) MemberwiseClone();
+            return (DevCycleEvent) MemberwiseClone();
         }
     }
 }

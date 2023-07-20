@@ -72,7 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Example.cs" />
-    <Compile Update="Api\DVCLocalClient.cs">
+    <Compile Update="Api\DevCycleLocalClient.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>

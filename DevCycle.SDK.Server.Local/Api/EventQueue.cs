@@ -16,7 +16,7 @@ namespace DevCycle.SDK.Server.Local.Api
 {
     internal class EventQueue
     {
-        private readonly DVCLocalOptions localOptions;
+        private readonly DevCycleLocalOptions localOptions;
         private readonly DVCEventsApiClient dvcEventsApiClient;
         private readonly LocalBucketing localBucketing;
         private readonly string sdkKey;
@@ -30,7 +30,7 @@ namespace DevCycle.SDK.Server.Local.Api
         
         public EventQueue(
             string sdkKey, 
-            DVCLocalOptions localOptions,
+            DevCycleLocalOptions localOptions,
             ILoggerFactory loggerFactory,
             LocalBucketing localBucketing,
             DVCRestClientOptions restClientOptions = null
@@ -130,7 +130,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return flushPayloads;
         }
 
-        public virtual void QueueEvent(DVCPopulatedUser user, Event @event, bool throwOnQueueMax = false)
+        public virtual void QueueEvent(DVCPopulatedUser user, DevCycleEvent @event, bool throwOnQueueMax = false)
         {
             if (closing)
             {
@@ -165,7 +165,7 @@ namespace DevCycle.SDK.Server.Local.Api
          * Queue Event that can be aggregated together, where multiple calls are aggregated
          * by incrementing the 'value' field.
          */
-        public virtual void QueueAggregateEvent(DVCPopulatedUser user, Event @event, BucketedUserConfig config, bool throwOnQueueMax = false)
+        public virtual void QueueAggregateEvent(DVCPopulatedUser user, DevCycleEvent @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
             if (closing)
             {

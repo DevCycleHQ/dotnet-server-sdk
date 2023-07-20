@@ -8,7 +8,7 @@ using Newtonsoft.Json.Converters;
 namespace DevCycle.SDK.Server.Common.Model
 {
     [DataContract]
-    public class User : IEquatable<User>
+    public class DevCycleUser : IEquatable<DevCycleUser>
     {
         /// <summary>
         /// DevCycle SDK type
@@ -36,7 +36,7 @@ namespace DevCycle.SDK.Server.Common.Model
         public SdkTypeEnum? SdkType { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="User" /> class.
+        /// Initializes a new instance of the <see cref="DevCycleUser" /> class.
         /// </summary>
         /// <param name="userId">Unique id to identify the user (required).</param>
         /// <param name="email">User&#x27;s email used to identify the user on the dashboard / target audiences.</param>
@@ -54,7 +54,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="deviceModel">User&#x27;s device model.</param>
         /// <param name="sdkType">DevCycle SDK type.</param>
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
-        public User(string userId = default, string email = default, string name = default, string language = default,
+        public DevCycleUser(string userId = default, string email = default, string name = default, string language = default,
             string country = default,
             string appVersion = default, double appBuild = default, Dictionary<string, object> customData = default,
             Dictionary<string, object> privateCustomData = default,
@@ -65,7 +65,7 @@ namespace DevCycle.SDK.Server.Common.Model
             // to ensure "userId" is required (not null)
             if (String.IsNullOrEmpty(userId))
             {
-                throw new ArgumentException("userId is a required property for User and cannot be null or empty");
+                throw new ArgumentException("userId is a required property for DevCycleUser and cannot be null or empty");
             }
             if (userId.Length > 200)
             {
@@ -241,7 +241,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <returns>Boolean</returns>
         public override bool Equals(object input)
         {
-            return Equals(input as User);
+            return Equals(input as DevCycleUser);
         }
 
         /// <summary>
@@ -249,7 +249,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <param name="input">Instance of UserData to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(User input)
+        public bool Equals(DevCycleUser input)
         {
             if (input == null)
                 return false;

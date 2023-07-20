@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class DVCTest
     {
-        private DVCLocalClient getTestClient(DVCLocalOptions options = null, string config = null,
+        private DevCycleLocalClient getTestClient(DevCycleLocalOptions options = null, string config = null,
             bool skipInitialize = false)
         {
             if (config == null)
@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-', '_')}_hash";
             localBucketing.StoreConfig(sdkKey, config);
-            var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DVCLocalOptions(),
+            var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DevCycleLocalOptions(),
                 new NullLoggerFactory(),
                 localBucketing,
                 restClientOptions: new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
@@ -54,11 +54,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 configManager.Initialized = true;
             }
 
-            DVCLocalClient api = new DVCLocalClientBuilder()
+            DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
                 .SetRestClientOptions(new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp })
-                .SetOptions(options ?? new DVCLocalOptions())
+                .SetOptions(options ?? new DevCycleLocalOptions())
                 .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)
                 .Build();
@@ -70,8 +70,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             const string baseurl = "https://different-domain";
             const string slug = "/slug";
-            var testClient = new DVCLocalClientBuilder()
-                .SetOptions(new DVCLocalOptions()
+            var testClient = new DevCycleLocalClientBuilder()
+                .SetOptions(new DevCycleLocalOptions()
                 {
                     CdnUri = baseurl,
                     CdnSlug = slug
@@ -97,13 +97,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 return;
             }
 
-            var api = new DVCLocalClientBuilder()
+            var api = new DevCycleLocalClientBuilder()
                 .SetInitializedSubscriber(((sender, args) => { Console.WriteLine($"Success? : {args.Success}"); }))
                 .SetSDKKey(sdkKey)
                 .Build();
 
             await Task.Delay(5000);
-            var resp = api.AllFeatures(new User("test"));
+            var resp = api.AllFeatures(new DevCycleUser("test"));
             Assert.IsTrue(resp.Count > 0);
             foreach (var (key, value) in resp)
             {
@@ -115,7 +115,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public void GetFeaturesTest()
         {
             var api = getTestClient();
-            var user = new User("j_test");
+            var user = new DevCycleUser("j_test");
             user.Country = "CA";
             user.Language = "en";
             user.AppBuild = 1;
@@ -133,9 +133,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTestAsync()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
 
-            var user = new User("j_test");
+            var user = new DevCycleUser("j_test");
             string key = "test";
             await Task.Delay(3000);
             
@@ -150,8 +150,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeySpecialCharactersTestAsync()
         {
-            using DVCLocalClient api = getTestClient(config: Fixtures.ConfigWithSpecialCharacters());
-            var user = new User("j_test");
+            using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithSpecialCharacters());
+            var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
             
@@ -168,8 +168,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeyJsonObjTestAsync()
         {
-            using DVCLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
-            var user = new User("j_test");
+            using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
+            var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
             
@@ -189,9 +189,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
 
-            var user = new User("j_test");
+            var user = new DevCycleUser("j_test");
             string key = "json";
 
             string json = "['Small','Medium','Large']";
@@ -207,9 +207,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void GetJsonVariableByKeyReturnsDefaultObjectTest()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
 
-            var user = new User("j_test");
+            var user = new DevCycleUser("j_test");
             string key = "json";
 
             string json = "{\"key\": \"value\"}";
@@ -228,9 +228,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
 
-            User user = new User("j_test");
+            DevCycleUser user = new DevCycleUser("j_test");
             // Bucketing needs time to work.
             await Task.Delay(5000);
             var result = api.AllVariables(user);
@@ -245,13 +245,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
 
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
-            User user = new User("j_test");
-            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
+            DevCycleUser user = new DevCycleUser("j_test");
+            DevCycleEvent userEvent = new DevCycleEvent("test event", "test target", now.DateTime, 600);
             await Task.Delay(5000);
             api.Track(user, userEvent);
 
@@ -262,7 +262,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
-                using DVCLocalClient api = getTestClient();
+                using DevCycleLocalClient api = getTestClient();
 
                 api.Variable(null, "some_key", true);
             });
@@ -271,7 +271,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void User_NullUserId_ThrowsException()
         {
-            Assert.ThrowsException<ArgumentException>(() => { _ = new User(); });
+            Assert.ThrowsException<ArgumentException>(() => { _ = new DevCycleUser(); });
         }
 
         [TestMethod]
@@ -279,7 +279,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             Assert.ThrowsException<ArgumentException>(() =>
             {
-                _ = new User("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
+                _ = new DevCycleUser("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
                              + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
                              + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
             });
@@ -288,7 +288,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void SetClientCustomDataTest()
         {
-            using DVCLocalClient api = getTestClient();
+            using DevCycleLocalClient api = getTestClient();
             
             Dictionary<string, object> customData = new Dictionary<string, object>();
             customData.Add("strProp", "value");

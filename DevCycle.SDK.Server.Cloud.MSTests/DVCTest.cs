@@ -16,7 +16,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
     [TestClass]
     public class DVCTest
     {
-        private DVCCloudClient getTestClient(object bodyResponse, DVCCloudOptions options = null)
+        private DevCycleCloudClient getTestClient(object bodyResponse, DVCCloudOptions options = null)
         {
             var mockHttp = new MockHttpMessageHandler();
 
@@ -26,7 +26,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                         bodyResponse
                     ));
 
-            DVCCloudClient api = new DVCCloudClientBuilder()
+            DevCycleCloudClient api = new DevCycleCloudClientBuilder()
                 .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DVCCloudOptions())
                 .SetSDKKey($"server-{Guid.NewGuid().ToString()}")
@@ -46,11 +46,11 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                 return;
             }
 
-            DVCCloudClient api = new DVCCloudClientBuilder()
+            DevCycleCloudClient api = new DevCycleCloudClientBuilder()
                     .SetSDKKey(Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY"))
                     .SetLogger(new NullLoggerFactory())
                     .Build();
-            var resp = await api.AllFeaturesAsync(new User("test"));
+            var resp = await api.AllFeaturesAsync(new DevCycleUser("test"));
             Assert.IsTrue(resp.Count > 0);
             foreach (var (key, value) in resp)
             {
@@ -61,8 +61,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetFeaturesTest()
         {
-            DVCCloudClient api = getTestClient(TestResponse.GetFeaturesAsync());
-            User user = new User("j_test");
+            DevCycleCloudClient api = getTestClient(TestResponse.GetFeaturesAsync());
+            DevCycleUser user = new DevCycleUser("j_test");
 
             var result = await api.AllFeaturesAsync(user);
 
@@ -78,9 +78,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            DVCCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync());
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync());
 
-            User user = new User("j_test");
+            DevCycleUser user = new DevCycleUser("j_test");
 
             const string key = "show-quickstart";
             var result = await api.VariableAsync(user, key, true);
@@ -95,9 +95,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            DVCCloudClient api = getTestClient(TestResponse.GetVariablesAsync());
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariablesAsync());
 
-            User user = new User("j_test");
+            DevCycleUser user = new DevCycleUser("j_test");
 
             var result = await api.AllVariablesAsync(user);
 
@@ -109,13 +109,13 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1));
+            using DevCycleCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1));
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
-            User user = new User("j_test");
-            List<Event> events = new List<Event>();
-            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
+            DevCycleUser user = new DevCycleUser("j_test");
+            List<DevCycleEvent> events = new List<DevCycleEvent>();
+            DevCycleEvent userEvent = new DevCycleEvent("test event", "test target", now.DateTime, 600);
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
@@ -132,13 +132,13 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         public async Task EdgeDBTest()
         {
             DVCCloudOptions options = new DVCCloudOptions(true);
-            using DVCCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1), options);
+            using DevCycleCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1), options);
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
-            User user = new User("j_test");
-            List<Event> events = new List<Event>();
-            Event userEvent = new Event("test event", "test target", now.DateTime, 600);
+            DevCycleUser user = new DevCycleUser("j_test");
+            List<DevCycleEvent> events = new List<DevCycleEvent>();
+            DevCycleEvent userEvent = new DevCycleEvent("test event", "test target", now.DateTime, 600);
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
@@ -148,7 +148,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DVCCloudClient api = new DVCCloudClient("dvc_server" + Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DevCycleCloudClient api = new DevCycleCloudClient("dvc_server" + Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {
@@ -161,14 +161,14 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         {
             Assert.ThrowsException<ArgumentException>(() =>
             {
-                User user = new User();
+                DevCycleUser user = new DevCycleUser();
             });
         }
 
-        private void AssertUserDefaultsCorrect(User user)
+        private void AssertUserDefaultsCorrect(DevCycleUser user)
         {
             Assert.AreEqual("C# Cloud", user.Platform);
-            Assert.AreEqual(User.SdkTypeEnum.Server, user.SdkType);
+            Assert.AreEqual(DevCycleUser.SdkTypeEnum.Server, user.SdkType);
             //Assert.AreEqual("1.0.3.0", user.SdkVersion);
         }
     }
