@@ -15,3 +15,29 @@ Your DevCycle SDK key can be found via [Environments & Keys Settings](https://ww
 
 ## Usage
 To find usage documentation, visit our docs for [Local Bucketing](https://docs.devcycle.com/docs/sdk/server-side-sdks/dotnet-local).
+
+## Logging
+
+The DevCycle SDK logs to **stdout** by default and utilizes the [Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/) library. You can override the default logger by passing in your own `ILoggerFactory` to the `DVCClient` constructor.
+
+```csharp
+var client = new DVCCloudClientBuilder()
+            .SetEnvironmentKey(SDK_ENV_VAR)
+            .SetLogger(LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug))
+            .Build();
+```
+
+To disable logging, pass in a `NullLoggerFactory` to the client builder object.
+
+```csharp
+ var client = new DVCCloudClientBuilder()
+            .SetEnvironmentKey(SDK_ENV_VAR)
+            .SetLogger(new NullLoggerFactory())
+            .Build();
+```
+
+If your application needs to to adjust the logging level or providers for the SDK, you can update the client by providing a new ILoggingFactory after the client is initialized.
+
+```csharp
+client.UpdateLogging(LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
+```
