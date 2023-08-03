@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -18,7 +19,7 @@ namespace DevCycle.SDK.Server.Common.API
         public abstract void Dispose();
         public abstract string Platform();
         public abstract IDVCApiClient GetApiClient();
-
+        public abstract void UpdateLogging(ILoggerFactory loggerFactory);
         protected void AddDefaults(User user)
         {
             if (string.IsNullOrEmpty(user.Platform))

@@ -25,7 +25,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
     public sealed class DVCCloudClient : DVCBaseClient
     {
         private readonly DVCApiClient apiClient;
-        private readonly ILogger logger;
+        private ILogger logger;
 
         private readonly DVCCloudOptions options;
 
@@ -194,6 +194,15 @@ namespace DevCycle.SDK.Server.Cloud.Api
         public override void Dispose()
         {
             ((IDisposable) apiClient).Dispose();
+        }
+        
+        /**
+         * Rebuild the logging of the client and all subcomponents
+         */
+        public override void UpdateLogging(ILoggerFactory loggerFactory) {
+            if (loggerFactory != null) {
+                logger = loggerFactory.CreateLogger<DVCCloudClient>();
+            }
         }
     }
 }

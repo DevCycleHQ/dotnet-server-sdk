@@ -37,7 +37,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             mockHttp.When("https://events*")
                 .Respond(HttpStatusCode.Created, "application/json",
                     "{}");
-            var localBucketing = new LocalBucketing();
+            var localBucketing = new LocalBucketing(new NullLoggerFactory());
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-', '_')}_hash";
             localBucketing.StoreConfig(sdkKey, config);

@@ -40,8 +40,8 @@ namespace DevCycle.SDK.Server.Local.Benchmark
             mockHttp.When("https://events*")
                 .Respond(HttpStatusCode.Created, "application/json",
                     "{}");
-            var localBucketing = new LocalBucketing();
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var localBucketing = new LocalBucketing(loggerFactory);
             var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
             localBucketing.StoreConfig(sdkKey, config);
             var configManager = new EnvironmentConfigManager(sdkKey, options, new NullLoggerFactory(),

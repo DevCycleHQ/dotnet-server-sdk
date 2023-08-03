@@ -8,10 +8,9 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Local.Protobuf;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using RestSharp;
+
 
 namespace DevCycle.SDK.Server.Local.Api
 {
@@ -42,11 +41,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public override DVCLocalClient Build()
         {
-            localBucketing ??= new LocalBucketing();
+            loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
+
+            localBucketing ??= new LocalBucketing(loggerFactory);
 
             options ??= new DVCLocalOptions();
-
-            loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
             configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
@@ -380,7 +379,10 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException();
         }
 
-        public void UpdateLogging(ILoggerFactory loggerFactory) {
+        /**
+         * Rebuild the logging of the client and all subcomponents
+         */
+        public override void UpdateLogging(ILoggerFactory loggerFactory) {
             if (loggerFactory != null) {
                 logger = loggerFactory.CreateLogger<DVCLocalClient>();
 
@@ -392,6 +394,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (eventQueue != null)
                 {
                     eventQueue.UpdateLogging(loggerFactory);
+                }
+                
+                if(localBucketing != null)
+                {
+                    localBucketing.UpdateLogging(loggerFactory);
                 }
             }
         }

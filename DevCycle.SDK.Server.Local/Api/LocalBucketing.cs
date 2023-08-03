@@ -8,6 +8,7 @@ using System.Threading;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Wasmtime;
 using Module = Wasmtime.Module;
@@ -27,6 +28,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
         private static readonly SemaphoreSlim FlushMutex = new(1, 1);
         private Func<string, string> handleError;
+        
+        private ILogger logger;
         
         private Dictionary<string, int> sdkKeyAddresses;
 
@@ -62,14 +65,16 @@ namespace DevCycle.SDK.Server.Local.Api
         private const int WasmObjectIdString = 1;
         private const int WasmObjectIdUint8Array = 9;
         
-        public LocalBucketing()
+        public LocalBucketing(ILoggerFactory loggerFactory)
         {
+            logger = loggerFactory.CreateLogger<LocalBucketing>();
+            
             WasmMutex.Wait();
             random = new Random();
             pinnedAddresses = new HashSet<int>();
             sdkKeyAddresses = new Dictionary<string, int>();
             
-            Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
+            logger.LogInformation("Initializing WASM Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
@@ -120,7 +125,7 @@ namespace DevCycle.SDK.Server.Local.Api
                         }
 
                         var message = ReadAssemblyScriptString(memory, messagePtr);
-                        Console.WriteLine(message);
+                        logger.LogInformation(message);
                     })
             );
             WASMLinker.Define(
@@ -169,6 +174,14 @@ namespace DevCycle.SDK.Server.Local.Api
             GenerateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
         
             ReleaseMutex();
+        }
+        
+        public void UpdateLogging(ILoggerFactory loggerFactory)
+        {
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<LocalBucketing>();
+            }
         }
         
         public void InitEventQueue(string sdkKey, string options)
