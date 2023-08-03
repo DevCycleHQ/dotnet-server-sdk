@@ -25,7 +25,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly int pollingIntervalMs;
         private readonly int requestTimeoutMs;
         private readonly RestClient restClient;
-        private readonly ILogger logger;
+        private ILogger logger;
         private readonly DVCEventArgs initializationEvent;
         private readonly LocalBucketing localBucketing;
         private readonly EventHandler<DVCEventArgs> initializedHandler;
@@ -208,6 +208,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             pollingTimer?.Dispose();
             PollingEnabled = false;
+        }
+
+        public void UpdateLogging(ILoggerFactory loggerFactory)
+        {
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
+            }
         }
     }
 }

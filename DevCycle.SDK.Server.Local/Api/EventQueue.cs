@@ -22,7 +22,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly string sdkKey;
         private bool closing = false;
 
-        private readonly ILogger logger;
+        private ILogger logger;
 
         private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
@@ -267,6 +267,14 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             closing = true;
             FlushEvents().GetAwaiter().GetResult();
+        }
+
+        public void UpdateLogging(ILoggerFactory loggerFactory)
+        {
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<EventQueue>();
+            }
         }
     }
 }

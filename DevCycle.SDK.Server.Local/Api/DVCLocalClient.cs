@@ -62,7 +62,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly EnvironmentConfigManager configManager;
         private readonly EventQueue eventQueue;
         private readonly LocalBucketing localBucketing;
-        private readonly ILogger logger;
+        private ILogger logger;
         private readonly Timer timer;
         private bool closing;
 
@@ -378,6 +378,22 @@ namespace DevCycle.SDK.Server.Local.Api
         public override IDVCApiClient GetApiClient()
         {
             throw new NotImplementedException();
+        }
+
+        public void UpdateLogging(ILoggerFactory loggerFactory) {
+            if (loggerFactory != null) {
+                logger = loggerFactory.CreateLogger<DVCLocalClient>();
+
+                if (configManager != null)
+                {
+                    configManager.UpdateLogging(loggerFactory);
+                }
+
+                if (eventQueue != null)
+                {
+                    eventQueue.UpdateLogging(loggerFactory);
+                }
+            }
         }
     }
 }
