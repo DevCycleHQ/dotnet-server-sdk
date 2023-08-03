@@ -428,13 +428,15 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private int GetParameter(string param)
         {
+            #if NETSTANDARD2_0
             byte[] data = Encoding.Unicode.GetBytes(param);
-            
-            var paramAddress =
-                (int)NewFunc.Invoke(data.Length, WasmObjectIdString)!;
-            
+            var paramAddress = (int)NewFunc.Invoke(data.Length, WasmObjectIdString)!;
             Span<byte> paramSpan = WASMMemory.GetSpan<byte>(paramAddress, data.Length);
             data.CopyTo(paramSpan);
+            #else
+            var paramAddress = (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
+            Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
+            #endif
 
             return paramAddress;
         }
@@ -530,8 +532,12 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
             var length = memory.ReadInt32(address - 4);
+            #if NETSTANDARD2_0
             Span<byte> span = memory.GetSpan<byte>(address, length);
             return Encoding.Unicode.GetString(span.ToArray());
+            #else 
+            return Encoding.Unicode.GetString(memory.GetSpan(address, length));
+            #endif 
         }
 
         private static byte[] ReadAssemblyScriptByteArray(Memory memory, int address)
