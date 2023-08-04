@@ -433,7 +433,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var paramAddress = (int)NewFunc.Invoke(data.Length, WasmObjectIdString)!;
             Span<byte> paramSpan = WASMMemory.GetSpan<byte>(paramAddress, data.Length);
             data.CopyTo(paramSpan);
-            #else
+            #elif NETSTANDARD2_1
             var paramAddress = (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
             Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
             #endif
