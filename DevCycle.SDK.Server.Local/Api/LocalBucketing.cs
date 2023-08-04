@@ -69,7 +69,7 @@ namespace DevCycle.SDK.Server.Local.Api
             pinnedAddresses = new HashSet<int>();
             sdkKeyAddresses = new Dictionary<string, int>();
             
-            Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
+            Console.WriteLine("Initializing Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
