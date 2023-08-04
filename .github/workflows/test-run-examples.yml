@@ -25,11 +25,21 @@ jobs:
       - name: Build
         run: |
           dotnet build --no-restore
-      - name: Run Local Example
+      - name: Debug
         run: |
-          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
-      - name: Run Cloud Example
-        run: |
-          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
-          
+          dir DevCycle.SDK.Server.Local.Example\bin\Debug\net48 > test.txt
+      - name: Read file
+        id: readfile
+        uses: komorebitech/read-files-action@v1.5
+        with:
+          files: '["test.txt"]'
+      - name: Echo file
+        run: echo "${{ steps.readfile.outputs.content }}"
+#      - name: Run Local Example
+#        run: |
+#          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+#      - name: Run Cloud Example
+#        run: |
+#          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
+#          
           
