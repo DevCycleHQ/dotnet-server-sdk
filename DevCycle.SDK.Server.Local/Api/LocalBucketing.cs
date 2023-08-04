@@ -535,7 +535,7 @@ namespace DevCycle.SDK.Server.Local.Api
             #if NETSTANDARD2_0
             Span<byte> span = memory.GetSpan<byte>(address, length);
             return Encoding.Unicode.GetString(span.ToArray());
-            #else 
+            #elif NETSTANDARD2_1
             return Encoding.Unicode.GetString(memory.GetSpan(address, length));
             #endif 
         }
