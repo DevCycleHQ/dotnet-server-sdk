@@ -13,12 +13,15 @@ env:
 jobs:
   run:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        dotnet-version: [ "5.0", "6.0.x" ]
     steps:
       - uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 3.1.x
+          dotnet-version: ${{ matrix.dotnet-version }}
       - name: Restore dependencies
         run: |
           dotnet restore
