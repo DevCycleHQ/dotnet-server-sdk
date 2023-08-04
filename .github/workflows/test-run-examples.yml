@@ -11,7 +11,7 @@ env:
   DVC_SERVER_SDK_KEY: "${{ secrets.EXAMPLE_DEVCYCLE_SERVER_SDK_KEY }}"
 
 jobs:
-  run:
+  run-example:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,17 +27,10 @@ jobs:
           dotnet build --no-restore
       - name: Debug
         run: |
-          dir DevCycle.SDK.Server.Local.Example\bin\Debug\net48 > test.txt
-      - name: Read file
-        id: readfile
-        uses: komorebitech/read-files-action@v1.5
-        with:
-          files: '["test.txt"]'
-      - name: Echo file
-        run: echo "${{ steps.readfile.outputs.content }}"
-#      - name: Run Local Example
-#        run: |
-#          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+          dir DevCycle.SDK.Server.Local.Example\bin\Debug\net48
+      - name: Run Local Example
+        run: |
+          dotnet run --no-build --verbosity diag --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
 #      - name: Run Cloud Example
 #        run: |
 #          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
