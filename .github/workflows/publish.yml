@@ -18,7 +18,7 @@ jobs:
           git config --global user.name "DevCycle Automation"
       - name: Setup Tools
         run: |
-          apt-get install xq
+          sudo apt-get install xq
       - name: Get current version of Cloud SDK
         id: cloud-version
         run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj)" >> "$GITHUB_OUTPUT"    
