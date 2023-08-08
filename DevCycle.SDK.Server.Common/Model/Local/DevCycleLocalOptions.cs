@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
-    public class DevCycleLocalOptions : IDVCOptions
+    public class DevCycleLocalOptions : IDevCycleOptions
     {
         [DataMember(Name="configPollingIntervalMS", EmitDefaultValue=false)]
         [JsonProperty("configPollingIntervalMS")]

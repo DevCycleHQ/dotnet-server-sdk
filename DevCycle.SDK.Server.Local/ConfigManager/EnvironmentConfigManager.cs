@@ -26,9 +26,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly int requestTimeoutMs;
         private readonly RestClient restClient;
         private readonly ILogger logger;
-        private readonly DVCEventArgs initializationEvent;
+        private readonly DevCycleEventArgs initializationEvent;
         private readonly LocalBucketing localBucketing;
-        private readonly EventHandler<DVCEventArgs> initializedHandler;
+        private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
         private Timer pollingTimer;
 
@@ -44,8 +44,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             LocalBucketing localBucketing,
-            EventHandler<DVCEventArgs> initializedHandler = null,
-            DVCRestClientOptions restClientOptions = null
+            EventHandler<DevCycleEventArgs> initializedHandler = null,
+            DevCycleRestClientOptions restClientOptions = null
         )
         {
             localOptions = dvcLocalOptions;
@@ -59,7 +59,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 : dvcLocalOptions.ConfigPollingTimeoutMs;
             dvcLocalOptions.CdnCustomHeaders ??= new Dictionary<string, string>();
 
-            DVCRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DVCRestClientOptions();
+            DevCycleRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DevCycleRestClientOptions();
             // Explicitly override the base URL to use the one in local bucketing options. This allows the normal 
             // rest client options to override the Events api endpoint url; while sharing certificate and other information.
             clientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
@@ -69,7 +69,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
-            initializationEvent = new DVCEventArgs();
+            initializationEvent = new DevCycleEventArgs();
 
             if (initializedHandler != null)
             {
@@ -105,7 +105,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             restClient.Dispose();
         }
 
-        private void OnInitialized(DVCEventArgs e)
+        private void OnInitialized(DevCycleEventArgs e)
         {
             Initialized = true;
             initializedHandler?.Invoke(this, e);
@@ -140,7 +140,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
-            DVCException finalError;
+            DevCycleException finalError;
             
             // Status code of 0 means some other error (like a network error) occurred
             if (res.StatusCode >= HttpStatusCode.InternalServerError || res.StatusCode == 0)
@@ -162,7 +162,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     ? "Project configuration could not be found. Check your SDK key."
                     : "Encountered non-retryable error fetching config. Client will not attempt to fetch configuration again.";
 
-                finalError = new DVCException(res.StatusCode,
+                finalError = new DevCycleException(res.StatusCode,
                     new ErrorResponse(errorMessage));
 
                 StopPolling();

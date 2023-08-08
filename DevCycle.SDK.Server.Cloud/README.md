@@ -7,7 +7,7 @@ Download the SDK from Nuget - https://www.nuget.org/packages/DevCycle.SDK.Server
 
 ## Getting Started
 Use the example app [`DevCycle.SDK.Server.Cloud.Example`.](https://github.com/DevCycleHQ/dotnet-server-sdk/tree/main/DevCycle.SDK.Server.Cloud.Example) 
-It will read your DevCycle SDK key from an environment variable `DVC_SERVER_SDK_KEY`
+It will read your DevCycle SDK key from an environment variable `DEVCYCLE_SERVER_SDK_KEY`
 
 Your DevCycle SDK key can be found via [Environments & Keys Settings](https://www.devcycle.com/r/environments) on the DevCycle dashboard.
 

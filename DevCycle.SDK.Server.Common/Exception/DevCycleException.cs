@@ -3,15 +3,15 @@ using DevCycle.SDK.Server.Common.Model;
 
 namespace DevCycle.SDK.Server.Common.Exception
 {
-    public class DVCException : System.Exception
+    public class DevCycleException : System.Exception
     {
-        public DVCException(HttpStatusCode httpResponseCode, ErrorResponse errorResponse) : base(errorResponse.Message)
+        public DevCycleException(HttpStatusCode httpResponseCode, ErrorResponse errorResponse) : base(errorResponse.Message)
         {
             HttpStatusCode = httpResponseCode;
             ErrorResponse = errorResponse;
         }
 
-        public DVCException(ErrorResponse errorResponse)
+        public DevCycleException(ErrorResponse errorResponse)
         {
             ErrorResponse = errorResponse;
         }

@@ -5,7 +5,7 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
-    public interface IDVCApiClient : IDisposable
+    public interface IDevCycleApiClient : IDisposable
     {
         public string GetServerSDKKey();
         public RestClient GetRestClient();

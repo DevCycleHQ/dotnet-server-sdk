@@ -39,7 +39,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var sdkKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
-                loggerFactory, new LocalBucketing(), restClientOptions: new DVCRestClientOptions()
+                loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
                     {ConfigureMessageHandler = _ => mockHttp},
                 initializedHandler: (isError && !isRetryableError) ? DidNotInitializeSubscriber : DidInitializeSubscriber);
 
@@ -98,13 +98,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
             await configManager.Item1.InitializeConfigAsync();
         }
 
-        private void DidInitializeSubscriber(object o, DVCEventArgs e)
+        private void DidInitializeSubscriber(object o, DevCycleEventArgs e)
         {
             Assert.IsTrue(e.Success);
             Assert.AreEqual(0, e.Errors.Count);
         }
 
-        private void DidNotInitializeSubscriber(object o, DVCEventArgs e)
+        private void DidNotInitializeSubscriber(object o, DevCycleEventArgs e)
         {
             Assert.IsFalse(e.Success);
             Assert.AreNotEqual(0, e.Errors.Count);

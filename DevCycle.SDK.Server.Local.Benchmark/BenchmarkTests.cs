@@ -45,12 +45,12 @@ namespace DevCycle.SDK.Server.Local.Benchmark
             var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-','_')}_hash";
             localBucketing.StoreConfig(sdkKey, config);
             var configManager = new EnvironmentConfigManager(sdkKey, options, new NullLoggerFactory(),
-                localBucketing, restClientOptions: new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
+                localBucketing, restClientOptions: new DevCycleRestClientOptions() {ConfigureMessageHandler = _ => mockHttp});
             
             DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
-                .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetRestClientOptions(new DevCycleRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
                 .SetOptions(options ?? new DevCycleLocalOptions())
                 .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)

@@ -16,7 +16,7 @@ namespace Example
 
         public static void Main()
         {
-            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
             var user = new DevCycleUser("testing");
 
             var apiBuilder = new DevCycleLocalClientBuilder();
@@ -34,7 +34,7 @@ namespace Example
                     }
                 })
                 .SetRestClientOptions(
-                    new DVCRestClientOptions()
+                    new DevCycleRestClientOptions()
                     {
                         //...
                     })

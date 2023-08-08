@@ -5,7 +5,7 @@ using RestSharp;
 // ReSharper disable once CheckNamespace
 namespace DevCycle.SDK.Server.Cloud.Api
 {
-    class DVCApiClient : DVCBaseApiClient
+    class DevCycleApiClient : DevCycleBaseApiClient
     {
         private static readonly string BaseURL = "https://bucketing-api.devcycle.com/";
 
@@ -15,16 +15,16 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         private bool disposed;
 
-        public DVCApiClient()
+        public DevCycleApiClient()
         {
         }
 
-        public DVCApiClient(string serverKey, DVCRestClientOptions restClientOptions = null)
+        public DevCycleApiClient(string serverKey, DevCycleRestClientOptions restClientOptions = null)
         {
             this.serverKey = serverKey;
 
             if (restClientOptions == null)
-                restClientOptions = new DVCRestClientOptions()
+                restClientOptions = new DevCycleRestClientOptions()
                 {
                     BaseUrl = new Uri(BaseURL)
                 };
@@ -56,7 +56,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             disposed = true;
         }
 
-        ~DVCApiClient()
+        ~DevCycleApiClient()
         {
             Dispose(disposing: false);
         }

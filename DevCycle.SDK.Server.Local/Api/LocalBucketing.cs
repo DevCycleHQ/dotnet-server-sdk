@@ -419,7 +419,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var function = WASMInstance.GetFunction(name);
             if (function is null)
             {
-                throw new DVCException(
+                throw new DevCycleException(
                     new ErrorResponse($"Cannot get {name} function from WebAssembly binary."));
             }
 
@@ -579,7 +579,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             var global = WASMInstance.GetGlobal(name);
             if (global == null)
-                throw new DVCException(new ErrorResponse($"Cannot get {name} global value from WebAssembly binary."));
+                throw new DevCycleException(new ErrorResponse($"Cannot get {name} global value from WebAssembly binary."));
             var globalValue = global.GetValue();
             if (globalValue is T val)
             {
@@ -587,7 +587,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             else
             {
-                throw new DVCException(new ErrorResponse($"{name} global value from WebAssembly binary is wrong type: " + global.Kind.ToString()));
+                throw new DevCycleException(new ErrorResponse($"{name} global value from WebAssembly binary is wrong type: " + global.Kind.ToString()));
             }
         }
     }

@@ -19,7 +19,7 @@ using System.Collections.Generic;
 namespace DevCycle.SDK.Server.Local.MSTests
 {
     [TestClass]
-    public class DVCTest
+    public class DevCycleTest
     {
         private DevCycleLocalClient getTestClient(DevCycleLocalOptions options = null, string config = null,
             bool skipInitialize = false)
@@ -44,7 +44,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DevCycleLocalOptions(),
                 new NullLoggerFactory(),
                 localBucketing,
-                restClientOptions: new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
+                restClientOptions: new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             if (skipInitialize)
             {
                 configManager.Initialized = false;
@@ -57,7 +57,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
                 .SetConfigManager(configManager)
-                .SetRestClientOptions(new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp })
+                .SetRestClientOptions(new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp })
                 .SetOptions(options ?? new DevCycleLocalOptions())
                 .SetSDKKey(sdkKey)
                 .SetLogger(loggerFactory)
@@ -89,11 +89,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetProductionAllVariables()
         {
-            var sdkKey = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
+            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
             if (string.IsNullOrEmpty(sdkKey))
             {
                 Console.WriteLine(
-                    "DVC_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
+                    "DEVCYCLE_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
                 return;
             }
 

@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Local.Api
     internal class EventQueue
     {
         private readonly DevCycleLocalOptions localOptions;
-        private readonly DVCEventsApiClient dvcEventsApiClient;
+        private readonly DevCycleEventsApiClient devCycleEventsApiClient;
         private readonly LocalBucketing localBucketing;
         private readonly string sdkKey;
         private bool closing = false;
@@ -26,16 +26,16 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
-        private event EventHandler<DVCEventArgs> FlushedEvents;
+        private event EventHandler<DevCycleEventArgs> FlushedEvents;
         
         public EventQueue(
             string sdkKey, 
             DevCycleLocalOptions localOptions,
             ILoggerFactory loggerFactory,
             LocalBucketing localBucketing,
-            DVCRestClientOptions restClientOptions = null
+            DevCycleRestClientOptions restClientOptions = null
         ) {
-            dvcEventsApiClient = new DVCEventsApiClient(sdkKey, localOptions, restClientOptions);
+            devCycleEventsApiClient = new DevCycleEventsApiClient(sdkKey, localOptions, restClientOptions);
             this.sdkKey = sdkKey;
             this.localOptions = localOptions;
             this.localBucketing = localBucketing;
@@ -44,26 +44,26 @@ namespace DevCycle.SDK.Server.Local.Api
             logger = loggerFactory.CreateLogger<EventQueue>();
         }
 
-        public void AddFlushedEventsSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
+        public void AddFlushedEventsSubscriber(EventHandler<DevCycleEventArgs> flushedEventsSubscriber)
         {
             FlushedEvents += flushedEventsSubscriber;
         }
 
-        public void RemoveFlushedEventsSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
+        public void RemoveFlushedEventsSubscriber(EventHandler<DevCycleEventArgs> flushedEventsSubscriber)
         {
             FlushedEvents -= flushedEventsSubscriber;
         }
 
         private async Task<Tuple<FlushPayload, RestResponse>> GetPayloadResult(FlushPayload flushPayload)
         {
-            return new Tuple<FlushPayload, RestResponse>(flushPayload, await dvcEventsApiClient.PublishEvents(flushPayload.Records));
+            return new Tuple<FlushPayload, RestResponse>(flushPayload, await devCycleEventsApiClient.PublishEvents(flushPayload.Records));
         }
 
         public virtual async Task FlushEvents()
         {
             localBucketing.StartFlush();
             var flushPayloads = GetPayloads();
-            var flushResultEvent = new DVCEventArgs
+            var flushResultEvent = new DevCycleEventArgs
             {
                 Success = true
             };
@@ -79,7 +79,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
             Func<int, FlushPayload, int> reducer = (val, batches) => val + batches.EventCount;
             var eventCount = flushPayloads.Aggregate(0, reducer);
-            logger.LogDebug($"DVC Flush {eventCount} Events, for {flushPayloads.Count} Users");
+            logger.LogDebug($"DevCycle Flush {eventCount} Events, for {flushPayloads.Count} Users");
 
             var requestTasks = flushPayloads.Select(GetPayloadResult).ToList();
             await Task.WhenAll(requestTasks);
@@ -93,18 +93,18 @@ namespace DevCycle.SDK.Server.Local.Api
                         logger.LogError($"Error publishing events, status: ${res.StatusCode}, body: ${res.Content}");
                         localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
                         flushResultEvent.Success = false;
-                        flushResultEvent.Errors.Add(new DVCException(res.StatusCode,
+                        flushResultEvent.Errors.Add(new DevCycleException(res.StatusCode,
                             new ErrorResponse(res.ErrorMessage ?? "")));
                     }
                     else
                     {
-                        logger.LogDebug($"DVC Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
+                        logger.LogDebug($"DevCycle Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
                         localBucketing.OnPayloadSuccess(this.sdkKey, flushPayload.PayloadID);
                     }
                 }
-                catch (DVCException ex)
+                catch (DevCycleException ex)
                 {
-                    logger.LogError($"DVC Error Flushing Events response message: ${ex.Message}");
+                    logger.LogError($"DevCycle Error Flushing Events response message: ${ex.Message}");
                     localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, true);
                     flushResultEvent.Success = false;
                     flushResultEvent.Errors.Add(ex);
@@ -123,14 +123,14 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             catch (Exception ex)
             {
-                logger.LogError($"DVC Error Flushing Events: ${ex.Message}");
+                logger.LogError($"DevCycle Error Flushing Events: ${ex.Message}");
                 throw;
             }
 
             return flushPayloads;
         }
 
-        public virtual void QueueEvent(DVCPopulatedUser user, DevCycleEvent @event, bool throwOnQueueMax = false)
+        public virtual void QueueEvent(DevCyclePopulatedUser user, DevCycleEvent @event, bool throwOnQueueMax = false)
         {
             if (closing)
             {
@@ -148,7 +148,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     "{Event} failed to be queued; events in queue exceed {Max}. Triggering a forced flush", @event,
                     localOptions.MaxEventsInQueue);
                 if (throwOnQueueMax)
-                    throw new DVCException(
+                    throw new DevCycleException(
                         new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
@@ -165,7 +165,7 @@ namespace DevCycle.SDK.Server.Local.Api
          * Queue Event that can be aggregated together, where multiple calls are aggregated
          * by incrementing the 'value' field.
          */
-        public virtual void QueueAggregateEvent(DVCPopulatedUser user, DevCycleEvent @event, BucketedUserConfig config, bool throwOnQueueMax = false)
+        public virtual void QueueAggregateEvent(DevCyclePopulatedUser user, DevCycleEvent @event, BucketedUserConfig config, bool throwOnQueueMax = false)
         {
             if (closing)
             {
@@ -176,7 +176,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
                     localOptions.MaxEventsInQueue);
                 if (throwOnQueueMax)
-                    throw new DVCException(
+                    throw new DevCycleException(
                         new ErrorResponse("Failed to queue an event. Events in queue exceeded the max"));
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
@@ -208,8 +208,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 );
         }
 
-        private IEnumerable<DVCRequestEvent> EventsFromAggregateEvents(
-            Dictionary<string, Dictionary<string, DVCRequestEvent>> aggUserEventsRecord)
+        private IEnumerable<DevCycleRequestEvent> EventsFromAggregateEvents(
+            Dictionary<string, Dictionary<string, DevCycleRequestEvent>> aggUserEventsRecord)
         {
             return (from eventType in aggUserEventsRecord
                     from eventTarget in eventType.Value
@@ -257,7 +257,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }, tokenSource.Token);
         }
 
-        private void OnFlushedEvents(DVCEventArgs e)
+        private void OnFlushedEvents(DevCycleEventArgs e)
         {
             if (FlushedEvents?.Target == null) return;
             FlushedEvents?.Invoke(this, e);

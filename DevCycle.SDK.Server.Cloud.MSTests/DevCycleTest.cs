@@ -14,9 +14,9 @@ using RichardSzalay.MockHttp;
 namespace DevCycle.SDK.Server.Cloud.MSTests
 {
     [TestClass]
-    public class DVCTest
+    public class DevCycleTest
     {
-        private DevCycleCloudClient getTestClient(object bodyResponse, DVCCloudOptions options = null)
+        private DevCycleCloudClient getTestClient(object bodyResponse, DevCycleCloudOptions options = null)
         {
             var mockHttp = new MockHttpMessageHandler();
 
@@ -27,8 +27,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     ));
 
             DevCycleCloudClient api = new DevCycleCloudClientBuilder()
-                .SetRestClientOptions(new DVCRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
-                .SetOptions(options ?? new DVCCloudOptions())
+                .SetRestClientOptions(new DevCycleRestClientOptions() {ConfigureMessageHandler = _ => mockHttp})
+                .SetOptions(options ?? new DevCycleCloudOptions())
                 .SetSDKKey($"server-{Guid.NewGuid().ToString()}")
                 .SetLogger(new NullLoggerFactory())
                 .Build();
@@ -38,16 +38,16 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetProductionAllFeatures()
         {
-            var sdkKey = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
+            var sdkKey = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
             if (string.IsNullOrEmpty(sdkKey))
             {
                 Console.WriteLine(
-                    "DVC_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
+                    "DEVCYCLE_SERVER_SDK_KEY is not set in the environment variables - skipping production features test.");
                 return;
             }
 
             DevCycleCloudClient api = new DevCycleCloudClientBuilder()
-                    .SetSDKKey(Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY"))
+                    .SetSDKKey(Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY"))
                     .SetLogger(new NullLoggerFactory())
                     .Build();
             var resp = await api.AllFeaturesAsync(new DevCycleUser("test"));
@@ -131,7 +131,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task EdgeDBTest()
         {
-            DVCCloudOptions options = new DVCCloudOptions(true);
+            DevCycleCloudOptions options = new DevCycleCloudOptions(true);
             using DevCycleCloudClient api = getTestClient(TestResponse.GetTrackResponseAsync(1), options);
 
             DateTimeOffset now = DateTimeOffset.UtcNow;

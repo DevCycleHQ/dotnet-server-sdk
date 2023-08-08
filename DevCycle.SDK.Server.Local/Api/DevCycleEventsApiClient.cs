@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    internal class DVCEventsApiClient : DVCBaseApiClient
+    internal class DevCycleEventsApiClient : DevCycleBaseApiClient
     {
         private const string TrackEventsUrl = "/v1/events/batch";
         private string SdkKey { get; set; }
@@ -17,14 +17,14 @@ namespace DevCycle.SDK.Server.Local.Api
 
 
         // internal parameterless constructor for testing
-        public DVCEventsApiClient()
+        public DevCycleEventsApiClient()
         {
         }
 
-        public DVCEventsApiClient(string sdkKey, DevCycleLocalOptions options = null, DVCRestClientOptions restClientOptions = null)
+        public DevCycleEventsApiClient(string sdkKey, DevCycleLocalOptions options = null, DevCycleRestClientOptions restClientOptions = null)
         {
             options ??= new DevCycleLocalOptions();
-            DVCRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DVCRestClientOptions();
+            DevCycleRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DevCycleRestClientOptions();
             if (string.IsNullOrEmpty(clientOptions.BaseUrl?.ToString()))
                 clientOptions.BaseUrl = new Uri(options.EventsApiUri);
             options.EventsApiCustomHeaders ??= new Dictionary<string, string>();
@@ -46,7 +46,7 @@ namespace DevCycle.SDK.Server.Local.Api
             _disposed = true;
         }
 
-        ~DVCEventsApiClient()
+        ~DevCycleEventsApiClient()
         {
             Dispose(disposing: false);
         }

@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
     [DataContract(Name = "requestEvent")]
-    public class DVCRequestEvent
+    public class DevCycleRequestEvent
     {
         private readonly List<string> eventTypes = new List<string>
         {
@@ -48,12 +48,12 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("metaData")]
         public Dictionary<string, object> MetaData { get; set; }
 
-        public DVCRequestEvent()
+        public DevCycleRequestEvent()
         {
             
         }
 
-        public DVCRequestEvent(DevCycleEvent @event, string userId, Dictionary<string, string> featureVars)
+        public DevCycleRequestEvent(DevCycleEvent @event, string userId, Dictionary<string, string> featureVars)
         {
             if (@event.Type == null)
             {

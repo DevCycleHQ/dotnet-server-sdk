@@ -11,7 +11,7 @@ namespace Example
     {
         private static async Task Main(string[] args)
         {
-            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DVC_SERVER_SDK_KEY");
+            var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
 
             var api = new DVCCloudClientBuilder().SetEnvironmentKey(SDK_ENV_VAR).SetLogger(new NullLoggerFactory()).Build();
             
@@ -34,7 +34,7 @@ namespace Example
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception when calling DVCClient.AllFeaturesAsync: " + e.Message);
+                Console.WriteLine("Exception when calling DevCycleClient.AllFeaturesAsync: " + e.Message);
             }
         }
     }

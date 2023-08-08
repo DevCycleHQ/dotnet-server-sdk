@@ -7,8 +7,8 @@ using RestSharp;
 namespace DevCycle.SDK.Server.Common.Model
 {
     public interface IClientBuilder<ClientType, OptionsType, BuilderType>
-        where ClientType : IDVCClient
-        where OptionsType: IDVCOptions
+        where ClientType : IDevCycleClient
+        where OptionsType: IDevCycleOptions
         where BuilderType: IClientBuilder<ClientType, OptionsType, BuilderType>
     {
         BuilderType SetSDKKey(string key);
@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Common.Model
         
         BuilderType SetLogger(ILoggerFactory loggerFactoryProvider);
         
-        BuilderType SetRestClientOptions(DVCRestClientOptions options);
+        BuilderType SetRestClientOptions(DevCycleRestClientOptions options);
 
         ClientType Build();
     }
