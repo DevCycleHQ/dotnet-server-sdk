@@ -23,7 +23,7 @@ jobs:
         uses: NuGet/setup-nuget@v1
 
       - name: Navigate to SDK.Server.Common
-        run: cd $GITHUB_WORKSPACE/DevCycle.SDK.Server.Common
+        run: cd DevCycle.SDK.Server.Common
 
       - name: Common - Restore Packages
         run: |
