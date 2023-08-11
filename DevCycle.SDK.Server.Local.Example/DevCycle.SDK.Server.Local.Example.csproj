@@ -13,8 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevCycle.SDK.Server.Common" Version="1.11.2" />
-    <PackageReference Include="DevCycle.SDK.Server.Local" Version="2.8.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
   </ItemGroup>
