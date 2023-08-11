@@ -22,17 +22,17 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
-      - name: Navigate to SDK.Server.Common
-        run: cd DevCycle.SDK.Server.Common
+#      - name: Navigate to SDK.Server.Common
+#        run: cd DevCycle.SDK.Server.Common
 
       - name: Common - Restore Packages
         run: |
-          pwd
-          dir
+          cd DevCycle.SDK.Server.Common
           nuget restore DevCycle.SDK.Server.Common.csproj
 
       - name: Common - Build
         run: |
+          cd DevCycle.SDK.Server.Common
           msbuild.exe DevCycle.SDK.Server.Common.csproj /p:configuration="Release"
 #
 #      - name: Navigate to SDK.Server.Local
