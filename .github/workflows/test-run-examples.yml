@@ -27,6 +27,8 @@ jobs:
 
       - name: Common - Restore Packages
         run: |
+          pwd
+          dir
           nuget restore DevCycle.SDK.Server.Common.csproj
 
       - name: Common - Build
