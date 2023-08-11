@@ -15,18 +15,48 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version:  "6.0.x"
-      - name: Build
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.2
+
+      - name: Navigate to SDK.Server.Common
+        run: cd $GITHUB_WORKSPACE/DevCycle.SDK.Server.Common
+
+      - name: Common - Restore Packages
         run: |
-          dotnet build
-      - name: Run Local Example
+          nuget restore DevCycle.SDK.Server.Common.csproj
+
+      - name: Common - Build
         run: |
-          dotnet run --configuration Release --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+          msbuild.exe DevCycle.SDK.Server.Common.csproj /p:configuration="Release"
+#
+#      - name: Navigate to SDK.Server.Local
+#        run: cd $GITHUB_WORKSPACE/DevCycle.SDK.Server.Local 
+#
+#      - name: Local - Restore Packages
+#        run: |
+#          nuget restore DevCycle.SDK.Server.Local.csproj
+#
+#      - name: Local - Build
+#        run: |
+#          msbuild.exe DevCycle.SDK.Server.Local.csproj /p:configuration="Release"
+#      
+#  
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v2
+#        with:
+#          dotnet-version:  "6.0.x"
+#      - name: Build
+#        run: |
+#          dotnet build
+#      - name: Run Local Example
+#        run: |
+#          dotnet run --no-build --configuration Release --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
 #      - name: Run Cloud Example
 #        run: |
-#          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
+#          dotnet run --no-build --configuration Release --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
 #          
           
