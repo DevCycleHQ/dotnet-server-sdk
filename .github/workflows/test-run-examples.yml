@@ -19,18 +19,12 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version:  "6.0.x"
-      - name: Restore dependencies
-        run: |
-          dotnet restore
       - name: Build
         run: |
-          dotnet build --no-restore
-      - name: Debug
-        run: |
-          dir DevCycle.SDK.Server.Local.Example\bin\Debug\net48
+          dotnet build
       - name: Run Local Example
         run: |
-          dotnet run --no-build --verbosity diag --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+          dotnet run --verbosity diag --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
 #      - name: Run Cloud Example
 #        run: |
 #          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
