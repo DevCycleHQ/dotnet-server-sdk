@@ -24,7 +24,7 @@ jobs:
           dotnet build
       - name: Run Local Example
         run: |
-          dotnet run --verbosity diag --configuration Release --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+          dotnet run --configuration Release --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
 #      - name: Run Cloud Example
 #        run: |
 #          dotnet run --no-build --verbosity normal --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
