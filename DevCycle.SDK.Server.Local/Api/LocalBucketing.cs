@@ -69,7 +69,7 @@ namespace DevCycle.SDK.Server.Local.Api
             pinnedAddresses = new HashSet<int>();
             sdkKeyAddresses = new Dictionary<string, int>();
             
-            Console.WriteLine("Initializing .NETStandard2.1 Local Bucketing");
+            Console.WriteLine("Initializing Local Bucketing");
             Assembly assembly = typeof(LocalBucketing).GetTypeInfo().Assembly;
             
             Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
@@ -123,18 +123,20 @@ namespace DevCycle.SDK.Server.Local.Api
                         Console.WriteLine(message);
                     })
             );
+            
             WASMLinker.Define(
                 "env",
                 "Date.now",
                 Function.FromCallback(WASMStore,
-                    (Caller _) => (DateTime.Now.ToUniversalTime() - DateTime.UnixEpoch).TotalMilliseconds)
+                    (Caller _) => Convert.ToDouble(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                    )
             );
             WASMLinker.Define(
                 "env",
                 "seed",
                 Function.FromCallback(WASMStore,
-                    (Caller _) =>
-                        (random.NextDouble() * (DateTime.Now.ToUniversalTime() - DateTime.UnixEpoch).TotalMilliseconds))
+                    (Caller _) => (random.NextDouble() * DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                )
             );
 
             WASMInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
@@ -426,10 +428,15 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private int GetParameter(string param)
         {
-            var paramAddress =
-                (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
-
+            #if NETSTANDARD2_0
+            byte[] data = Encoding.Unicode.GetBytes(param);
+            var paramAddress = (int)NewFunc.Invoke(data.Length, WasmObjectIdString)!;
+            Span<byte> paramSpan = WASMMemory.GetSpan<byte>(paramAddress, data.Length);
+            data.CopyTo(paramSpan);
+            #elif NETSTANDARD2_1
+            var paramAddress = (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
             Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
+            #endif
 
             return paramAddress;
         }
@@ -525,7 +532,12 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             // The byte length of the string is at offset -4 in AssemblyScript string layout.
             var length = memory.ReadInt32(address - 4);
+            #if NETSTANDARD2_0
+            Span<byte> span = memory.GetSpan<byte>(address, length);
+            return Encoding.Unicode.GetString(span.ToArray());
+            #elif NETSTANDARD2_1
             return Encoding.Unicode.GetString(memory.GetSpan(address, length));
+            #endif 
         }
 
         private static byte[] ReadAssemblyScriptByteArray(Memory memory, int address)
