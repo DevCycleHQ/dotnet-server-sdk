@@ -60,7 +60,8 @@ jobs:
         run: dotnet nuget push DevCycle.SDK.Server.Cloud/bin/Release/DevCycle.SDK.Server.Cloud.*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Common to NuGet
         run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
-      - name: Create GitHub Release
-        uses: DevCycleHQ/release-action/gh-release@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+# Release action doesn't work right now for this repo due to the multiple different project versions
+#      - name: Create GitHub Release
+#        uses: DevCycleHQ/release-action/gh-release@v2
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
