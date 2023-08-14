@@ -12,42 +12,21 @@ env:
 
 jobs:
   run-example:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
-
-      - name: Common - Restore Packages
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version:  "6.0.x"
+      - name: Build
         run: |
-          cd DevCycle.SDK.Server.Common
-          nuget restore DevCycle.SDK.Server.Common.csproj
-
-      - name: Common - Build
+          dotnet build
+      - name: Run Local Example
         run: |
-          cd DevCycle.SDK.Server.Common
-          msbuild.exe DevCycle.SDK.Server.Common.csproj /p:configuration="Release"
-
-      - name: Local - Restore Packages
+          dotnet run --configuration Release --project .\DevCycle.SDK.Server.Local.Example\DevCycle.SDK.Server.Local.Example.csproj
+      - name: Run Cloud Example
         run: |
-          cd DevCycle.SDK.Server.Local
-          nuget restore DevCycle.SDK.Server.Local.csproj
+          dotnet run --configuration Release --project .\DevCycle.SDK.Server.Cloud.Example\DevCycle.SDK.Server.Cloud.Example.csproj
 
-      - name: Local - Build
-        run: |
-          cd DevCycle.SDK.Server.Local
-          msbuild.exe DevCycle.SDK.Server.Local.csproj /p:configuration="Release"
-
-      - name: Example - Restore Packages
-        run: |
-          cd DevCycle.SDK.Server.Local.Example
-          nuget restore DevCycle.SDK.Server.Local.Example.csproj
-
-      - name: Example - Build
-        run: |
-          cd DevCycle.SDK.Server.Local.Example
-          msbuild.exe DevCycle.SDK.Server.Local.Example.csproj /p:configuration="Release"
+          
