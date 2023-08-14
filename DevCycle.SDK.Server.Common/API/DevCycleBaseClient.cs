@@ -9,17 +9,17 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
-    public abstract class DVCBaseClient : IDVCClient
+    public abstract class DevCycleBaseClient : IDevCycleClient
     {
         private string SdkPlatform => $"C# {Platform()}";
         private static string CSharpVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
-        private static string SdkVersion => typeof(IDVCClient).Assembly.GetName().Version.ToString();
-        private static User.SdkTypeEnum SdkType => User.SdkTypeEnum.Server;
+        private static string SdkVersion => typeof(IDevCycleClient).Assembly.GetName().Version.ToString();
+        private static DevCycleUser.SdkTypeEnum SdkType => DevCycleUser.SdkTypeEnum.Server;
         public abstract void Dispose();
         public abstract string Platform();
-        public abstract IDVCApiClient GetApiClient();
+        public abstract IDevCycleApiClient GetApiClient();
 
-        protected void AddDefaults(User user)
+        protected void AddDefaults(DevCycleUser user)
         {
             if (string.IsNullOrEmpty(user.Platform))
             {
@@ -39,7 +39,7 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        protected void ValidateUser(User user)
+        protected void ValidateUser(DevCycleUser user)
         {
             if (user == null)
             {
@@ -81,18 +81,18 @@ namespace DevCycle.SDK.Server.Common.API
                 }
                 
                 errorResponse ??= new ErrorResponse("Unexpected Error Occurred"); 
-                throw new DVCException(response.StatusCode, errorResponse);
+                throw new DevCycleException(response.StatusCode, errorResponse);
             }
             catch (System.Exception e)
             {
-                if (e.GetType() == typeof(DVCException))
+                if (e.GetType() == typeof(DevCycleException))
                 {
                     throw e;
                 }
 
                 errorResponse = new ErrorResponse(e.ToString());
-                if (response != null) throw new DVCException(response.StatusCode, errorResponse);
-                throw new DVCException(errorResponse);
+                if (response != null) throw new DevCycleException(response.StatusCode, errorResponse);
+                throw new DevCycleException(errorResponse);
             }
         }
 

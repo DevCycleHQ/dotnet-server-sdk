@@ -13,32 +13,32 @@ using RestSharp;
 namespace DevCycle.SDK.Server.Cloud.Api
 {
 
-    public class DVCCloudClientBuilder : DVCClientBuilder<DVCCloudClient, DVCCloudOptions, DVCCloudClientBuilder>
+    public class DevCycleCloudClientBuilder : DevCycleClientBuilder<DevCycleCloudClient, DevCycleCloudOptions, DevCycleCloudClientBuilder>
     {
-        protected override DVCCloudClientBuilder BuilderInstance => this;
+        protected override DevCycleCloudClientBuilder BuilderInstance => this;
 
-        public override DVCCloudClient Build()
+        public override DevCycleCloudClient Build()
         {
-            return new DVCCloudClient(sdkKey, loggerFactory, options, restClientOptions);
+            return new DevCycleCloudClient(sdkKey, loggerFactory, options, restClientOptions);
         }
     }
-    public sealed class DVCCloudClient : DVCBaseClient
+    public sealed class DevCycleCloudClient : DevCycleBaseClient
     {
-        private readonly DVCApiClient apiClient;
+        private readonly DevCycleApiClient apiClient;
         private readonly ILogger logger;
 
-        private readonly DVCCloudOptions options;
+        private readonly DevCycleCloudOptions options;
 
-        internal DVCCloudClient(
+        internal DevCycleCloudClient(
             string sdkKey,
             ILoggerFactory loggerFactory, 
-            IDVCOptions options=null,
-            DVCRestClientOptions restClientOptions = null
+            IDevCycleOptions options=null,
+            DevCycleRestClientOptions restClientOptions = null
         ) {
             ValidateSDKKey(sdkKey);
-            apiClient = new DVCApiClient(sdkKey, restClientOptions);
-            logger = loggerFactory.CreateLogger<DVCCloudClient>();
-            this.options = options != null ? (DVCCloudOptions) options : new DVCCloudOptions();
+            apiClient = new DevCycleApiClient(sdkKey, restClientOptions);
+            logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
+            this.options = options != null ? (DevCycleCloudOptions) options : new DevCycleCloudOptions();
         }
         
         public override string Platform()
@@ -46,12 +46,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return "Cloud"; 
         }
 
-        public override IDVCApiClient GetApiClient()
+        public override IDevCycleApiClient GetApiClient()
         {
             return apiClient;
         }
 
-        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(User user)
+        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(DevCycleUser user)
         {
             ValidateUser(user);
 
@@ -66,7 +66,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
 
             }
-            catch (DVCException e)
+            catch (DevCycleException e)
             {
                 if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
                     throw e;
@@ -77,12 +77,12 @@ namespace DevCycle.SDK.Server.Cloud.Api
             
         }
 
-        public async Task<T> VariableValueAsync<T>(User user, string key, T defaultValue)
+        public async Task<T> VariableValueAsync<T>(DevCycleUser user, string key, T defaultValue)
         {
             return (await VariableAsync(user, key, defaultValue)).Value;
         }
         
-        public async Task<Variable<T>> VariableAsync<T>(User user, string key, T defaultValue)
+        public async Task<Variable<T>> VariableAsync<T>(DevCycleUser user, string key, T defaultValue)
         {
             ValidateUser(user);
 
@@ -126,7 +126,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                                       $"Expected {type}, got {variableResponse.Type}");
                 }
             }
-            catch (DVCException e)
+            catch (DevCycleException e)
             {
                 if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400 && (int)e.HttpStatusCode != 404) {
                     throw e;
@@ -139,7 +139,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return variable;
         }
 
-        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(User user)
+        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(DevCycleUser user)
         {
             ValidateUser(user);
 
@@ -155,7 +155,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 return await GetResponseAsync<Dictionary<string, ReadOnlyVariable<object>>>(user, urlFragment,
                     queryParams);
             }
-            catch (DVCException e)
+            catch (DevCycleException e)
             {
                 if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
                     throw e;
@@ -165,7 +165,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
         }
 
-        public async Task<DVCResponse> TrackAsync(User user, Event userEvent)
+        public async Task<DevCycleResponse> TrackAsync(DevCycleUser user, DevCycleEvent userEvent)
         {
             ValidateUser(user);
 
@@ -175,19 +175,19 @@ namespace DevCycle.SDK.Server.Cloud.Api
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            UserAndEvents userAndEvents = new UserAndEvents(new List<Event>() {userEvent}, user);
+            UserAndEvents userAndEvents = new UserAndEvents(new List<DevCycleEvent>() {userEvent}, user);
 
             try 
             {
-                return await GetResponseAsync<DVCResponse>(userAndEvents, urlFragment, queryParams);
+                return await GetResponseAsync<DevCycleResponse>(userAndEvents, urlFragment, queryParams);
             } 
-            catch (DVCException e)
+            catch (DevCycleException e)
             {
                 if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
                     throw e;
                 }
                 logger.LogError(e, "Failed to request AllVariables");
-                return new DVCResponse(e.ToString());
+                return new DevCycleResponse(e.ToString());
             }
         }
 

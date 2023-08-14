@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace DevCycle.SDK.Server.Common.Model.Local
 {
     [DataContract]
-    public class DVCPopulatedUser
+    public class DevCyclePopulatedUser
     {
 
         [DataMember(Name="user_id", EmitDefaultValue=false)]
@@ -66,10 +66,10 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         private readonly int hashCode;
 
-        public DVCPopulatedUser()
+        public DevCyclePopulatedUser()
         {
         }
-        public DVCPopulatedUser(User user)
+        public DevCyclePopulatedUser(DevCycleUser user)
         {
             if (user == null)
             {

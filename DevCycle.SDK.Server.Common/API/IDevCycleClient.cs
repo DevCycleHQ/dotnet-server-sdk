@@ -2,10 +2,10 @@ using System;
 
 namespace DevCycle.SDK.Server.Common.API
 {
-    public interface IDVCClient : IDisposable
+    public interface IDevCycleClient : IDisposable
     {
         string Platform();
-        IDVCApiClient GetApiClient();
+        IDevCycleApiClient GetApiClient();
     }
 
 }

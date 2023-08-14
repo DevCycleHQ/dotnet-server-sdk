@@ -7,13 +7,13 @@ namespace DevCycle.SDK.Server.Common.Model
 {
     
     [DataContract]
-    public partial class DVCResponse : IEquatable<DVCResponse>
+    public partial class DevCycleResponse : IEquatable<DevCycleResponse>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DVCResponse" /> class.
+        /// Initializes a new instance of the <see cref="DevCycleResponse" /> class.
         /// </summary>
         /// <param name="message">message.</param>
-        public DVCResponse(string message = default(string))
+        public DevCycleResponse(string message = default(string))
         {
             this.Message = message;
         }
@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Common.Model
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class DVCResponse {\n");
+            sb.Append("class DevCycleResponse {\n");
             sb.Append("  Message: ").Append(Message).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
@@ -53,7 +53,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <returns>Boolean</returns>
         public override bool Equals(object input)
         {
-            return this.Equals(input as DVCResponse);
+            return this.Equals(input as DevCycleResponse);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <param name="input">Instance of InlineResponse201 to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(DVCResponse input)
+        public bool Equals(DevCycleResponse input)
         {
             if (input == null)
                 return false;

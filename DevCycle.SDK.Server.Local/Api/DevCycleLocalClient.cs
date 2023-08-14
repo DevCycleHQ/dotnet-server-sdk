@@ -15,48 +15,48 @@ using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    public class DVCLocalClientBuilder : DVCClientBuilder<DVCLocalClient, DVCLocalOptions, DVCLocalClientBuilder>
+    public class DevCycleLocalClientBuilder : DevCycleClientBuilder<DevCycleLocalClient, DevCycleLocalOptions, DevCycleLocalClientBuilder>
     {
         private EnvironmentConfigManager configManager;
         private LocalBucketing localBucketing;
         
-        protected override DVCLocalClientBuilder BuilderInstance => this;
+        protected override DevCycleLocalClientBuilder BuilderInstance => this;
 
-        public DVCLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
+        public DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
             return this;
         }
 
-        public DVCLocalClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
+        public DevCycleLocalClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
         {
             localBucketing = localBucketingWrapper;
             return this;
         }
 
-        public DVCLocalClientBuilder SetInitializedSubscriber(EventHandler<DVCEventArgs> initializedEventHandler)
+        public DevCycleLocalClientBuilder SetInitializedSubscriber(EventHandler<DevCycleEventArgs> initializedEventHandler)
         {
             initialized = initializedEventHandler;
             return this;
         }
 
-        public override DVCLocalClient Build()
+        public override DevCycleLocalClient Build()
         {
             localBucketing ??= new LocalBucketing();
 
-            options ??= new DVCLocalOptions();
+            options ??= new DevCycleLocalOptions();
 
             loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
 
             configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
-            return new DVCLocalClient(sdkKey, options, loggerFactory, configManager, localBucketing,
+            return new DevCycleLocalClient(sdkKey, options, loggerFactory, configManager, localBucketing,
                 restClientOptions);
         }
     }
 
-    public sealed class DVCLocalClient : DVCBaseClient
+    public class DevCycleLocalClient : DevCycleBaseClient
     {
         private readonly string sdkKey;
         private readonly EnvironmentConfigManager configManager;
@@ -66,19 +66,19 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly Timer timer;
         private bool closing;
 
-        internal DVCLocalClient(
+        internal DevCycleLocalClient(
             string sdkKey, 
-            DVCLocalOptions dvcLocalOptions, 
+            DevCycleLocalOptions dvcLocalOptions, 
             ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager, 
             LocalBucketing localBucketing,
-            DVCRestClientOptions restClientOptions = null
+            DevCycleRestClientOptions restClientOptions = null
         )  {
             ValidateSDKKey(sdkKey);
             this.sdkKey = sdkKey;
             this.configManager = configManager;
             this.localBucketing = localBucketing;
-            logger = loggerFactory.CreateLogger<DVCLocalClient>();
+            logger = loggerFactory.CreateLogger<DevCycleLocalClient>();
             eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
 
             var platformData = new PlatformData();
@@ -157,20 +157,20 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public T VariableValue<T>(User user, string key, T defaultValue) {
+        public T VariableValue<T>(DevCycleUser user, string key, T defaultValue) {
             return Variable(user, key, defaultValue).Value;
         }
         
-        public Variable<T> Variable<T>(User user, string key, T defaultValue) {
-            var requestUser = new DVCPopulatedUser(user);
+        public Variable<T> Variable<T>(DevCycleUser user, string key, T defaultValue) {
+            var requestUser = new DevCyclePopulatedUser(user);
             
             if (!configManager.Initialized)
             {
-                logger.LogWarning("Variable called before DVCClient has initialized, returning default value");
+                logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
                 
                 eventQueue.QueueAggregateEvent(
                     requestUser,
-                    new Event(type: EventTypes.aggVariableDefaulted, target: key),
+                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
                 return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
@@ -250,15 +250,15 @@ namespace DevCycle.SDK.Server.Local.Api
             return existingVariable;
         }
         
-        public Dictionary<string, Feature> AllFeatures(User user)
+        public Dictionary<string, Feature> AllFeatures(DevCycleUser user)
         {
             if (!configManager.Initialized)
             {
-                logger.LogWarning("AllFeatures called before DVCClient has initialized");
+                logger.LogWarning("AllFeatures called before DevCycleClient has initialized");
                 return new Dictionary<string, Feature>();
             }
 
-            var requestUser = new DVCPopulatedUser(user);
+            var requestUser = new DevCyclePopulatedUser(user);
 
             try
             {
@@ -272,15 +272,15 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public Dictionary<string, ReadOnlyVariable<object>> AllVariables(User user)
+        public Dictionary<string, ReadOnlyVariable<object>> AllVariables(DevCycleUser user)
         {
             if (!configManager.Initialized)
             {
-                logger.LogWarning("AllVariables called before DVCClient has initialized");
+                logger.LogWarning("AllVariables called before DevCycleClient has initialized");
                 return new Dictionary<string, ReadOnlyVariable<object>>();
             }
 
-            var requestUser = new DVCPopulatedUser(user);
+            var requestUser = new DevCyclePopulatedUser(user);
 
             try
             {
@@ -298,7 +298,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             if (!configManager.Initialized)
             {
-                logger.LogWarning("SetClientCustomData called before DVCClient has initialized");
+                logger.LogWarning("SetClientCustomData called before DevCycleClient has initialized");
                 return;
             }
             
@@ -313,7 +313,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
         
-        public void Track(User user, Event userEvent)
+        public void Track(DevCycleUser user, DevCycleEvent userEvent)
         {
             if (closing)
             {
@@ -321,11 +321,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 return;
             }
             BucketedUserConfig config = null;
-            var requestUser = new DVCPopulatedUser(user);
+            var requestUser = new DevCyclePopulatedUser(user);
 
             if (!configManager.Initialized)
             {
-                logger.LogWarning("Track called before DVCClient has initialized");
+                logger.LogWarning("Track called before DevCycleClient has initialized");
             }
             else
             {
@@ -343,12 +343,12 @@ namespace DevCycle.SDK.Server.Local.Api
             }
         }
 
-        public void AddFlushedEventSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
+        public void AddFlushedEventSubscriber(EventHandler<DevCycleEventArgs> flushedEventsSubscriber)
         {
             eventQueue.AddFlushedEventsSubscriber(flushedEventsSubscriber);
         }
 
-        public void RemoveFlushedEventsSubscriber(EventHandler<DVCEventArgs> flushedEventsSubscriber)
+        public void RemoveFlushedEventsSubscriber(EventHandler<DevCycleEventArgs> flushedEventsSubscriber)
         {
             eventQueue.RemoveFlushedEventsSubscriber(flushedEventsSubscriber);
         }
@@ -375,7 +375,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return "Local";
         }
 
-        public override IDVCApiClient GetApiClient()
+        public override IDevCycleApiClient GetApiClient()
         {
             throw new NotImplementedException();
         }

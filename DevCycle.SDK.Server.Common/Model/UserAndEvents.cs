@@ -15,7 +15,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <param name="events">events.</param>
         /// <param name="user">user.</param>
-        public UserAndEvents(List<Event> events = default, User user = default)
+        public UserAndEvents(List<DevCycleEvent> events = default, DevCycleUser user = default)
         {
             this.Events = events;
             this.User = user;
@@ -26,14 +26,14 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         [DataMember(Name="events", EmitDefaultValue=false)]
         [JsonProperty("events")]
-        public List<Event> Events { get; set; }
+        public List<DevCycleEvent> Events { get; set; }
 
         /// <summary>
         /// Gets or Sets User
         /// </summary>
         [DataMember(Name="user", EmitDefaultValue=false)]
         [JsonProperty("user")]
-        public User User { get; set; }
+        public DevCycleUser User { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

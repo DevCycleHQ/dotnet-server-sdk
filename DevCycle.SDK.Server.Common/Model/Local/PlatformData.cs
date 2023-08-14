@@ -6,9 +6,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
     {
 
         private const string DefaultPlatform = "C# Local";
-        private const User.SdkTypeEnum DefaultSdkType = User.SdkTypeEnum.Server;
+        private const DevCycleUser.SdkTypeEnum DefaultSdkType = DevCycleUser.SdkTypeEnum.Server;
         
-        private static readonly string DefaultSdkVersion = typeof(DVCPopulatedUser).Assembly.GetName().Version.ToString();
+        private static readonly string DefaultSdkVersion = typeof(DevCyclePopulatedUser).Assembly.GetName().Version.ToString();
         private static readonly string DefaultPlatformVersion = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
 
         /// <summary>

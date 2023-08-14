@@ -5,10 +5,10 @@ namespace DevCycle.SDK.Server.Local.Api;
 
 internal class UserAndFeatureVars
 {
-    public readonly DVCPopulatedUser User;
+    public readonly DevCyclePopulatedUser User;
     private readonly Dictionary<string, string> featureVars;
 
-    public UserAndFeatureVars(DVCPopulatedUser user, Dictionary<string, string> featureVars)
+    public UserAndFeatureVars(DevCyclePopulatedUser user, Dictionary<string, string> featureVars)
     {
         User = user;
         this.featureVars = featureVars;

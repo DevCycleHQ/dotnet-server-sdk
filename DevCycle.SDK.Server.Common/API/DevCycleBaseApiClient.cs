@@ -7,7 +7,7 @@ using DevCycle.SDK.Server.Common.Policies;
 namespace DevCycle.SDK.Server.Common.API
 {
 
-    public abstract class DVCBaseApiClient : IDVCApiClient
+    public abstract class DevCycleBaseApiClient : IDevCycleApiClient
     {
         public abstract void Dispose();
         public abstract string GetServerSDKKey();

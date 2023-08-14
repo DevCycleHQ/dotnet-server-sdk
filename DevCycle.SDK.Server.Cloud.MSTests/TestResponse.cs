@@ -35,9 +35,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             };
         }
 
-        public static DVCResponse GetTrackResponseAsync(int count)
+        public static DevCycleResponse GetTrackResponseAsync(int count)
         {
-            return new DVCResponse($"Successfully received {count} events");
+            return new DevCycleResponse($"Successfully received {count} events");
         }
     }
 }

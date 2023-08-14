@@ -20,7 +20,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
     {
         private Tuple<EventQueue, MockHttpMessageHandler, MockedRequest> getTestQueue(bool isError = false,
             bool isRetryableError = false, LogLevel logLevel = LogLevel.Information,
-            DVCLocalOptions localOptions = null)
+            DevCycleLocalOptions localOptions = null)
         {
             var mockHttp = new MockHttpMessageHandler();
             var sdkKey = $"server-{Guid.NewGuid()}";
@@ -35,7 +35,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                     .Respond(statusCode,
                         "application/json",
                         "{}");
-            localOptions ??= new DVCLocalOptions(10, 10);
+            localOptions ??= new DevCycleLocalOptions(10, 10);
             var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
@@ -47,14 +47,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
             localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
 
             var eventQueue = new EventQueue(sdkKey, localOptions, loggerFactory,
-                localBucketing, new DVCRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
+                localBucketing, new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
             return new Tuple<EventQueue, MockHttpMessageHandler, MockedRequest>(eventQueue, mockHttp, req);
         }
 
         private async Task WaitForOneEvent(EventQueue eventQueue)
         {
             var completion = new ManualResetEvent(false);
-            eventQueue.AddFlushedEventsSubscriber((object sender, DVCEventArgs e) =>
+            eventQueue.AddFlushedEventsSubscriber((object sender, DevCycleEventArgs e) =>
             {
                 completion.Set();
             });
@@ -62,21 +62,21 @@ namespace DevCycle.SDK.Server.Local.MSTests
             completion.WaitOne();
         }
 
-        private void QueueSimpleEvent(EventQueue eventQueue, Event @event = null)
+        private void QueueSimpleEvent(EventQueue eventQueue, DevCycleEvent @event = null)
         {
-            @event ??= new Event("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
-            var user = new User("1");
+            @event ??= new DevCycleEvent("testEvent", metaData: new Dictionary<string, object> { { "test", "value" } });
+            var user = new DevCycleUser("1");
 
-            var dvcPopulatedUser = new DVCPopulatedUser(user);
+            var dvcPopulatedUser = new DevCyclePopulatedUser(user);
             eventQueue.QueueEvent(dvcPopulatedUser, @event);
         }
-        private void QueueSimpleAggregateEvent(EventQueue eventQueue, Event @event = null)
+        private void QueueSimpleAggregateEvent(EventQueue eventQueue, DevCycleEvent @event = null)
         {
-            @event ??= new Event(
+            @event ??= new DevCycleEvent(
                 "aggVariableEvaluated",
                 Fixtures.VariableKey,
                 metaData: new Dictionary<string, object> { { "test", "value" } });
-            var user = new User("1");
+            var user = new DevCycleUser("1");
             
             var config = new BucketedUserConfig
             {
@@ -91,7 +91,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 }
             };
 
-            var dvcPopulatedUser = new DVCPopulatedUser(user);
+            var dvcPopulatedUser = new DevCyclePopulatedUser(user);
             eventQueue.QueueAggregateEvent(dvcPopulatedUser, @event, config);
         }
 
@@ -179,13 +179,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(1, messageHandler.GetMatchCount(request));
         }
 
-        private void AssertSuccessfulEvent(object sender, DVCEventArgs e)
+        private void AssertSuccessfulEvent(object sender, DevCycleEventArgs e)
         {
             Assert.AreEqual(0, e.Errors.Count);
             Assert.IsTrue(e.Success);
         }
 
-        private void AssertFailedEvent(object sender, DVCEventArgs e)
+        private void AssertFailedEvent(object sender, DevCycleEventArgs e)
         {
             Assert.AreNotEqual(0, e.Errors.Count);
             Assert.IsFalse(e.Success);
