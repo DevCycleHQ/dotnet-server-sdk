@@ -46,9 +46,9 @@ jobs:
           version: ${{ steps.local-version.outputs.version }}
       - name: Replace the versions for all SDKs
         run: |
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.major }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.major }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.major }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.patch }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.patch }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.patch }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
           git add .
           git commit -m "Version Bumping"
           git push -u origin main
