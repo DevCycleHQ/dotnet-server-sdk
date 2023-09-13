@@ -172,7 +172,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             else if (res.StatusCode == HttpStatusCode.NotModified)
             {
-                logger.LogInformation("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
+                // No action needs to be taken - data is current and valid.
+                // We should not write a log message here; if we do so, we will generate hundreds of log messages per second for normal healthy behavior.
             }
             else
             {
