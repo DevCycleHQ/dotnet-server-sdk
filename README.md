@@ -15,3 +15,26 @@ Your DevCycle SDK key can be found via [Environments & Keys Settings](https://ww
 
 ## Usage
 To find usage documentation, visit our docs for [Local Bucketing](https://docs.devcycle.com/docs/sdk/server-side-sdks/dotnet-local).
+
+
+## Logging
+
+The DevCycle SDK uses [Microsoft.Extensions.Logging](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.2) for logging and logs to **stdout** by default. You can customize the logging by providing your own ILoggingFactory when creating the `DevCycleLocalClient`.
+
+```csharp
+var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder
+        .AddConsole() // Configure the logger to output to the console
+        .SetMinimumLevel(LogLevel.Information); // Set the minimum log level to Information
+});
+
+client = new DevCycleLocalClientBuilder()
+    .SetSDKKey("<DEVCYCLE_SERVER_SDK_KEY>")
+    .SetOptions(options ?? new DevCycleLocalOptions())
+    .SetOptions(new DevCycleLocalOptions(configPollingIntervalMs: 60000, eventFlushIntervalMs: 60000))
+    .SetLogger(loggerFactory)
+    .Build();
+```
+
+
