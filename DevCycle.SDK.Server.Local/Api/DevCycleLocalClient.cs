@@ -46,8 +46,12 @@ namespace DevCycle.SDK.Server.Local.Api
 
             options ??= new DevCycleLocalOptions();
 
-            loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
-
+            loggerFactory ??= LoggerFactory.Create(builder => builder.AddSimpleConsole(options =>
+            {
+                options.IncludeScopes = false;
+                options.SingleLine = true;
+            }));
+            
             configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
