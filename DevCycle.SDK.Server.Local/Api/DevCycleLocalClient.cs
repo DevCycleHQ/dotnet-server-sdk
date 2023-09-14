@@ -8,10 +8,8 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Local.Protobuf;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
