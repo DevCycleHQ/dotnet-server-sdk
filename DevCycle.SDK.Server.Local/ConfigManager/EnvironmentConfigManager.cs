@@ -172,7 +172,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             else if (res.StatusCode == HttpStatusCode.NotModified)
             {
-                logger.LogInformation("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
+                logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
             }
             else
             {

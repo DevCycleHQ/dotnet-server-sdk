@@ -158,7 +158,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 JsonConvert.SerializeObject(user), 
                 JsonConvert.SerializeObject(@event)
                 );
-            logger.LogInformation("{Event} queued successfully", @event);
+            logger.LogDebug("{Event} queued successfully", @event);
         }
 
         /**
