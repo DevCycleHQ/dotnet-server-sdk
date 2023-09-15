@@ -8,10 +8,8 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Local.ConfigManager;
 using DevCycle.SDK.Server.Local.Protobuf;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using RestSharp;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
@@ -46,8 +44,12 @@ namespace DevCycle.SDK.Server.Local.Api
 
             options ??= new DevCycleLocalOptions();
 
-            loggerFactory ??= LoggerFactory.Create(builder => builder.AddConsole());
-
+            loggerFactory ??= LoggerFactory.Create(builder => builder.AddSimpleConsole(options =>
+            {
+                options.IncludeScopes = false;
+                options.SingleLine = true;
+            }));
+            
             configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
