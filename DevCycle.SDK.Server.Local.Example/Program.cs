@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.API;
@@ -16,7 +18,6 @@ namespace Example
         public static void Main()
         {
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
-            var user = new DevCycleUser("testing");
 
             var apiBuilder = new DevCycleLocalClientBuilder();
             api = apiBuilder
@@ -25,7 +26,7 @@ namespace Example
                 {
                     if (e.Success)
                     {
-                        ClientInitialized(user);
+                        ClientInitialized();
                     }
                     else
                     {
@@ -52,18 +53,42 @@ namespace Example
             Task.Delay(15000).Wait();
         }
 
-        private static void ClientInitialized(DevCycleUser user)
+        private static void ClientInitialized()
         {
-            var result = api.AllFeatures(user);
-
-            foreach (var entry in result)
+            foreach (var userId in new List<string> { "a", "b", "c" })
             {
-                Console.WriteLine(entry.Key + " : " + entry.Value);
+                Console.WriteLine("VariableValue-----------");
+                var user = new DevCycleUser(userId);
+                Console.WriteLine();
+                // Double variable - default value integer
+                double variableValueDI = api.VariableValue(user, "double-variable", 10);
+                // Double variable - typecast to int, default int
+                int variableValueII = api.VariableValue(user, "integer-variable", 10);
+                // Autoassign type, default value correct
+                var variableValueDD = api.VariableValue(user, "double-variable", 10.0);
+                // high prec float, default float
+                float variableValueFF = api.VariableValue(user, "high-precision-variable", 69.420f);
+
+                var values = new List<Object>() { variableValueDI, variableValueII, variableValueDD, variableValueFF };
+                foreach (var k in values)
+                {
+                    Console.WriteLine("User is {2} - Value is {0} Type of {1}", k, k.GetType(), userId);
+                }
+                Console.WriteLine("Variables---------------");
+
+                Variable<int> variableDI = api.Variable(user, "double-variable", 10);
+                Console.WriteLine("User is {2} - Value is {0} Type of {1}", variableDI.Value, variableDI.Type, userId);
+                // Double variable - typecast to int, default int
+                var variableII = api.Variable(user, "integer-variable", 10);
+                Console.WriteLine("User is {2} - Value is {0} Type of {1}", variableII.Value, variableII.Type, userId);
+                // Autoassign type, default value correct
+                var variableDD = api.Variable(user, "double-variable", 10.0);
+                Console.WriteLine("User is {2} - Value is {0} Type of {1}", variableDD.Value, variableDD.Type, userId);
+                // high prec float, default float
+                var variableFF = api.Variable(user, "high-precision-variable", 69.420f);
+                Console.WriteLine("User is {2} - Value is {0} Type of {1}", variableFF.Value, variableFF.Type, userId);
             }
 
-            Console.WriteLine(api.Variable(user, "test-variable", true));
-            Console.WriteLine(api.AllVariables(user));
-            
             api.Dispose();
         }
     }
