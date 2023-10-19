@@ -1,0 +1,16 @@
+version: 2
+updates:
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: "daily"
+  reviewers:
+    - "devcyclehq/engineering"
+  versioning-strategy: increase
+- package-ecosystem: nuget
+  directory: "/"
+  schedule:
+    interval: "daily"
+  reviewers:
+    - "devcyclehq/engineering"
+  versioning-strategy: increase
