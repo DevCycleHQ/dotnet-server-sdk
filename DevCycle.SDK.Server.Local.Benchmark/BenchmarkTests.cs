@@ -70,10 +70,10 @@ namespace DevCycle.SDK.Server.Local.Benchmark
         
         
         [Benchmark]
-        public void VariableLocalBenchmark()
+        public async Task VariableLocalBenchmark()
         {
             DevCycleUser testUser = new DevCycleUser("j_test");
-            var result = client.Variable(testUser, Fixtures.LargeConfigVariableKey, false);
+            var result = await client.Variable(testUser, Fixtures.LargeConfigVariableKey, false);
             if (result.IsDefaulted)
             {
                 logger.LogError("Defaulted variable returned");

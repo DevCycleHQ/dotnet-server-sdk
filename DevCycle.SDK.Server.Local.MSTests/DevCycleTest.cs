@@ -103,7 +103,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Build();
 
             await Task.Delay(5000);
-            var resp = api.AllFeatures(new DevCycleUser("test"));
+            var resp = await api.AllFeatures(new DevCycleUser("test"));
             Assert.IsTrue(resp.Count > 0);
             foreach (var (key, value) in resp)
             {
@@ -112,7 +112,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetFeaturesTest()
+        public async Task GetFeaturesTest()
         {
             var api = getTestClient();
             var user = new DevCycleUser("j_test");
@@ -121,7 +121,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             user.AppBuild = 1;
             user.Email = "email@gmail.com";
             user.Name = "name";
-            var result = api.AllFeatures(user);
+            var result = await api.AllFeatures(user);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
@@ -139,11 +139,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string key = "test";
             await Task.Delay(3000);
             
-            var variable = api.Variable(user, key, false);
+            var variable =await api.Variable(user, key, false);
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.Value);
 
-            var value = api.VariableValue(user, key, false);
+            var value = await api.VariableValue(user, key, false);
             Assert.IsTrue(value);
         }
         
@@ -155,12 +155,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
             
-            var variable = api.Variable<string>(user, key, "default_value");
+            var variable = await api.Variable(user, key, "default_value");
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual("öé 🐍 ¥", variable.Value);
             
-            var value = api.VariableValue(user, key, "default_value");
+            var value = await api.VariableValue(user, key, "default_value");
             Assert.IsNotNull(value);
             Assert.AreEqual("öé 🐍 ¥", value);
         }
@@ -175,19 +175,19 @@ namespace DevCycle.SDK.Server.Local.MSTests
             
             var expectedValue = JObject.Parse("{\"sample\": \"A\"}");
             var defaultValue = JObject.Parse("{\"key\": \"default\"}");
-            var variable = api.Variable<JObject>(user, key, defaultValue);
+            var variable = await api.Variable(user, key, defaultValue);
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual(expectedValue.ToString(), variable.Value.ToString());
 
-            var value = api.VariableValue(user, key, defaultValue);
+            var value = await api.VariableValue(user, key, defaultValue);
             Assert.IsNotNull(value);
             Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
 
         
         [TestMethod]
-        public void GetJsonVariableByKeyReturnsDefaultArrayTest()
+        public async Task GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
             using DevCycleLocalClient api = getTestClient();
 
@@ -197,7 +197,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string json = "['Small','Medium','Large']";
             var expectedValue = JArray.Parse(json);
 
-            var result = api.Variable(user, key, JArray.Parse(json));
+            var result = await api.Variable(user, key, JArray.Parse(json));
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
@@ -205,7 +205,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void GetJsonVariableByKeyReturnsDefaultObjectTest()
+        public async Task GetJsonVariableByKeyReturnsDefaultObjectTest()
         {
             using DevCycleLocalClient api = getTestClient();
 
@@ -215,12 +215,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string json = "{\"key\": \"value\"}";
             var expectedValue = JObject.Parse(json);
             
-            var variable = api.Variable(user, key, JObject.Parse(json));
+            var variable = await api.Variable(user, key, JObject.Parse(json));
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.IsDefaulted);
             Assert.AreEqual(expectedValue.ToString(), variable.Value.ToString());
 
-            var value = api.VariableValue(user, key, JObject.Parse(json));
+            var value = await api.VariableValue(user, key, JObject.Parse(json));
             Assert.IsNotNull(value);
             Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
@@ -233,7 +233,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DevCycleUser user = new DevCycleUser("j_test");
             // Bucketing needs time to work.
             await Task.Delay(5000);
-            var result = api.AllVariables(user);
+            var result = await api.AllVariables(user);
 
             Assert.IsTrue(result.ContainsKey("test"));
             Assert.IsNotNull(result);
@@ -253,8 +253,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DevCycleUser user = new DevCycleUser("j_test");
             DevCycleEvent userEvent = new DevCycleEvent("test event", "test target", now.DateTime, 600);
             await Task.Delay(5000);
-            api.Track(user, userEvent);
-
+            await api.Track(user, userEvent);
         }
 
         [TestMethod]
@@ -264,7 +263,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 using DevCycleLocalClient api = getTestClient();
 
-                api.Variable(null, "some_key", true);
+                var variable = api.Variable(null, "some_key", true).Result;
             });
         }
 

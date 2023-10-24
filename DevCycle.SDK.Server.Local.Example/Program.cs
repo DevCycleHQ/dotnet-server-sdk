@@ -19,19 +19,22 @@ namespace Example
             var user = new DevCycleUser("testing");
 
             var apiBuilder = new DevCycleLocalClientBuilder();
+
+            async void InitializedEventHandler(object o, DevCycleEventArgs e)
+            {
+                if (e.Success)
+                {
+                    await ClientInitialized(user);
+                }
+                else
+                {
+                    Console.WriteLine($"Client did not initialize. Errors: {e.Errors}");
+                }
+            }
+
             api = apiBuilder
                 .SetOptions(new DevCycleLocalOptions())
-                .SetInitializedSubscriber((o, e) =>
-                {
-                    if (e.Success)
-                    {
-                        ClientInitialized(user);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Client did not initialize. Errors: {e.Errors}");
-                    }
-                })
+                .SetInitializedSubscriber(InitializedEventHandler)
                 .SetRestClientOptions(
                     new DevCycleRestClientOptions()
                     {
@@ -52,9 +55,9 @@ namespace Example
             Task.Delay(15000).Wait();
         }
 
-        private static void ClientInitialized(DevCycleUser user)
+        private static async Task ClientInitialized(DevCycleUser user)
         {
-            var result = api.AllFeatures(user);
+            var result = await api.AllFeatures(user);
 
             foreach (var entry in result)
             {

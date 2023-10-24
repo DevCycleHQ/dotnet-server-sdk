@@ -13,11 +13,12 @@ using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Local.Api
 {
-    public class DevCycleLocalClientBuilder : DevCycleClientBuilder<DevCycleLocalClient, DevCycleLocalOptions, DevCycleLocalClientBuilder>
+    public class DevCycleLocalClientBuilder : DevCycleClientBuilder<DevCycleLocalClient, DevCycleLocalOptions,
+        DevCycleLocalClientBuilder>
     {
         private EnvironmentConfigManager configManager;
         private LocalBucketing localBucketing;
-        
+
         protected override DevCycleLocalClientBuilder BuilderInstance => this;
 
         public DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
@@ -32,7 +33,8 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public DevCycleLocalClientBuilder SetInitializedSubscriber(EventHandler<DevCycleEventArgs> initializedEventHandler)
+        public DevCycleLocalClientBuilder SetInitializedSubscriber(
+            EventHandler<DevCycleEventArgs> initializedEventHandler)
         {
             initialized = initializedEventHandler;
             return this;
@@ -49,7 +51,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 options.IncludeScopes = false;
                 options.SingleLine = true;
             }));
-            
+
             configManager ??= new EnvironmentConfigManager(sdkKey, options, loggerFactory, localBucketing,
                 initialized, restClientOptions);
 
@@ -69,13 +71,14 @@ namespace DevCycle.SDK.Server.Local.Api
         private bool closing;
 
         internal DevCycleLocalClient(
-            string sdkKey, 
-            DevCycleLocalOptions dvcLocalOptions, 
+            string sdkKey,
+            DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
-            EnvironmentConfigManager configManager, 
+            EnvironmentConfigManager configManager,
             LocalBucketing localBucketing,
             DevCycleRestClientOptions restClientOptions = null
-        )  {
+        )
+        {
             ValidateSDKKey(sdkKey);
             this.sdkKey = sdkKey;
             this.configManager = configManager;
@@ -92,23 +95,27 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.Enabled = true;
             Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
         }
-        
+
         private void OnTimedEvent(object source, ElapsedEventArgs e)
         {
             eventQueue?.ScheduleFlush();
         }
-        
-        
+
+
         private NullableString CreateNullableString(string value)
         {
-            return value == null ? new NullableString(){IsNull = true} : new NullableString() { IsNull = false, Value = value };
+            return value == null
+                ? new NullableString() { IsNull = true }
+                : new NullableString() { IsNull = false, Value = value };
         }
 
         private NullableDouble CreateNullableDouble(double value)
         {
-            return !Double.IsNaN(value) ? new NullableDouble() { IsNull = false, Value = value } : new NullableDouble() { IsNull = true };
+            return !Double.IsNaN(value)
+                ? new NullableDouble() { IsNull = false, Value = value }
+                : new NullableDouble() { IsNull = true };
         }
-        
+
         private NullableCustomData CreateNullableCustomData(Dictionary<string, object> customData)
         {
             if (customData == null)
@@ -117,31 +124,34 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             else
             {
-                NullableCustomData nullableCustomData = new NullableCustomData() { IsNull = false};
-                foreach(KeyValuePair<string, object> entry in customData)
+                NullableCustomData nullableCustomData = new NullableCustomData() { IsNull = false };
+                foreach (KeyValuePair<string, object> entry in customData)
                 {
-                    if(entry.Value == null)
+                    if (entry.Value == null)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue() { Type = CustomDataType.Null };
                     }
                     else if (entry.Value is string strValue)
                     {
-                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { StringValue = strValue, Type = CustomDataType.Str };
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue()
+                            { StringValue = strValue, Type = CustomDataType.Str };
                     }
                     else if (entry.Value is double numValue)
                     {
-                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { DoubleValue = numValue, Type = CustomDataType.Num };
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue()
+                            { DoubleValue = numValue, Type = CustomDataType.Num };
                     }
                     else if (entry.Value is bool boolValue)
                     {
-                        nullableCustomData.Value[entry.Key] = new CustomDataValue() { BoolValue = boolValue, Type = CustomDataType.Bool };
+                        nullableCustomData.Value[entry.Key] = new CustomDataValue()
+                            { BoolValue = boolValue, Type = CustomDataType.Bool };
                     }
-
                 }
+
                 return nullableCustomData;
             }
         }
-        
+
         private VariableType_PB TypeEnumToVariableTypeProtobuf(TypeEnum type)
         {
             switch (type)
@@ -155,155 +165,18 @@ namespace DevCycle.SDK.Server.Local.Api
                 case TypeEnum.JSON:
                     return VariableType_PB.Json;
                 default:
-                    throw new ArgumentOutOfRangeException("Unknown variable type: "+type);
+                    throw new ArgumentOutOfRangeException("Unknown variable type: " + type);
             }
         }
 
-        public T VariableValue<T>(DevCycleUser user, string key, T defaultValue) {
-            return Variable(user, key, defaultValue).Value;
-        }
-        
-        public Variable<T> Variable<T>(DevCycleUser user, string key, T defaultValue) {
-            var requestUser = new DevCyclePopulatedUser(user);
-            
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
-                
-                eventQueue.QueueAggregateEvent(
-                    requestUser,
-                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
-                    null
-                );
-                return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-            }
-            
-            DVCUser_PB userPb = new DVCUser_PB()
-            {
-                UserId = user.UserId,
-                Email = CreateNullableString(user.Email),
-                Name = CreateNullableString(user.Name),
-                Language = CreateNullableString(user.Language),
-                Country = CreateNullableString(user.Country),
-                AppBuild = CreateNullableDouble(user.AppBuild),
-                AppVersion = CreateNullableString(user.AppVersion),
-                DeviceModel = CreateNullableString(user.DeviceModel),
-                CustomData = CreateNullableCustomData(user.CustomData),
-                PrivateCustomData = CreateNullableCustomData(user.PrivateCustomData)
-            };
-
-            var type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
-            VariableType_PB variableType = TypeEnumToVariableTypeProtobuf(type);
-            
-            VariableForUserParams_PB paramsPb = new VariableForUserParams_PB()
-            {
-                SdkKey = sdkKey,
-                User = userPb,
-                VariableKey = key,
-                VariableType = variableType,
-                ShouldTrackEvent = true
-            };
-            
-            Variable<T> existingVariable = null;
-            try
-            {
-                var paramsBuffer = paramsPb.ToByteArray();
-            
-                byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams:paramsBuffer);
-            
-                if (variableData == null)
-                {
-                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-                }
-            
-                SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-            
-                if(variableType != sdkVariable.Type)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                    return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-                }
-            
-                switch (sdkVariable.Type)
-                {
-                    case VariableType_PB.Boolean:
-                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue);
-                        break;
-                    case VariableType_PB.Number:
-                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.DoubleValue, typeof(T)), defaultValue: defaultValue);
-                        break;
-                    case VariableType_PB.String:
-                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)), defaultValue: defaultValue);
-                        break;
-                    case VariableType_PB.Json:
-                        // T is expected to be a JObject or JArray 
-                        var jsonObj = JsonConvert.DeserializeObject<T>(sdkVariable.StringValue);
-                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: jsonObj, defaultValue: defaultValue);
-                        break;  
-                    default:
-                        throw new ArgumentOutOfRangeException("Unknown variable type: "+sdkVariable.Type);
-                }
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
-                return Common.Model.Local.Variable<T>.InitializeFromVariable(null, key, defaultValue);
-            }
-            return existingVariable;
-        }
-        
-        public Dictionary<string, Feature> AllFeatures(DevCycleUser user)
-        {
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("AllFeatures called before DevCycleClient has initialized");
-                return new Dictionary<string, Feature>();
-            }
-
-            var requestUser = new DevCyclePopulatedUser(user);
-
-            try
-            {
-                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
-                return config.Features;
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Unexpected exception retrieving features from the config {Exception}", e.Message);
-                return new Dictionary<string, Feature>();
-            }
-        }
-
-        public Dictionary<string, ReadOnlyVariable<object>> AllVariables(DevCycleUser user)
-        {
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("AllVariables called before DevCycleClient has initialized");
-                return new Dictionary<string, ReadOnlyVariable<object>>();
-            }
-
-            var requestUser = new DevCyclePopulatedUser(user);
-
-            try
-            {
-                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
-                return config.Variables;
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Unexpected exception retrieving variables from the config: {Exception}", e.Message);
-                return new Dictionary<string, ReadOnlyVariable<object>>();
-            }
-        }
-
-        public void SetClientCustomData(Dictionary<string,object> customData)
+        public void SetClientCustomData(Dictionary<string, object> customData)
         {
             if (!configManager.Initialized)
             {
                 logger.LogWarning("SetClientCustomData called before DevCycleClient has initialized");
                 return;
             }
-            
+
             string data = JsonConvert.SerializeObject(customData);
             try
             {
@@ -312,36 +185,6 @@ namespace DevCycle.SDK.Server.Local.Api
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception setting client custom data {Exception}", e.Message);
-            }
-        }
-        
-        public void Track(DevCycleUser user, DevCycleEvent userEvent)
-        {
-            if (closing)
-            {
-                logger.LogError("Client is closing, can not track new events");
-                return;
-            }
-            BucketedUserConfig config = null;
-            var requestUser = new DevCyclePopulatedUser(user);
-
-            if (!configManager.Initialized)
-            {
-                logger.LogWarning("Track called before DevCycleClient has initialized");
-            }
-            else
-            {
-                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
-            }
-
-
-            try
-            {
-                eventQueue.QueueEvent(requestUser, userEvent);
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Unexpected exception queueing event: {Exception}", e.Message);
             }
         }
 
@@ -363,7 +206,7 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             _ = eventQueue.FlushEvents();
         }
-        
+
         public override void Dispose()
         {
             closing = true;
@@ -380,6 +223,185 @@ namespace DevCycle.SDK.Server.Local.Api
         public override IDevCycleApiClient GetApiClient()
         {
             throw new NotImplementedException();
+        }
+
+        public override Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)
+        {
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("AllFeatures called before DevCycleClient has initialized");
+                return Task.FromResult(new Dictionary<string, Feature>());
+            }
+
+            var requestUser = new DevCyclePopulatedUser(user);
+
+            try
+            {
+                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
+                return Task.FromResult(config.Features);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception retrieving features from the config {Exception}", e.Message);
+                return Task.FromResult(new Dictionary<string, Feature>());
+            }
+        }
+
+        public override Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariables(DevCycleUser user)
+        {
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("AllVariables called before DevCycleClient has initialized");
+                return Task.FromResult(new Dictionary<string, ReadOnlyVariable<object>>());
+            }
+
+            var requestUser = new DevCyclePopulatedUser(user);
+
+            try
+            {
+                var config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
+                return Task.FromResult(config.Variables);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception retrieving variables from the config: {Exception}", e.Message);
+                return Task.FromResult(new Dictionary<string, ReadOnlyVariable<object>>());
+            }
+        }
+
+        public override Task<Variable<T>> Variable<T>(DevCycleUser user, string key, T defaultValue)
+        {
+             var requestUser = new DevCyclePopulatedUser(user);
+
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
+
+                eventQueue.QueueAggregateEvent(
+                    requestUser,
+                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
+                    null
+                );
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+            }
+
+            DVCUser_PB userPb = new DVCUser_PB()
+            {
+                UserId = user.UserId,
+                Email = CreateNullableString(user.Email),
+                Name = CreateNullableString(user.Name),
+                Language = CreateNullableString(user.Language),
+                Country = CreateNullableString(user.Country),
+                AppBuild = CreateNullableDouble(user.AppBuild),
+                AppVersion = CreateNullableString(user.AppVersion),
+                DeviceModel = CreateNullableString(user.DeviceModel),
+                CustomData = CreateNullableCustomData(user.CustomData),
+                PrivateCustomData = CreateNullableCustomData(user.PrivateCustomData)
+            };
+
+            var type = Common.Model.Variable<T>.DetermineType(defaultValue);
+            VariableType_PB variableType = TypeEnumToVariableTypeProtobuf(type);
+
+            VariableForUserParams_PB paramsPb = new VariableForUserParams_PB()
+            {
+                SdkKey = sdkKey,
+                User = userPb,
+                VariableKey = key,
+                VariableType = variableType,
+                ShouldTrackEvent = true
+            };
+
+            Variable<T> existingVariable = null;
+            try
+            {
+                var paramsBuffer = paramsPb.ToByteArray();
+
+                byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams: paramsBuffer);
+
+                if (variableData == null)
+                {
+                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                }
+
+                SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
+
+                if (variableType != sdkVariable.Type)
+                {
+                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
+                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                }
+
+                switch (sdkVariable.Type)
+                {
+                    case VariableType_PB.Boolean:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key,
+                            value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.Number:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key,
+                            value: (T)Convert.ChangeType(sdkVariable.DoubleValue, typeof(T)),
+                            defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.String:
+                        existingVariable = new Variable<T>(key: sdkVariable.Key,
+                            value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)),
+                            defaultValue: defaultValue);
+                        break;
+                    case VariableType_PB.Json:
+                        // T is expected to be a JObject or JArray 
+                        var jsonObj = JsonConvert.DeserializeObject<T>(sdkVariable.StringValue);
+                        existingVariable = new Variable<T>(key: sdkVariable.Key, value: jsonObj,
+                            defaultValue: defaultValue);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("Unknown variable type: " + sdkVariable.Type);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+            }
+
+            return Task.FromResult(existingVariable);
+        }
+
+        public override async Task<T> VariableValue<T>(DevCycleUser user, string key, T defaultValue)
+        {
+            return (await Variable(user, key, defaultValue)).Value;
+        }
+
+        public override Task<DevCycleResponse> Track(DevCycleUser user, DevCycleEvent userEvent)
+        {
+            if (closing)
+            {
+                logger.LogError("Client is closing, can not track new events");
+                return Task.FromResult(new DevCycleResponse("Client is closing, can not track new events"));
+            }
+
+            BucketedUserConfig config = null;
+            var requestUser = new DevCyclePopulatedUser(user);
+
+            if (!configManager.Initialized)
+            {
+                logger.LogWarning("Track called before DevCycleClient has initialized");
+            }
+            else
+            {
+                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
+            }
+
+            try
+            {
+                eventQueue.QueueEvent(requestUser, userEvent);
+                return Task.FromResult(new DevCycleResponse("Successfully Queued Event"));
+            }
+            catch (Exception e)
+            {
+                var message = $"Unexpected exception queueing event: {e.Message}";
+                logger.LogError(message);
+                return Task.FromResult(new DevCycleResponse(message));
+            }
         }
     }
 }

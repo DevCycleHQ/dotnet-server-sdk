@@ -18,14 +18,14 @@ namespace Example
 
             try
             {
-                var result = await api.AllFeaturesAsync(user);
+                var result = await api.AllFeatures(user);
 
                 foreach(var entry in result)
                 {
                     Console.WriteLine(entry.Key + " : " + entry.Value);
                 }
 
-                var variables = await api.AllVariablesAsync(user);
+                var variables = await api.AllVariables(user);
                 foreach (var entry in variables)
                 {
                     Console.WriteLine(entry.Key + " : " + entry.Value);

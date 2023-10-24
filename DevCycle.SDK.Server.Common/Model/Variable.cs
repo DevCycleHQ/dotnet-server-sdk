@@ -3,13 +3,13 @@ using System.IO;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
 
-namespace DevCycle.SDK.Server.Common.Model.Local
+namespace DevCycle.SDK.Server.Common.Model
 {
-    [DataContract]
-    public class Variable<T> : IVariable
+
+    public class Variable<T> : IEquatable<Variable<T>>, IVariable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Variable" /> class.
+        /// Initializes a new instance of the <see cref="Variable{T}" /> class.
         /// </summary>
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
@@ -143,6 +143,56 @@ namespace DevCycle.SDK.Server.Common.Model.Local
                 Console.WriteLine(variableValue);
                 Console.WriteLine(e);
                 throw;
+            }
+        }
+        
+        public override bool Equals(object input)
+        {
+            return Equals(input as Variable<T>);
+        }
+
+        /// <summary>
+        /// Returns true if Variable instances are equal
+        /// </summary>
+        /// <param name="input">Instance of Variable to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(Variable<T> input)
+        {
+            if (input == null)
+                return false;
+
+            return 
+                (
+                    Key == input.Key ||
+                    (Key != null &&
+                     Key.Equals(input.Key))
+                ) && 
+                (
+                    Type == input.Type ||
+                    Type.Equals(input.Type)
+                ) && 
+                (
+                    (Value != null &&
+                     Value.Equals(input.Value))
+                );
+        }
+        
+        
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hashCode = 41;
+                if (Key != null)
+                    hashCode = hashCode * 59 + Key.GetHashCode();
+                hashCode = hashCode * 59 + Type.GetHashCode();
+                if (Value != null)
+                    hashCode = hashCode * 59 + Value.GetHashCode();
+                return hashCode;
             }
         }
 

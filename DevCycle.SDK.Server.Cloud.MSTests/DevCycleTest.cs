@@ -50,7 +50,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
                     .SetSDKKey(Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY"))
                     .SetLogger(new NullLoggerFactory())
                     .Build();
-            var resp = await api.AllFeaturesAsync(new DevCycleUser("test"));
+            var resp = await api.AllFeatures(new DevCycleUser("test"));
             Assert.IsTrue(resp.Count > 0);
             foreach (var (key, value) in resp)
             {
@@ -64,7 +64,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             DevCycleCloudClient api = getTestClient(TestResponse.GetFeaturesAsync());
             DevCycleUser user = new DevCycleUser("j_test");
 
-            var result = await api.AllFeaturesAsync(user);
+            var result = await api.AllFeatures(user);
 
             AssertUserDefaultsCorrect(user);
 
@@ -83,12 +83,12 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             DevCycleUser user = new DevCycleUser("j_test");
 
             const string key = "show-quickstart";
-            var result = await api.VariableAsync(user, key, true);
+            var result = await api.Variable(user, key, true);
             AssertUserDefaultsCorrect(user);
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Value);
 
-            var value = await api.VariableValueAsync(user, key, true);
+            var value = await api.VariableValue(user, key, true);
             Assert.IsFalse(value);
         }
 
@@ -99,7 +99,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             DevCycleUser user = new DevCycleUser("j_test");
 
-            var result = await api.AllVariablesAsync(user);
+            var result = await api.AllVariables(user);
 
             AssertUserDefaultsCorrect(user);
 
@@ -119,7 +119,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
-            var result = await api.TrackAsync(user, userEvent);
+            var result = await api.Track(user, userEvent);
 
             AssertUserDefaultsCorrect(userAndEvents.User);
 
@@ -142,7 +142,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             events.Add(userEvent);
             UserAndEvents userAndEvents = new UserAndEvents(events, user);
 
-            var result = await api.TrackAsync(user, userEvent);
+            var result = await api.Track(user, userEvent);
         }
 
         [TestMethod]
@@ -152,7 +152,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {
-                await api.VariableAsync(null, "some_key", true);
+                await api.Variable(null, "some_key", true);
             });
         }
 
