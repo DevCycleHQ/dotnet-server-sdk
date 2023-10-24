@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
@@ -336,48 +337,9 @@ namespace DevCycle.SDK.Server.Common.Model
                 );
         }
 
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
+        public static DevCycleUser FromEvaluationContext(EvaluationContext context)
         {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (UserId != null)
-                    hashCode = hashCode * 59 + UserId.GetHashCode();
-                if (Email != null)
-                    hashCode = hashCode * 59 + Email.GetHashCode();
-                if (Name != null)
-                    hashCode = hashCode * 59 + Name.GetHashCode();
-                if (Language != null)
-                    hashCode = hashCode * 59 + Language.GetHashCode();
-                if (Country != null)
-                    hashCode = hashCode * 59 + Country.GetHashCode();
-                if (AppVersion != null)
-                    hashCode = hashCode * 59 + AppVersion.GetHashCode();
-                hashCode = hashCode * 59 + AppBuild.GetHashCode();
-                if (CustomData != null)
-                    hashCode = hashCode * 59 + CustomData.GetHashCode();
-                if (PrivateCustomData != null)
-                    hashCode = hashCode * 59 + PrivateCustomData.GetHashCode();
-                if (CreatedDate != null)
-                    hashCode = hashCode * 59 + CreatedDate.GetHashCode();
-                if (LastSeenDate != null)
-                    hashCode = hashCode * 59 + LastSeenDate.GetHashCode();
-                if (Platform != null)
-                    hashCode = hashCode * 59 + Platform.GetHashCode();
-                if (PlatformVersion != null)
-                    hashCode = hashCode * 59 + PlatformVersion.GetHashCode();
-                if (DeviceModel != null)
-                    hashCode = hashCode * 59 + DeviceModel.GetHashCode();
-                if (SdkType != null)
-                    hashCode = hashCode * 59 + SdkType.GetHashCode();
-                if (SdkVersion != null)
-                    hashCode = hashCode * 59 + SdkVersion.GetHashCode();
-                return hashCode;
-            }
+            return new DevCycleUser(context.GetValue("user-id").AsString);
         }
     }
 }

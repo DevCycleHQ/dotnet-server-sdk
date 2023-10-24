@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using DevCycle.SDK.Server.Common.Model;
 using OpenFeature;
 using OpenFeature.Model;
 
@@ -18,10 +19,13 @@ namespace DevCycle.SDK.Server.Common.API
             return new Metadata(Client.SdkPlatform);
         }
 
-        public override Task<ResolutionDetails<bool>> ResolveBooleanValue(string flagKey, bool defaultValue,
+        public override async Task<ResolutionDetails<bool>> ResolveBooleanValue(string flagKey, bool defaultValue,
             EvaluationContext context = null)
         {
-            throw new System.NotImplementedException();
+            // CONCEPT?
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
+            var variable= await Client.Variable(user, flagKey, defaultValue);
+            return variable.ToOpenFeature();
         }
 
         public override Task<ResolutionDetails<string>> ResolveStringValue(string flagKey, string defaultValue,

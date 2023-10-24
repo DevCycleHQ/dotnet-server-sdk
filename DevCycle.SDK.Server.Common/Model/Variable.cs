@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
+using OpenFeature.Constant;
+using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
@@ -226,6 +228,11 @@ namespace DevCycle.SDK.Server.Common.Model
                     return false;
                 default: return false;
             }
+        }
+
+        public ResolutionDetails<T> ToOpenFeature()
+        {
+            return new ResolutionDetails<T>(this.Key, this.Value, ErrorType.None, this.EvalReason);
         }
     }
 }
