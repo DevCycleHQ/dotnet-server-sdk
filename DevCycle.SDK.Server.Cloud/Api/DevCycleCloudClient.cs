@@ -24,7 +24,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
     {
         private readonly DevCycleApiClient apiClient;
         private readonly ILogger logger;
-
+        private DevCycleProvider OpenFeatureProvider { get; }
         private readonly DevCycleCloudOptions options;
 
         internal DevCycleCloudClient(
@@ -38,6 +38,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             apiClient = new DevCycleApiClient(sdkKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
             this.options = options != null ? (DevCycleCloudOptions)options : new DevCycleCloudOptions();
+            OpenFeatureProvider = new DevCycleProvider(this);
         }
 
         public override string Platform()
@@ -48,6 +49,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
         public override IDevCycleApiClient GetApiClient()
         {
             return apiClient;
+        }
+
+        public override DevCycleProvider GetOpenFeatureProvider()
+        {
+            return OpenFeatureProvider;
         }
 
         public override async Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)

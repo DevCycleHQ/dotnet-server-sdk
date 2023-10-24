@@ -69,6 +69,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
         private readonly Timer timer;
         private bool closing;
+        private DevCycleProvider OpenFeatureProvider { get; }
 
         internal DevCycleLocalClient(
             string sdkKey,
@@ -94,6 +95,7 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.AutoReset = true;
             timer.Enabled = true;
             Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
+            OpenFeatureProvider = new DevCycleProvider(this);
         }
 
         private void OnTimedEvent(object source, ElapsedEventArgs e)
@@ -225,6 +227,11 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException();
         }
 
+        public override DevCycleProvider GetOpenFeatureProvider()
+        {
+            return OpenFeatureProvider;
+        }
+
         public override Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)
         {
             if (!configManager.Initialized)
@@ -271,7 +278,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public override Task<Variable<T>> Variable<T>(DevCycleUser user, string key, T defaultValue)
         {
-             var requestUser = new DevCyclePopulatedUser(user);
+            var requestUser = new DevCyclePopulatedUser(user);
 
             if (!configManager.Initialized)
             {
