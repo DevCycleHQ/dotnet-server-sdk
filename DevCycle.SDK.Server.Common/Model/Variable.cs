@@ -230,9 +230,9 @@ namespace DevCycle.SDK.Server.Common.Model
             }
         }
 
-        public ResolutionDetails<T> ToOpenFeature()
+        public ResolutionDetails<T> GetResolutionDetails()
         {
-            return new ResolutionDetails<T>(this.Key, this.Value, ErrorType.None, this.EvalReason);
+            return new ResolutionDetails<T>(Key, Value, ErrorType.None, IsDefaulted ? Reason.Default : Reason.TargetingMatch);
         }
     }
 }

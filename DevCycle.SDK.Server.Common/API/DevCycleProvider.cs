@@ -24,32 +24,40 @@ namespace DevCycle.SDK.Server.Common.API
         {
             // CONCEPT?
             DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable= await Client.Variable(user, flagKey, defaultValue);
-            return variable.ToOpenFeature();
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
 
-        public override Task<ResolutionDetails<string>> ResolveStringValue(string flagKey, string defaultValue,
+        public override async Task<ResolutionDetails<string>> ResolveStringValue(string flagKey, string defaultValue,
             EvaluationContext context = null)
         {
-            throw new System.NotImplementedException();
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
 
-        public override Task<ResolutionDetails<int>> ResolveIntegerValue(string flagKey, int defaultValue,
+        public override async Task<ResolutionDetails<int>> ResolveIntegerValue(string flagKey, int defaultValue,
             EvaluationContext context = null)
         {
-            throw new System.NotImplementedException();
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
 
-        public override Task<ResolutionDetails<double>> ResolveDoubleValue(string flagKey, double defaultValue,
+        public override async Task<ResolutionDetails<double>> ResolveDoubleValue(string flagKey, double defaultValue,
             EvaluationContext context = null)
         {
-            throw new System.NotImplementedException();
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
 
-        public override Task<ResolutionDetails<Value>> ResolveStructureValue(string flagKey, Value defaultValue,
+        public override async Task<ResolutionDetails<Value>> ResolveStructureValue(string flagKey, Value defaultValue,
             EvaluationContext context = null)
         {
-            throw new System.NotImplementedException();
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
     }
 }

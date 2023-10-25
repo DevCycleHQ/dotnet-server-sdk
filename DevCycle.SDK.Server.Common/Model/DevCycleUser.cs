@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using OpenFeature.Error;
 using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model
@@ -28,6 +32,7 @@ namespace DevCycle.SDK.Server.Common.Model
             /// </summary>
             [EnumMember(Value = "server")] Server = 2
         }
+
 
         /// <summary>
         /// DevCycle SDK type
@@ -55,7 +60,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="deviceModel">User&#x27;s device model.</param>
         /// <param name="sdkType">DevCycle SDK type.</param>
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
-        public DevCycleUser(string userId = default, string email = default, string name = default, string language = default,
+        public DevCycleUser(string userId = default, string email = default, string name = default,
+            string language = default,
             string country = default,
             string appVersion = default, double appBuild = default, Dictionary<string, object> customData = default,
             Dictionary<string, object> privateCustomData = default,
@@ -66,8 +72,10 @@ namespace DevCycle.SDK.Server.Common.Model
             // to ensure "userId" is required (not null)
             if (String.IsNullOrEmpty(userId))
             {
-                throw new ArgumentException("userId is a required property for DevCycleUser and cannot be null or empty");
+                throw new ArgumentException(
+                    "userId is a required property for DevCycleUser and cannot be null or empty");
             }
+
             if (userId.Length > 200)
             {
                 throw new ArgumentException("userId cannot be greater than 200 characters");
@@ -337,9 +345,93 @@ namespace DevCycle.SDK.Server.Common.Model
                 );
         }
 
+
         public static DevCycleUser FromEvaluationContext(EvaluationContext context)
         {
-            return new DevCycleUser(context.GetValue("user-id").AsString);
+            DevCycleUser user;
+            Value userId = null;
+            if (!context.TryGetValue("targetingKey", out var targetingKey) &&
+                !context.TryGetValue("user_id", out userId))
+            {
+                throw new TargetingKeyMissingException("Missing targetingKey or user_id in context");
+            }
+
+            if (targetingKey is { IsString: false } && userId is { IsString: false })
+            {
+                throw new InvalidContextException("targetingKey or user_id must be a string");
+            }
+
+            var dvcuserId = userId ?? targetingKey;
+            user = new DevCycleUser(dvcuserId.AsString);
+            user.CustomData = new Dictionary<string, object>();
+            user.PrivateCustomData = new Dictionary<string, object>();
+
+            foreach (var (k, v) in context.AsDictionary().Select(x => (x.Key, x.Value)))
+            {
+                if (k.Equals("user_id") || k.Equals("targetingKey")) continue;
+
+                switch (k)
+                {
+                    case "email":
+                    case "name":
+                    case "language":
+                    case "country":
+                    case "appVersion":
+                        if (!v.IsString)
+                            continue;
+                        break;
+                    case "appBuild":
+                        if (!v.IsNumber)
+                            continue;
+                        break;
+                    case "customData":
+                    case "privateCustomData":
+                        if (v.IsStructure)
+                        {
+                            var str = v.AsStructure;
+                            foreach (var (cdK, cdV) in str.AsDictionary().Select(x => (x.Key, x.Value)))
+                            {
+                                if (!cdV.IsString && !cdV.IsNumber && !cdV.IsBoolean && !cdV.IsNull)
+                                    throw new System.Exception(
+                                        "DevCycleUser only supports flat customData properties of type string / number / boolean / null");
+
+                                switch (k)
+                                {
+                                    case "privateCustomData":
+                                        user.PrivateCustomData.Add(cdK, cdV.AsObject);
+                                        break;
+                                    case "customData":
+                                        user.CustomData.Add(cdK, cdV.AsObject);
+                                        break;
+                                }
+                            }
+
+                            continue;
+                        }
+
+                        break;
+                    default:
+                        // add to customdata
+                        if (!v.IsString && !v.IsNumber && !v.IsBoolean && !v.IsNull)
+                            throw new System.Exception(
+                                $"DevCycleUser only supports flat customData properties of type string / number / boolean / null. Attempted to submit {v}");
+                        user.CustomData[k] = v.AsObject;
+                        continue;
+                }
+
+                if (k.Equals("customData") || k.Equals("privateCustomData")) continue;
+
+                var propertyName = Char.ToUpperInvariant(k[0]) + k.Substring(1);
+                var propertyInfo = user.GetType().GetProperty(propertyName);
+                if (propertyInfo != null)
+                    propertyInfo.SetValue(user, v.AsObject, null);
+                else
+                {
+                    throw new System.Exception($"invalid property key referenced {propertyName} {v}");
+                }
+            }
+
+            return user;
         }
     }
 }

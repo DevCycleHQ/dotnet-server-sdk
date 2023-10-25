@@ -9,12 +9,12 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using RichardSzalay.MockHttp;
 using Environment = System.Environment;
 using System.Collections.Generic;
+using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Local.MSTests
 {
@@ -24,10 +24,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         private DevCycleLocalClient getTestClient(DevCycleLocalOptions options = null, string config = null,
             bool skipInitialize = false)
         {
-            if (config == null)
-            {
-                config = new string(Fixtures.Config());
-            }
+            config ??= new string(Fixtures.Config());
 
             var mockHttp = new MockHttpMessageHandler();
 
@@ -45,14 +42,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 new NullLoggerFactory(),
                 localBucketing,
                 restClientOptions: new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
-            if (skipInitialize)
-            {
-                configManager.Initialized = false;
-            }
-            else
-            {
-                configManager.Initialized = true;
-            }
+            configManager.Initialized = !skipInitialize;
 
             DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
@@ -138,15 +128,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new DevCycleUser("j_test");
             string key = "test";
             await Task.Delay(3000);
-            
-            var variable =await api.Variable(user, key, false);
+
+            var variable = await api.Variable(user, key, false);
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.Value);
 
             var value = await api.VariableValue(user, key, false);
             Assert.IsTrue(value);
         }
-        
+
         [TestMethod]
         public async Task GetVariableByKeySpecialCharactersTestAsync()
         {
@@ -154,17 +144,17 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
-            
+
             var variable = await api.Variable(user, key, "default_value");
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual("öé 🐍 ¥", variable.Value);
-            
+
             var value = await api.VariableValue(user, key, "default_value");
             Assert.IsNotNull(value);
             Assert.AreEqual("öé 🐍 ¥", value);
         }
-        
+
         [TestMethod]
         public async Task GetVariableByKeyJsonObjTestAsync()
         {
@@ -172,7 +162,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
-            
+
             var expectedValue = JObject.Parse("{\"sample\": \"A\"}");
             var defaultValue = JObject.Parse("{\"key\": \"default\"}");
             var variable = await api.Variable(user, key, defaultValue);
@@ -185,7 +175,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
 
-        
+
         [TestMethod]
         public async Task GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
@@ -214,7 +204,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             string json = "{\"key\": \"value\"}";
             var expectedValue = JObject.Parse(json);
-            
+
             var variable = await api.Variable(user, key, JObject.Parse(json));
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.IsDefaulted);
@@ -279,23 +269,63 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.ThrowsException<ArgumentException>(() =>
             {
                 _ = new DevCycleUser("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
-                             + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
-                             + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
+                                     + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
+                                     + "JdgsDl0Cm49Vb7utlc4y0dyHYS1GKFuJwuipzVSrlYij39D8BWKLDbkqiJGc7qU2xCAeJv");
             });
         }
-        
+
         [TestMethod]
         public void SetClientCustomDataTest()
         {
             using DevCycleLocalClient api = getTestClient();
-            
+
             Dictionary<string, object> customData = new Dictionary<string, object>();
             customData.Add("strProp", "value");
             customData.Add("numProp", 100);
             customData.Add("boolProp", true);
             customData.Add("nullProp", null);
-            
+
             api.SetClientCustomData(customData);
         }
+
+        [TestMethod]
+        public void OpenFeatureUserParsing()
+        {
+            EvaluationContext ctx = EvaluationContext.Builder()
+                .Set("user_id", "test")
+                .Set("customData",
+                    new Structure(new Dictionary<string, Value> { { "customkey", new Value("customValue") } }))
+                .Set("email", "email@email.com")
+                .Set("name", "Name Name")
+                .Set("language", "EN")
+                .Set("country", "CA")
+                .Set("appVersion", "0.0.1")
+                .Set("appBuild", 1)
+                .Set("nonSetValueBubbledCustomData", true)
+                .Set("nonSetValueBubbledCustomData2", "true")
+                .Set("nonSetValueBubbledCustomData3", 1)
+                .Set("nonSetValueBubbledCustomData4", new Value((object)null))
+                .Build();
+            
+            DevCycleUser user = DevCycleUser.FromEvaluationContext(ctx);
+            
+            Assert.AreEqual(user.UserId, ctx.GetValue("user_id").AsString);
+            Assert.AreEqual(user.CustomData["customkey"], "customValue");
+            Assert.AreEqual(user.Email, "email@email.com");
+            Assert.AreEqual(user.Name, "Name Name");
+            Assert.AreEqual(user.Language, "EN");
+            Assert.AreEqual(user.Country, "CA");
+            Assert.AreEqual(user.AppVersion, "0.0.1");
+            Assert.AreEqual(user.AppBuild, 1);
+            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData"], true);
+            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData2"], "true");
+            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData3"], 1d);
+            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData4"], null);
+
+
+            ctx = EvaluationContext.Builder().Set("targetingKey", "test").Build();
+            user = DevCycleUser.FromEvaluationContext(ctx);
+            Assert.AreEqual(user.UserId, ctx.GetValue("targetingKey").AsString);
+        }
     }
-}  
+}
