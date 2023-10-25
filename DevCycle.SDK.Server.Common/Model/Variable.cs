@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using OpenFeature.Constant;
 using OpenFeature.Model;

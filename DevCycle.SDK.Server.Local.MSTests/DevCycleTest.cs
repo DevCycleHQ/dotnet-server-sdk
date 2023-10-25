@@ -9,12 +9,12 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
 using RestSharp;
 using RichardSzalay.MockHttp;
 using Environment = System.Environment;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenFeature;
 using OpenFeature.Constant;
 using OpenFeature.Model;
@@ -166,8 +166,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
 
-            var expectedValue = JObject.Parse("{\"sample\": \"A\"}");
-            var defaultValue = JObject.Parse("{\"key\": \"default\"}");
+            var expectedValue = Newtonsoft.Json.Linq.JObject.Parse("{\"sample\": \"A\"}");
+            var defaultValue = Newtonsoft.Json.Linq.JObject.Parse("{\"key\": \"default\"}");
             var variable = await api.Variable(user, key, defaultValue);
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
@@ -188,9 +188,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string key = "json";
 
             string json = "['Small','Medium','Large']";
-            var expectedValue = JArray.Parse(json);
+            var expectedValue = Newtonsoft.Json.Linq.JArray.Parse(json);
 
-            var result = await api.Variable(user, key, JArray.Parse(json));
+            var result = await api.Variable(user, key, Newtonsoft.Json.Linq.JArray.Parse(json));
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
@@ -206,14 +206,14 @@ namespace DevCycle.SDK.Server.Local.MSTests
             string key = "json";
 
             string json = "{\"key\": \"value\"}";
-            var expectedValue = JObject.Parse(json);
+            var expectedValue = Newtonsoft.Json.Linq.JObject.Parse(json);
 
-            var variable = await api.Variable(user, key, JObject.Parse(json));
+            var variable = await api.Variable(user, key, Newtonsoft.Json.Linq.JObject.Parse(json));
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.IsDefaulted);
             Assert.AreEqual(expectedValue.ToString(), variable.Value.ToString());
 
-            var value = await api.VariableValue(user, key, JObject.Parse(json));
+            var value = await api.VariableValue(user, key, Newtonsoft.Json.Linq.JObject.Parse(json));
             Assert.IsNotNull(value);
             Assert.AreEqual(expectedValue.ToString(), value.ToString());
         }
@@ -299,7 +299,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Set("customData",
                     new Structure(new Dictionary<string, Value> { { "customkey", new Value("customValue") } }))
                 .Set("privateCustomData",
-                    new Structure(new Dictionary<string, Value> { { "privateCustomKey", new Value("privateCustomValue") } }))
+                    new Structure(new Dictionary<string, Value>
+                        { { "privateCustomKey", new Value("privateCustomValue") } }))
                 .Set("email", "email@email.com")
                 .Set("name", "Name Name")
                 .Set("language", "EN")
@@ -311,9 +312,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Set("nonSetValueBubbledCustomData3", 1)
                 .Set("nonSetValueBubbledCustomData4", new Value((object)null))
                 .Build();
-            
+
             DevCycleUser user = DevCycleUser.FromEvaluationContext(ctx);
-            
+
             Assert.AreEqual(user.UserId, ctx.GetValue("user_id").AsString);
             Assert.AreEqual(user.CustomData["customkey"], "customValue");
             Assert.AreEqual(user.PrivateCustomData["privateCustomKey"], "privateCustomValue");
@@ -345,7 +346,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var isEnabled = await client.GetBooleanValue("test", false, ctx);
             Assert.IsTrue(isEnabled);
         }
-        
+
         [TestMethod]
         public async Task TestOpenFeatureJSON()
         {
@@ -360,11 +361,29 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
 
-            var variable = await client.GetObjectDetails("json", new Value(new Structure(jsonDict)), ctx);
+            var defaultV = new Value(new Structure(jsonDict));
+            var variable = await client.GetObjectDetails("json", defaultV, ctx);
             Assert.IsNotNull(variable);
-            Assert.AreEqual(new Value(new Structure(jsonDict)).ToString(), variable.Value.ToString());
+            Assert.AreEqual(defaultV, variable.Value);
             Assert.AreEqual(variable.Reason, Reason.Default);
+        }
 
+        [TestMethod]
+        public void TestOpenFeatureSerialization()
+        {
+            var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
+
+            var defaultV = new Value(new Structure(jsonDict));
+            var jsonString = JsonSerializer.Serialize(defaultV,
+                new JsonSerializerOptions()
+                    { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
+            Console.WriteLine(jsonString);
+
+            var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
+                { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
+            Console.WriteLine("t");
+            Assert.AreEqual(defaultV.IsStructure, deserialzed.IsStructure);
+            Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString, deserialzed.AsStructure.GetValue("key").AsString);
         }
     }
 }

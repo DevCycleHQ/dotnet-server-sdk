@@ -1,15 +1,62 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model;
 
-public class OpenFeatureValueJsonConverter : System.Text.Json.Serialization.JsonConverter<Value>
+public class OpenFeatureValueJsonConverter : JsonConverter<Value>
 {
     public override Value Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        var structureBuilder = Structure.Builder();
+        var list = new List<Value>();
+        while (reader.Read())
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.None:
+                    break;
+                case JsonTokenType.StartObject:
+                    return Read(ref reader, typeToConvert, options);
+                case JsonTokenType.EndObject:
+                    return new Value(structureBuilder.Build());
+                case JsonTokenType.StartArray:
+                    for (; reader.TokenType != JsonTokenType.EndArray; reader.Read())
+                    {
+                        list.Add(Read(ref reader, typeToConvert, options));
+                    }
+                    break;
+                case JsonTokenType.EndArray:
+                    return new Value(list);
+                case JsonTokenType.PropertyName:
+                    structureBuilder.Set(reader.GetString(), Read(ref reader, typeToConvert, options));
+                    break;
+                case JsonTokenType.Comment:
+                    break;
+                case JsonTokenType.String:
+                    return new Value(reader.GetString());
+                case JsonTokenType.Number:
+                    return new Value(reader.GetDecimal());
+                case JsonTokenType.True:
+                    return new Value(true);
+                case JsonTokenType.False:
+                    return new Value(false);
+                case JsonTokenType.Null:
+                    return new Value();
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        return new Value(structureBuilder.Build());
+    }
+
+    public override bool CanConvert(Type typeToConvert)
+    {
+        return typeToConvert == typeof(Value);
     }
 
     public override void Write(Utf8JsonWriter writer, Value value, JsonSerializerOptions options)
