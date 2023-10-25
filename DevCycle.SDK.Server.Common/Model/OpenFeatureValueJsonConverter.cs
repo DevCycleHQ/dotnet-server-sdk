@@ -28,9 +28,10 @@ public class OpenFeatureValueJsonConverter : JsonConverter<Value>
                     {
                         list.Add(Read(ref reader, typeToConvert, options));
                     }
-                    break;
-                case JsonTokenType.EndArray:
                     return new Value(list);
+                
+                case JsonTokenType.EndArray:
+                    break;
                 case JsonTokenType.PropertyName:
                     structureBuilder.Set(reader.GetString(), Read(ref reader, typeToConvert, options));
                     break;

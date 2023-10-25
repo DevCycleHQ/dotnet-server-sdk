@@ -371,19 +371,30 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void TestOpenFeatureSerialization()
         {
-            var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
+            var simpleDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
+            var listDict = new List<Value>()
+            {
+                new(new Structure(simpleDict)),
+                new(new Structure(simpleDict)),
+                new(new Structure(simpleDict))
+            };
+            var jsonDict = new Dictionary<string, Value>()
+            {
+                { "key", new Value("value") },
+                { "key2", new Value(new Structure(simpleDict)) },
+                { "listKey", new Value(listDict) }
+            };
 
             var defaultV = new Value(new Structure(jsonDict));
             var jsonString = JsonSerializer.Serialize(defaultV,
                 new JsonSerializerOptions()
                     { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
-            Console.WriteLine(jsonString);
-
             var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
                 { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
-            Console.WriteLine("t");
+            Console.WriteLine(jsonString);
             Assert.AreEqual(defaultV.IsStructure, deserialzed.IsStructure);
-            Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString, deserialzed.AsStructure.GetValue("key").AsString);
+            Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
+                deserialzed.AsStructure.GetValue("key").AsString);
         }
     }
 }
