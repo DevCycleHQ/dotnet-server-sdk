@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Model;
 using OpenFeature;
@@ -52,6 +53,12 @@ namespace DevCycle.SDK.Server.Common.API
         public override async Task<ResolutionDetails<Value>> ResolveStructureValue(string flagKey, Value defaultValue,
             EvaluationContext context = null)
         {
+            if (!defaultValue.IsStructure) throw new System.Exception("");
+
+            var structure = defaultValue.AsStructure;
+            foreach (var (k, v) in structure.AsDictionary().Select(x => (x.Key, x.Value)))
+            {
+            }
             return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
     }

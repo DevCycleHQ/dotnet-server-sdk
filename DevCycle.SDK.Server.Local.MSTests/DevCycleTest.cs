@@ -14,6 +14,9 @@ using RestSharp;
 using RichardSzalay.MockHttp;
 using Environment = System.Environment;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using OpenFeature;
+using OpenFeature.Constant;
 using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Local.MSTests
@@ -329,6 +332,39 @@ namespace DevCycle.SDK.Server.Local.MSTests
             ctx = EvaluationContext.Builder().Set("targetingKey", "test").Build();
             user = DevCycleUser.FromEvaluationContext(ctx);
             Assert.AreEqual(user.UserId, ctx.GetValue("targetingKey").AsString);
+        }
+
+        [TestMethod]
+        public async Task TestOpenFeatureInitialization()
+        {
+            var dvcClient = getTestClient();
+            OpenFeature.Api.Instance.SetProvider(dvcClient.GetOpenFeatureProvider());
+            FeatureClient client = OpenFeature.Api.Instance.GetClient();
+
+            var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
+            var isEnabled = await client.GetBooleanValue("test", false, ctx);
+            Assert.IsTrue(isEnabled);
+        }
+        
+        [TestMethod]
+        public async Task TestOpenFeatureJSON()
+        {
+            using DevCycleLocalClient api = getTestClient();
+            OpenFeature.Api.Instance.SetProvider(api.GetOpenFeatureProvider());
+            FeatureClient client = OpenFeature.Api.Instance.GetClient();
+
+            string key = "json";
+            var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
+
+            string json = "{\"key\": \"value\"}";
+
+            var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
+
+            var variable = await client.GetObjectDetails("json", new Value(new Structure(jsonDict)), ctx);
+            Assert.IsNotNull(variable);
+            Assert.AreEqual(new Value(new Structure(jsonDict)).ToString(), variable.Value.ToString());
+            Assert.AreEqual(variable.Reason, Reason.Default);
+
         }
     }
 }
