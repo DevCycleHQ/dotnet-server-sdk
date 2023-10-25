@@ -19,45 +19,40 @@ namespace DevCycle.SDK.Server.Common.API
             return new Metadata(Client.SdkPlatform);
         }
 
+        private async Task<ResolutionDetails<T>> EvaluateDevCycle<T>(string flagKey, T defaultValue, EvaluationContext context = null)
+        {
+            var user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
+        }
         public override async Task<ResolutionDetails<bool>> ResolveBooleanValue(string flagKey, bool defaultValue,
             EvaluationContext context = null)
         {
-            // CONCEPT?
-            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
+            return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
         public override async Task<ResolutionDetails<string>> ResolveStringValue(string flagKey, string defaultValue,
             EvaluationContext context = null)
         {
-            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
+            return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
         public override async Task<ResolutionDetails<int>> ResolveIntegerValue(string flagKey, int defaultValue,
             EvaluationContext context = null)
         {
-            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
+            return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
         public override async Task<ResolutionDetails<double>> ResolveDoubleValue(string flagKey, double defaultValue,
             EvaluationContext context = null)
         {
-            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
+            return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
         public override async Task<ResolutionDetails<Value>> ResolveStructureValue(string flagKey, Value defaultValue,
             EvaluationContext context = null)
         {
-            DevCycleUser user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
+            return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
     }
 }
