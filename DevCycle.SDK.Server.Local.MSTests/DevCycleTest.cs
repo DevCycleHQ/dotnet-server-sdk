@@ -295,6 +295,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Set("user_id", "test")
                 .Set("customData",
                     new Structure(new Dictionary<string, Value> { { "customkey", new Value("customValue") } }))
+                .Set("privateCustomData",
+                    new Structure(new Dictionary<string, Value> { { "privateCustomKey", new Value("privateCustomValue") } }))
                 .Set("email", "email@email.com")
                 .Set("name", "Name Name")
                 .Set("language", "EN")
@@ -311,6 +313,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             
             Assert.AreEqual(user.UserId, ctx.GetValue("user_id").AsString);
             Assert.AreEqual(user.CustomData["customkey"], "customValue");
+            Assert.AreEqual(user.PrivateCustomData["privateCustomKey"], "privateCustomValue");
             Assert.AreEqual(user.Email, "email@email.com");
             Assert.AreEqual(user.Name, "Name Name");
             Assert.AreEqual(user.Language, "EN");
