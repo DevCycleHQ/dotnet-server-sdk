@@ -38,8 +38,7 @@ public class OpenFeatureValueJsonConverter : System.Text.Json.Serialization.Json
 
             writer.WriteEndArray();
         }
-
-        if (value.IsString)
+        else if (value.IsString)
             writer.WriteStringValue(value.AsString);
         else if (value.IsBoolean)
             writer.WriteBooleanValue(value.AsBoolean != null && (bool)value.AsBoolean);
@@ -56,7 +55,7 @@ public class OpenFeatureValueJsonConverter : System.Text.Json.Serialization.Json
         }
         else if (value.IsDateTime)
             writer.WriteStringValue(value.AsDateTime.ToString());
-        else if (value.IsNull)
+        else
             writer.WriteNullValue();
     }
 }
