@@ -364,8 +364,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var defaultV = new Value(new Structure(jsonDict));
             var variable = await client.GetObjectDetails("json", defaultV, ctx);
             Assert.IsNotNull(variable);
-            Assert.AreEqual(defaultV, variable.Value);
-            Assert.AreEqual(variable.Reason, Reason.Default);
+            Assert.AreEqual(defaultV.IsStructure, variable.Value.IsStructure);
+            Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
+                variable.Value.AsStructure.GetValue("key").AsString);
+            Assert.AreEqual( Reason.Default, variable.Reason);
         }
 
         [TestMethod]

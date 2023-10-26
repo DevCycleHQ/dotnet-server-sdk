@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json.Linq;
 using OpenFeature;
+using OpenFeature.Constant;
 using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.API
@@ -65,8 +66,13 @@ namespace DevCycle.SDK.Server.Common.API
             var newtonsoftJObj = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
             var user = DevCycleUser.FromEvaluationContext(context);
             var variable = await Client.Variable(user, flagKey, (JObject)newtonsoftJObj);
-            // TODO: This parsing needs to return a ResolutionDetails<Value> - but currently needs conversion from
-            return null;variable.GetResolutionDetails();
+            var jsonValue = Newtonsoft.Json.JsonConvert.SerializeObject(variable.Value);
+            var openFeatureValue = JsonSerializer.Deserialize<Value>(jsonValue,
+                new JsonSerializerOptions() { Converters = { new OpenFeatureValueJsonConverter() } });
+            
+            return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None,
+                variable.IsDefaulted ? Reason.Default : Reason.TargetingMatch);
+
         }
     }
 }

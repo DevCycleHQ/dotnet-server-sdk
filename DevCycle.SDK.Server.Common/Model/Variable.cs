@@ -233,7 +233,8 @@ namespace DevCycle.SDK.Server.Common.Model
 
         public ResolutionDetails<T> GetResolutionDetails()
         {
-            return new ResolutionDetails<T>(Key, Value, ErrorType.None, IsDefaulted ? Reason.Default : Reason.TargetingMatch);
+            return new ResolutionDetails<T>(Key, Value, ErrorType.None,
+                IsDefaulted ? Reason.Default : Reason.TargetingMatch);
         }
     }
 }
