@@ -8,7 +8,7 @@ using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
-
+    [DataContract]
     public class Variable<T> : IEquatable<Variable<T>>, IVariable
     {
         /// <summary>
