@@ -382,7 +382,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 { "key", new Value("value") },
                 { "key2", new Value(new Structure(simpleDict)) },
-                { "listKey", new Value(listDict) }
+                { "listKey", new Value(listDict) },
+                {"numberKey", new Value(1d)}
             };
 
             var defaultV = new Value(new Structure(jsonDict));
@@ -395,6 +396,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(defaultV.IsStructure, deserialzed.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
                 deserialzed.AsStructure.GetValue("key").AsString);
+            Assert.AreEqual(1, deserialzed.AsStructure.GetValue("numberKey").AsInteger);
         }
     }
 }

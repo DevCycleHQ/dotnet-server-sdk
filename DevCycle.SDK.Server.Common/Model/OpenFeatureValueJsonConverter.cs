@@ -40,7 +40,7 @@ public class OpenFeatureValueJsonConverter : JsonConverter<Value>
                 case JsonTokenType.String:
                     return new Value(reader.GetString());
                 case JsonTokenType.Number:
-                    return new Value(reader.GetDecimal());
+                    return new Value(reader.GetDouble());
                 case JsonTokenType.True:
                     return new Value(true);
                 case JsonTokenType.False:
