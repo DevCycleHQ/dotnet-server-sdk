@@ -386,7 +386,6 @@ namespace DevCycle.SDK.Server.Local.Api
                 return Task.FromResult(new DevCycleResponse("Client is closing, can not track new events"));
             }
 
-            BucketedUserConfig config = null;
             var requestUser = new DevCyclePopulatedUser(user);
 
             if (!configManager.Initialized)
@@ -395,7 +394,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             else
             {
-                config = localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
+                localBucketing.GenerateBucketedConfig(sdkKey, requestUser.ToJson());
             }
 
             try

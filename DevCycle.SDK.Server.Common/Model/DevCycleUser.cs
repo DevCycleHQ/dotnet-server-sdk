@@ -392,7 +392,7 @@ namespace DevCycle.SDK.Server.Common.Model
                             foreach (var (cdK, cdV) in str.AsDictionary().Select(x => (x.Key, x.Value)))
                             {
                                 if (!cdV.IsString && !cdV.IsNumber && !cdV.IsBoolean && !cdV.IsNull)
-                                    throw new System.Exception(
+                                    throw new InvalidContextException(
                                         "DevCycleUser only supports flat customData properties of type string / number / boolean / null");
 
                                 switch (k)
@@ -413,7 +413,7 @@ namespace DevCycle.SDK.Server.Common.Model
                     default:
                         // add to customdata
                         if (!v.IsString && !v.IsNumber && !v.IsBoolean && !v.IsNull)
-                            throw new System.Exception(
+                            throw new InvalidContextException(
                                 $"DevCycleUser only supports flat customData properties of type string / number / boolean / null. Attempted to submit {v}");
                         user.CustomData[k] = v.AsObject;
                         continue;
@@ -427,7 +427,7 @@ namespace DevCycle.SDK.Server.Common.Model
                     propertyInfo.SetValue(user, v.AsObject, null);
                 else
                 {
-                    throw new System.Exception($"invalid property key referenced {propertyName} {v}");
+                    throw new InvalidContextException($"invalid property key referenced {propertyName} {v}");
                 }
             }
 
