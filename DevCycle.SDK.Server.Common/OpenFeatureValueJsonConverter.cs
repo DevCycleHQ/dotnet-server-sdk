@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenFeature.Model;
 
-namespace DevCycle.SDK.Server.Common.Model;
+namespace DevCycle.SDK.Server.Common;
 
 public class OpenFeatureValueJsonConverter : JsonConverter<Value>
 {
@@ -66,7 +66,7 @@ public class OpenFeatureValueJsonConverter : JsonConverter<Value>
         {
             var structure = value.AsStructure;
             writer.WriteStartObject();
-
+            
             foreach (var (k, v) in structure.AsDictionary().Select(x => (x.Key, x.Value)))
             {
                 writer.WritePropertyName(k);
@@ -83,7 +83,6 @@ public class OpenFeatureValueJsonConverter : JsonConverter<Value>
             {
                 Write(writer, v, options);
             }
-
             writer.WriteEndArray();
         }
         else if (value.IsString)

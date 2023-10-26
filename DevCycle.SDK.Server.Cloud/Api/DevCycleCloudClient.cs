@@ -124,7 +124,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 {
                     variable = variableResponse.Convert<T>();
                 }
-                catch (InvalidCastException e)
+                catch (InvalidCastException)
                 {
                     variable = new Variable<T>(lowerKey, defaultValue);
                     logger.LogWarning($"Type mismatch for variable {key}. " +
