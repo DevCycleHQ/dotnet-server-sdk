@@ -6,14 +6,11 @@ using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Cloud;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using RestSharp;
-
 
 namespace DevCycle.SDK.Server.Cloud.Api
 {
-
-    public class DevCycleCloudClientBuilder : DevCycleClientBuilder<DevCycleCloudClient, DevCycleCloudOptions, DevCycleCloudClientBuilder>
+    public class DevCycleCloudClientBuilder : DevCycleClientBuilder<DevCycleCloudClient, DevCycleCloudOptions,
+        DevCycleCloudClientBuilder>
     {
         protected override DevCycleCloudClientBuilder BuilderInstance => this;
 
@@ -22,28 +19,31 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return new DevCycleCloudClient(sdkKey, loggerFactory, options, restClientOptions);
         }
     }
+
     public sealed class DevCycleCloudClient : DevCycleBaseClient
     {
         private readonly DevCycleApiClient apiClient;
         private readonly ILogger logger;
-
+        private DevCycleProvider OpenFeatureProvider { get; }
         private readonly DevCycleCloudOptions options;
 
         internal DevCycleCloudClient(
             string sdkKey,
-            ILoggerFactory loggerFactory, 
-            IDevCycleOptions options=null,
+            ILoggerFactory loggerFactory,
+            IDevCycleOptions options = null,
             DevCycleRestClientOptions restClientOptions = null
-        ) {
+        )
+        {
             ValidateSDKKey(sdkKey);
             apiClient = new DevCycleApiClient(sdkKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
-            this.options = options != null ? (DevCycleCloudOptions) options : new DevCycleCloudOptions();
+            this.options = options != null ? (DevCycleCloudOptions)options : new DevCycleCloudOptions();
+            OpenFeatureProvider = new DevCycleProvider(this);
         }
-        
+
         public override string Platform()
         {
-            return "Cloud"; 
+            return "Cloud";
         }
 
         public override IDevCycleApiClient GetApiClient()
@@ -51,38 +51,43 @@ namespace DevCycle.SDK.Server.Cloud.Api
             return apiClient;
         }
 
-        public async Task<Dictionary<string, Feature>> AllFeaturesAsync(DevCycleUser user)
+        public override DevCycleProvider GetOpenFeatureProvider()
+        {
+            return OpenFeatureProvider;
+        }
+
+        public override async Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)
         {
             ValidateUser(user);
 
             AddDefaults(user);
 
-            string urlFragment = "v1/features";
+            const string urlFragment = "v1/features";
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
             try
             {
                 return await GetResponseAsync<Dictionary<string, Feature>>(user, urlFragment, queryParams);
-
             }
             catch (DevCycleException e)
             {
-                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400)
+                {
                     throw e;
                 }
+
                 logger.LogError(e, "Failed to request AllFeatures:");
                 return new Dictionary<string, Feature>();
             }
-            
         }
 
-        public async Task<T> VariableValueAsync<T>(DevCycleUser user, string key, T defaultValue)
+        public override async Task<T> VariableValue<T>(DevCycleUser user, string key, T defaultValue)
         {
-            return (await VariableAsync(user, key, defaultValue)).Value;
+            return (await Variable(user, key, defaultValue)).Value;
         }
-        
-        public async Task<Variable<T>> VariableAsync<T>(DevCycleUser user, string key, T defaultValue)
+
+        public override async Task<Variable<T>> Variable<T>(DevCycleUser user, string key, T defaultValue)
         {
             ValidateUser(user);
 
@@ -106,20 +111,20 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
             Variable<T> variable;
 
-            TypeEnum type = Common.Model.Local.Variable<T>.DetermineType(defaultValue);
-            
+            TypeEnum type = Common.Model.Variable<T>.DetermineType(defaultValue);
+
             try
             {
                 var variableResponse = await GetResponseAsync<Variable<object>>(user, urlFragment, queryParams);
                 variableResponse.DefaultValue = defaultValue;
                 variableResponse.IsDefaulted = false;
-                variableResponse.Type = Common.Model.Local.Variable<object>.DetermineType(variableResponse.Value);
-               
+                variableResponse.Type = Common.Model.Variable<object>.DetermineType(variableResponse.Value);
+
                 try
                 {
                     variable = variableResponse.Convert<T>();
                 }
-                catch (InvalidCastException e)
+                catch (InvalidCastException)
                 {
                     variable = new Variable<T>(lowerKey, defaultValue);
                     logger.LogWarning($"Type mismatch for variable {key}. " +
@@ -128,24 +133,25 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             catch (DevCycleException e)
             {
-                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400 && (int)e.HttpStatusCode != 404) {
-                    throw e;
-                } else {
-                    logger.LogError(e, "Failed to retrieve variable value, using default.");
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400 && (int)e.HttpStatusCode != 404)
+                {
+                    throw;
                 }
+
+                logger.LogError(e, "Failed to retrieve variable value, using default.");
                 variable = new Variable<T>(lowerKey, defaultValue);
             }
 
             return variable;
         }
 
-        public async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariablesAsync(DevCycleUser user)
+        public override async Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariables(DevCycleUser user)
         {
             ValidateUser(user);
 
             AddDefaults(user);
 
-            string urlFragment = "v1/variables";
+            const string urlFragment = "v1/variables";
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
@@ -157,15 +163,17 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             catch (DevCycleException e)
             {
-                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400)
+                {
                     throw e;
                 }
+
                 logger.LogError(e, "Failed to request AllVariables");
                 return new Dictionary<string, ReadOnlyVariable<object>>();
             }
         }
 
-        public async Task<DevCycleResponse> TrackAsync(DevCycleUser user, DevCycleEvent userEvent)
+        public override async Task<DevCycleResponse> Track(DevCycleUser user, DevCycleEvent userEvent)
         {
             ValidateUser(user);
 
@@ -175,17 +183,19 @@ namespace DevCycle.SDK.Server.Cloud.Api
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            UserAndEvents userAndEvents = new UserAndEvents(new List<DevCycleEvent>() {userEvent}, user);
+            UserAndEvents userAndEvents = new UserAndEvents(new List<DevCycleEvent> { userEvent }, user);
 
-            try 
+            try
             {
                 return await GetResponseAsync<DevCycleResponse>(userAndEvents, urlFragment, queryParams);
-            } 
+            }
             catch (DevCycleException e)
             {
-                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400) {
+                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400)
+                {
                     throw e;
                 }
+
                 logger.LogError(e, "Failed to request AllVariables");
                 return new DevCycleResponse(e.ToString());
             }
@@ -193,7 +203,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
 
         public override void Dispose()
         {
-            ((IDisposable) apiClient).Dispose();
+            ((IDisposable)apiClient).Dispose();
         }
     }
 }

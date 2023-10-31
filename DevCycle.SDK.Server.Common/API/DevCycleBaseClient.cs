@@ -5,19 +5,28 @@ using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json;
+using OpenFeature;
+using OpenFeature.Model;
 using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API
 {
-    public abstract class DevCycleBaseClient : IDevCycleClient
+    public abstract class DevCycleBaseClient : IDevCycleClient 
     {
-        private string SdkPlatform => $"C# {Platform()}";
+        public string SdkPlatform => $"C# {Platform()}";
         private static string CSharpVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
         private static string SdkVersion => typeof(IDevCycleClient).Assembly.GetName().Version.ToString();
         private static DevCycleUser.SdkTypeEnum SdkType => DevCycleUser.SdkTypeEnum.Server;
+        
         public abstract void Dispose();
         public abstract string Platform();
         public abstract IDevCycleApiClient GetApiClient();
+        public abstract DevCycleProvider GetOpenFeatureProvider();
+        public abstract Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user);
+        public abstract Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariables(DevCycleUser user);
+        public abstract Task<Variable<T>> Variable<T>(DevCycleUser user, string key, T defaultValue);
+        public abstract Task<T> VariableValue<T>(DevCycleUser user, string key, T defaultValue);
+        public abstract Task<DevCycleResponse> Track(DevCycleUser user, DevCycleEvent userEvent);
 
         protected void AddDefaults(DevCycleUser user)
         {
@@ -96,7 +105,7 @@ namespace DevCycle.SDK.Server.Common.API
             }
         }
 
-        public void ValidateSDKKey(string sdkKey)
+        protected void ValidateSDKKey(string sdkKey)
         {
             if (string.IsNullOrEmpty(sdkKey))
             {
@@ -108,5 +117,7 @@ namespace DevCycle.SDK.Server.Common.API
                 throw new ArgumentException("Invalid SDK key provided. Please call build with a valid server SDK key");
             }
         }
+
+
     }
 }
