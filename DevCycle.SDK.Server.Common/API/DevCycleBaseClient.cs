@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Common.API
 {
     public abstract class DevCycleBaseClient : IDevCycleClient 
     {
-        public string SdkPlatform => $"C# {Platform()}";
+        public string SdkPlatform => $"C#";
         private static string CSharpVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
         private static string SdkVersion => typeof(IDevCycleClient).Assembly.GetName().Version.ToString();
         private static DevCycleUser.SdkTypeEnum SdkType => DevCycleUser.SdkTypeEnum.Server;

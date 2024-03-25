@@ -167,7 +167,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
         private void AssertUserDefaultsCorrect(DevCycleUser user)
         {
-            Assert.AreEqual("C# Cloud", user.Platform);
+            Assert.AreEqual("C#", user.Platform);
             Assert.AreEqual(DevCycleUser.SdkTypeEnum.Server, user.SdkType);
             //Assert.AreEqual("1.0.3.0", user.SdkVersion);
         }
