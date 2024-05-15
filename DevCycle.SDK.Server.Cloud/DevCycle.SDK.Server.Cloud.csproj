@@ -12,17 +12,17 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <RootNamespace>DevCycle</RootNamespace>
-    <Version>3.0.5</Version>
-    <ReleaseVersion>3.0.5</ReleaseVersion>
+    <Version>3.0.6</Version>
+    <ReleaseVersion>3.0.6</ReleaseVersion>
     <Copyright>2022</Copyright>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>Server SDK</Title>
-    <PackageVersion>3.0.5</PackageVersion>
-    <AssemblyVersion>3.0.5</AssemblyVersion>
-    <FileVersion>3.0.5</FileVersion>
+    <PackageVersion>3.0.6</PackageVersion>
+    <AssemblyVersion>3.0.6</AssemblyVersion>
+    <FileVersion>3.0.6</FileVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
