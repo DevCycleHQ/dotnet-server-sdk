@@ -24,46 +24,98 @@ namespace DevCycle.SDK.Server.Local.Api
 
     public class LocalBucketing
     {
+        
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
         private static readonly SemaphoreSlim FlushMutex = new(1, 1);
+        private static string _clientUuid;
         private Func<string, string> handleError;
         
         private Dictionary<string, int> sdkKeyAddresses;
 
         private HashSet<int> pinnedAddresses;
-        private Engine WASMEngine { get; }
-        private Module WASMModule { get; }
-        private Linker WASMLinker { get; }
-        private Store WASMStore { get; }
-        private Memory WASMMemory { get; }
-        private Instance WASMInstance { get; }
+
+        private Engine WASMEngine => wasmEngine;
+
+        private Module WASMModule => wasmModule;
+
+        private Linker WASMLinker => wasmLinker;
+
+        private Store WASMStore => wasmStore;
+
+        private Memory WASMMemory => wasmMemory;
+
+        private Instance WASMInstance => wasmInstance;
+
         private Random random;
         private Dictionary<TypeEnum, int> variableTypeMap = new Dictionary<TypeEnum, int>();
-        
-        
-        private Function PinFunc { get; }
-        private Function UnPinFunc { get; }
-        private Function NewFunc { get; }
-        private Function CollectFunc { get; }
-        private Function FlushEventQueueFunc { get; }
-        private Function EventQueueSizeFunc { get; }
-        private Function MarkPayloadSuccessFunc { get; }
-        private Function QueueEventFunc { get; }
-        private Function MarkPayloadFailureFunc { get; }
-        private Function InitEventQueueFunc { get; }
-        private Function QueueAggregateEventFunc { get; }
-        private Function VariableForUserFunc { get; }
-        private Function VariableForUserProtobufFunc { get; }
-        private Function SetConfigDataFunc { get; }
-        private Function SetPlatformDataFunc { get; }
-        private Function SetClientCustomDataFunc   { get; }
-        private Function GenerateBucketedConfigForUserFunc { get; }
-        
+        private readonly Engine wasmEngine;
+        private readonly Module wasmModule;
+        private readonly Linker wasmLinker;
+        private readonly Store wasmStore;
+        private readonly Memory wasmMemory;
+        private readonly Instance wasmInstance;
+        private readonly Function pinFunc;
+        private readonly Function unPinFunc;
+        private readonly Function newFunc;
+        private readonly Function collectFunc;
+        private readonly Function flushEventQueueFunc;
+        private readonly Function eventQueueSizeFunc;
+        private readonly Function markPayloadSuccessFunc;
+        private readonly Function queueEventFunc;
+        private readonly Function markPayloadFailureFunc;
+        private readonly Function initEventQueueFunc;
+        private readonly Function queueAggregateEventFunc;
+        private readonly Function variableForUserFunc;
+        private readonly Function variableForUserProtobufFunc;
+        private readonly Function setConfigDataFunc;
+        private readonly Function setPlatformDataFunc;
+        private readonly Function setClientCustomDataFunc;
+        private readonly Function generateBucketedConfigForUserFunc;
+
+
+        private Function PinFunc => pinFunc;
+
+        private Function UnPinFunc => unPinFunc;
+
+        private Function NewFunc => newFunc;
+
+        private Function CollectFunc => collectFunc;
+
+        private Function FlushEventQueueFunc => flushEventQueueFunc;
+
+        private Function EventQueueSizeFunc => eventQueueSizeFunc;
+
+        private Function MarkPayloadSuccessFunc => markPayloadSuccessFunc;
+
+        private Function QueueEventFunc => queueEventFunc;
+
+        private Function MarkPayloadFailureFunc => markPayloadFailureFunc;
+
+        private Function InitEventQueueFunc => initEventQueueFunc;
+
+        private Function QueueAggregateEventFunc => queueAggregateEventFunc;
+
+        private Function VariableForUserFunc => variableForUserFunc;
+
+        private Function VariableForUserProtobufFunc => variableForUserProtobufFunc;
+
+        private Function SetConfigDataFunc => setConfigDataFunc;
+
+        private Function SetPlatformDataFunc => setPlatformDataFunc;
+
+        private Function SetClientCustomDataFunc => setClientCustomDataFunc;
+
+        private Function GenerateBucketedConfigForUserFunc => generateBucketedConfigForUserFunc;
+
         private const int WasmObjectIdString = 1;
         private const int WasmObjectIdUint8Array = 9;
-        
+
+        public string ClientUUID { get; }
+       
+
         public LocalBucketing()
         {
+            ClientUUID = new Guid().ToString();
             WasmMutex.Wait();
             random = new Random();
             pinnedAddresses = new HashSet<int>();
@@ -78,10 +130,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new ApplicationException("Could not find the bucketing-lib.release.wasm file");
             }
 
-            WASMEngine = new Engine();
-            WASMModule = Module.FromStream(WASMEngine, "devcycle-local-bucketing", wasmResource);
-            WASMLinker = new Linker(WASMEngine);
-            WASMStore = new Store(WASMEngine);
+            wasmEngine = new Engine();
+            wasmModule = Module.FromStream(WASMEngine, "devcycle-local-bucketing", wasmResource);
+            wasmLinker = new Linker(WASMEngine);
+            wasmStore = new Store(WASMEngine);
 
             WASMStore.SetWasiConfiguration(
                 new WasiConfiguration()
@@ -139,8 +191,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 )
             );
 
-            WASMInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
-            WASMMemory = WASMInstance.GetMemory("memory");
+            wasmInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
+            wasmMemory = WASMInstance.GetMemory("memory");
             if (WASMMemory is null)
             {
                 throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
@@ -152,23 +204,23 @@ namespace DevCycle.SDK.Server.Local.Api
             variableTypeMap.Add(TypeEnum.JSON, GetGlobalValue<int>("VariableType.JSON"));
             
             // cache the various functions from WASM
-            PinFunc = GetFunction("__pin");
-            UnPinFunc = GetFunction("__unpin");
-            NewFunc = GetFunction("__new");
-            CollectFunc = GetFunction("__collect");
-            FlushEventQueueFunc = GetFunction("flushEventQueue");
-            EventQueueSizeFunc = GetFunction("eventQueueSize");
-            MarkPayloadSuccessFunc = GetFunction("onPayloadSuccess");
-            QueueEventFunc = GetFunction("queueEvent");
-            MarkPayloadFailureFunc = GetFunction("onPayloadFailure");
-            InitEventQueueFunc = GetFunction("initEventQueue");
-            QueueAggregateEventFunc = GetFunction("queueAggregateEvent");
-            VariableForUserFunc = GetFunction("variableForUser");
-            VariableForUserProtobufFunc = GetFunction("variableForUser_PB");
-            SetConfigDataFunc = GetFunction("setConfigDataUTF8");
-            SetPlatformDataFunc = GetFunction("setPlatformDataUTF8");
-            SetClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
-            GenerateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
+            pinFunc = GetFunction("__pin");
+            unPinFunc = GetFunction("__unpin");
+            newFunc = GetFunction("__new");
+            collectFunc = GetFunction("__collect");
+            flushEventQueueFunc = GetFunction("flushEventQueue");
+            eventQueueSizeFunc = GetFunction("eventQueueSize");
+            markPayloadSuccessFunc = GetFunction("onPayloadSuccess");
+            queueEventFunc = GetFunction("queueEvent");
+            markPayloadFailureFunc = GetFunction("onPayloadFailure");
+            initEventQueueFunc = GetFunction("initEventQueue");
+            queueAggregateEventFunc = GetFunction("queueAggregateEvent");
+            variableForUserFunc = GetFunction("variableForUser");
+            variableForUserProtobufFunc = GetFunction("variableForUser_PB");
+            setConfigDataFunc = GetFunction("setConfigDataUTF8");
+            setPlatformDataFunc = GetFunction("setPlatformDataUTF8");
+            setClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
+            generateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
         
             ReleaseMutex();
         }
@@ -182,9 +234,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var clientUUIDAddress = GetParameter(ClientUUID);
             var optionsAddress = GetParameter(options);
 
-            InitEventQueueFunc.Invoke(sdkKeyAddress, optionsAddress);
+            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUUIDAddress, optionsAddress);
 
             ReleaseMutex();
         }

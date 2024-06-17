@@ -20,21 +20,22 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly DevCycleEventsApiClient devCycleEventsApiClient;
         private readonly LocalBucketing localBucketing;
         private readonly string sdkKey;
-        private bool closing = false;
+        private bool closing;
 
         private readonly ILogger logger;
 
         private CancellationTokenSource tokenSource = new();
         private bool schedulerIsRunning;
         private event EventHandler<DevCycleEventArgs> FlushedEvents;
-        
+
         public EventQueue(
-            string sdkKey, 
+            string sdkKey,
             DevCycleLocalOptions localOptions,
             ILoggerFactory loggerFactory,
             LocalBucketing localBucketing,
             DevCycleRestClientOptions restClientOptions = null
-        ) {
+        )
+        {
             devCycleEventsApiClient = new DevCycleEventsApiClient(sdkKey, localOptions, restClientOptions);
             this.sdkKey = sdkKey;
             this.localOptions = localOptions;
@@ -56,7 +57,8 @@ namespace DevCycle.SDK.Server.Local.Api
 
         private async Task<Tuple<FlushPayload, RestResponse>> GetPayloadResult(FlushPayload flushPayload)
         {
-            return new Tuple<FlushPayload, RestResponse>(flushPayload, await devCycleEventsApiClient.PublishEvents(flushPayload.Records));
+            return new Tuple<FlushPayload, RestResponse>(flushPayload,
+                await devCycleEventsApiClient.PublishEvents(flushPayload.Records));
         }
 
         public virtual async Task FlushEvents()
@@ -91,25 +93,27 @@ namespace DevCycle.SDK.Server.Local.Api
                     if (res.StatusCode != HttpStatusCode.Created)
                     {
                         logger.LogError($"Error publishing events, status: ${res.StatusCode}, body: ${res.Content}");
-                        localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
+                        localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, (int)res.StatusCode >= 500);
                         flushResultEvent.Success = false;
                         flushResultEvent.Errors.Add(new DevCycleException(res.StatusCode,
                             new ErrorResponse(res.ErrorMessage ?? "")));
                     }
                     else
                     {
-                        logger.LogDebug($"DevCycle Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
-                        localBucketing.OnPayloadSuccess(this.sdkKey, flushPayload.PayloadID);
+                        logger.LogDebug(
+                            $"DevCycle Flushed ${eventCount} Events, for ${flushPayload.Records.Count} Users");
+                        localBucketing.OnPayloadSuccess(sdkKey, flushPayload.PayloadID);
                     }
                 }
                 catch (DevCycleException ex)
                 {
                     logger.LogError($"DevCycle Error Flushing Events response message: ${ex.Message}");
-                    localBucketing.OnPayloadFailure(this.sdkKey, flushPayload.PayloadID, true);
+                    localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, true);
                     flushResultEvent.Success = false;
                     flushResultEvent.Errors.Add(ex);
                 }
             }
+
             OnFlushedEvents(flushResultEvent);
             localBucketing.EndFlush();
         }
@@ -136,7 +140,7 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 return;
             }
-            
+
             if (user is null)
             {
                 throw new Exception("User can't be null");
@@ -153,24 +157,71 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.Log(LogLevel.Error, "Failed to queue an event. Events in queue exceeded the max");
                 return;
             }
+
             localBucketing.QueueEvent(
-                sdkKey, 
-                JsonConvert.SerializeObject(user), 
+                sdkKey,
+                JsonConvert.SerializeObject(user),
                 JsonConvert.SerializeObject(@event)
-                );
+            );
             logger.LogDebug("{Event} queued successfully", @event);
+        }
+
+        public virtual void QueueSDKConfigEvent(RestRequest request, RestResponse response)
+        {
+            var popU = new DevCyclePopulatedUser(
+                new DevCycleUser(userId: $"{localBucketing.ClientUUID}@{Dns.GetHostName()}"));
+            QueueEvent(popU, new DevCycleEvent(
+                type: EventTypes.sdkConfig,
+                target: request.Resource,
+                value: -1,
+                metaData: new Dictionary<string, object>
+                {
+                    { "clientUUID", localBucketing.ClientUUID },
+                    {
+                        "reqEtag",
+                        request.Parameters.GetParameters<HeaderParameter>().First(p => p.Name == "If-None-Match")
+                    },
+                    {
+                        "reqLastModified",
+                        request.Parameters.GetParameters<HeaderParameter>().First(p => p.Name == "If-Modified-Since")
+                    },
+                    {
+                        "resEtag", response.Headers?.First(p => p.Name?.ToLower() == "etag")
+                    },
+                    {
+                        "resLastModified", response.Headers?.First(p => p.Name?.ToLower() == "last-modified")
+                    },
+                    {
+                        "resRayId", response.Headers?.First(p => p.Name?.ToLower() == "cf-ray")
+                    },
+                    {
+                        "resStatus", response.StatusCode
+                    },
+                    {
+                        "errMsg",
+                        response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.NotModified
+                            ? response.StatusDescription
+                            : null
+                    },
+                    {
+                        "sseConnected", null
+                    }
+                })
+            );
         }
 
         /**
          * Queue Event that can be aggregated together, where multiple calls are aggregated
          * by incrementing the 'value' field.
          */
-        public virtual void QueueAggregateEvent(DevCyclePopulatedUser user, DevCycleEvent @event, BucketedUserConfig config, bool throwOnQueueMax = false)
+        public virtual void QueueAggregateEvent(DevCyclePopulatedUser user, DevCycleEvent @event,
+            BucketedUserConfig config, bool throwOnQueueMax = false)
         {
             if (closing)
             {
                 return;
             }
+
             if (CheckEventQueueSize())
             {
                 logger.LogWarning("{Event} failed to be queued; events in queue exceed {Max}", @event,
@@ -186,12 +237,12 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 throw new ArgumentException("UserId must be set");
             }
-            
+
             if (string.IsNullOrEmpty(@event.Target))
             {
                 throw new ArgumentException("Target must be set");
             }
-            
+
             if (@event.Type == string.Empty)
             {
                 throw new ArgumentException("Type must be set");
@@ -205,20 +256,20 @@ namespace DevCycle.SDK.Server.Local.Api
                 sdkKey,
                 JsonConvert.SerializeObject(@event),
                 JsonConvert.SerializeObject(config?.VariableVariationMap ?? new Dictionary<string, FeatureVariation>())
-                );
+            );
         }
 
         private IEnumerable<DevCycleRequestEvent> EventsFromAggregateEvents(
             Dictionary<string, Dictionary<string, DevCycleRequestEvent>> aggUserEventsRecord)
         {
             return (from eventType in aggUserEventsRecord
-                    from eventTarget in eventType.Value
-                    select eventTarget.Value).ToList();
+                from eventTarget in eventType.Value
+                select eventTarget.Value).ToList();
         }
 
         private bool CheckEventQueueSize()
         {
-            var queueSize = localBucketing.EventQueueSize(this.sdkKey);
+            var queueSize = localBucketing.EventQueueSize(sdkKey);
             if (queueSize >= localOptions.FlushEventQueueSize)
             {
                 ScheduleFlush();

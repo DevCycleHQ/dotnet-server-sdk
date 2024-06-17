@@ -26,22 +26,29 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var mockHttp = new MockHttpMessageHandler();
             var statusCode =
                 isError
-                    ? isRetryableError 
-                        ? HttpStatusCode.InternalServerError : HttpStatusCode.BadRequest
+                    ? isRetryableError
+                        ? HttpStatusCode.InternalServerError
+                        : HttpStatusCode.BadRequest
                     : HttpStatusCode.OK;
             MockedRequest req = mockHttp.When("https://config-cdn*")
                 .Respond(statusCode,
-                    new List<KeyValuePair<string, string>>() {new("test etag", "test etag value")},
+                    new List<KeyValuePair<string, string>>()
+                    {
+                        new("test etag", "test etag value"),
+                        new("Last-Modified", "timestamp")
+                    },
                     "application/json",
                     isError ? "" : config);
-           
+
 
             var sdkKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
                 loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
-                    {ConfigureMessageHandler = _ => mockHttp},
-                initializedHandler: (isError && !isRetryableError) ? DidNotInitializeSubscriber : DidInitializeSubscriber);
+                    { ConfigureMessageHandler = _ => mockHttp },
+                initializedHandler: (isError && !isRetryableError)
+                    ? DidNotInitializeSubscriber
+                    : DidInitializeSubscriber);
 
             return new Tuple<EnvironmentConfigManager, MockHttpMessageHandler, MockedRequest>(cfgManager, mockHttp,
                 req);
