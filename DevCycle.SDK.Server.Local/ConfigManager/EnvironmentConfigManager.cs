@@ -38,6 +38,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private bool PollingEnabled = true;
 
         private string configEtag;
+        private string configLastModified;
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -135,6 +136,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
             var request = new RestRequest(GetConfigUrl());
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
+            if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
 
             RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
@@ -147,7 +149,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 if (Config != null)
                 {
-                    logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}", configEtag);
+                    logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag, configLastModified);
                 }
                 else
                 {
@@ -172,17 +174,18 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             else if (res.StatusCode == HttpStatusCode.NotModified)
             {
-                logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}", configEtag);
+                logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}, lastmodified: {lastmodified}", configEtag, configLastModified);
             }
             else
             {
                 try
                 {
                     localBucketing.StoreConfig(sdkKey, res.Content);
-                    IEnumerable<HeaderParameter> headerValues = res.Headers.Where(e => e.Name.ToLower() == "etag");
-                    configEtag = (string)headerValues.FirstOrDefault()?.Value;
-
-                    logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}", configEtag);
+                    var etag = res.Headers.FirstOrDefault(e => e.Name.ToLower() == "etag");
+                    var lastmodified = res.Headers.FirstOrDefault(e => e.Name.ToLower() == "last-modified");
+                    configEtag = (string)etag.Value;
+                    configLastModified = (string)lastmodified.Value;
+                    logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
                 }
                 catch (WasmtimeException e)
                 {
