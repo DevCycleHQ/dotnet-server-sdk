@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         protected override DevCycleLocalClientBuilder BuilderInstance => this;
 
-        internal DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
+        public DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
             return this;
