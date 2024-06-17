@@ -30,6 +30,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly LocalBucketing localBucketing;
         private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
+        private EventQueue eventQueue;
         private Timer pollingTimer;
 
         public virtual string Config { get; private set; }
@@ -47,7 +48,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             LocalBucketing localBucketing,
             EventHandler<DevCycleEventArgs> initializedHandler = null,
             DevCycleRestClientOptions restClientOptions = null
-        )
+            )
         {
             localOptions = dvcLocalOptions;
             this.sdkKey = sdkKey;
@@ -76,6 +77,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 this.initializedHandler += initializedHandler;
             }
+        }
+
+        internal void SetEventQueue(EventQueue queue)
+        {
+            eventQueue = queue;
         }
 
         public async Task InitializeConfigAsync()
@@ -181,11 +187,12 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 try
                 {
                     localBucketing.StoreConfig(sdkKey, res.Content);
-                    var etag = res.Headers.FirstOrDefault(e => e.Name.ToLower() == "etag");
-                    var lastmodified = res.Headers.FirstOrDefault(e => e.Name.ToLower() == "last-modified");
-                    configEtag = (string)etag.Value;
-                    configLastModified = (string)lastmodified.Value;
-                    logger.LogInformation("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
+                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
+                    var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
+                    configEtag = (string)etag?.Value;
+                    configLastModified = (string)lastModified?.Value;
+                    logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
+                    eventQueue?.QueueSDKConfigEvent(request, res);
                 }
                 catch (WasmtimeException e)
                 {

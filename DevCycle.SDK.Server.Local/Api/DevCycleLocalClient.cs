@@ -21,7 +21,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         protected override DevCycleLocalClientBuilder BuilderInstance => this;
 
-        public DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
+        internal DevCycleLocalClientBuilder SetConfigManager(EnvironmentConfigManager environmentConfigManager)
         {
             configManager = environmentConfigManager;
             return this;
@@ -86,7 +86,7 @@ namespace DevCycle.SDK.Server.Local.Api
             this.localBucketing = localBucketing;
             logger = loggerFactory.CreateLogger<DevCycleLocalClient>();
             eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
-
+            this.configManager.SetEventQueue(eventQueue);
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
 
