@@ -114,7 +114,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public LocalBucketing()
         {
-            ClientUUID = new Guid().ToString();
+            ClientUUID = Guid.NewGuid().ToString();
             WasmMutex.Wait();
             random = new Random();
             pinnedAddresses = new HashSet<int>();
@@ -233,10 +233,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var clientUUIDAddress = GetParameter(ClientUUID);
+            var clientUuidAddress = GetParameter(ClientUUID);
             var optionsAddress = GetParameter(options);
 
-            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUUIDAddress, optionsAddress);
+            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUuidAddress, optionsAddress);
 
             ReleaseMutex();
         }
