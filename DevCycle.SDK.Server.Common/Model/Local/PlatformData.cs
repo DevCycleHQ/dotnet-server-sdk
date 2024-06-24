@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
@@ -62,7 +63,19 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             PlatformVersion = DefaultPlatformVersion;
             SdkType = DefaultSdkType.ToString().ToLower();
             SdkVersion = DefaultSdkVersion;
-            HostName = Dns.GetHostName();
+            try
+            {
+                HostName = Dns.GetHostName();
+                
+            }
+            catch (SocketException)
+            {
+            }
+            if (HostName == "")
+            {
+                HostName = "localhost";
+            }
+            
         }
     }
 }

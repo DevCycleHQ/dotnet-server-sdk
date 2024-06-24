@@ -27,7 +27,6 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
         private static readonly SemaphoreSlim FlushMutex = new(1, 1);
-        private static string _clientUuid;
         private Func<string, string> handleError;
         
         private Dictionary<string, int> sdkKeyAddresses;
