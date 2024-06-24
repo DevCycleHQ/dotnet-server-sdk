@@ -149,56 +149,62 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
             DevCycleException finalError;
-            
-            // Status code of 0 means some other error (like a network error) occurred
-            if (res.StatusCode >= HttpStatusCode.InternalServerError || res.StatusCode == 0)
-            {
-                if (Config != null)
-                {
-                    logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag, configLastModified);
-                }
-                else
-                {
-                    logger.LogError(res.ErrorException,"Failed to download DevCycle config");
-                }
-            }
-            else if (res.StatusCode >= HttpStatusCode.BadRequest)
-            {
-                initializationEvent.Success = false;
 
-                var errorMessage = (int)res.StatusCode == 403
-                    ? "Project configuration could not be found. Check your SDK key."
-                    : "Encountered non-retryable error fetching config. Client will not attempt to fetch configuration again.";
-
-                finalError = new DevCycleException(res.StatusCode,
-                    new ErrorResponse(errorMessage));
-
-                StopPolling();
-
-                logger.LogError(finalError.ErrorResponse.Message);
-                initializationEvent.Errors.Add(finalError);
-            }
-            else if (res.StatusCode == HttpStatusCode.NotModified)
+            switch (res.StatusCode)
             {
-                logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}, lastmodified: {lastmodified}", configEtag, configLastModified);
-            }
-            else
-            {
-                try
+                // Status code of 0 means some other error (like a network error) occurred
+                case >= HttpStatusCode.InternalServerError:
+                case 0:
                 {
-                    localBucketing.StoreConfig(sdkKey, res.Content);
-                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
-                    var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
-                    configEtag = (string)etag?.Value;
-                    configLastModified = (string)lastModified?.Value;
-                    logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
-                    eventQueue?.QueueSDKConfigEvent(request, res);
+                    if (Config != null)
+                    {
+                        logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag, configLastModified);
+                    }
+                    else
+                    {
+                        logger.LogError(res.ErrorException,"Failed to download DevCycle config");
+                    }
+
+                    break;
                 }
-                catch (WasmtimeException e)
+                case >= HttpStatusCode.BadRequest:
                 {
-                    // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                    logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                    initializationEvent.Success = false;
+
+                    var errorMessage = (int)res.StatusCode == 403
+                        ? "Project configuration could not be found. Check your SDK key."
+                        : "Encountered non-retryable error fetching config. Client will not attempt to fetch configuration again.";
+
+                    finalError = new DevCycleException(res.StatusCode,
+                        new ErrorResponse(errorMessage));
+
+                    StopPolling();
+
+                    logger.LogError(finalError.ErrorResponse.Message);
+                    initializationEvent.Errors.Add(finalError);
+                    break;
                 }
+                case HttpStatusCode.NotModified:
+                    logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}, lastmodified: {lastmodified}", configEtag, configLastModified);
+                    break;
+                default:
+                    try
+                    {
+                        localBucketing.StoreConfig(sdkKey, res.Content);
+                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
+                        var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
+                        configEtag = (string)etag?.Value;
+                        configLastModified = (string)lastModified?.Value;
+                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
+                        eventQueue?.QueueSDKConfigEvent(request, res);
+                    }
+                    catch (WasmtimeException e)
+                    {
+                        // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
+                        logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                    }
+
+                    break;
             }
         }
 
