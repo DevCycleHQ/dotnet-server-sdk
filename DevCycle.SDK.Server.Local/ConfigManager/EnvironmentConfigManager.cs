@@ -149,7 +149,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
             DevCycleException finalError;
-
+            if (res.StatusCode != HttpStatusCode.NotModified)
+            {
+                eventQueue?.QueueSDKConfigEvent(request, res);
+            }
             switch (res.StatusCode)
             {
                 // Status code of 0 means some other error (like a network error) occurred
@@ -196,7 +199,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         configEtag = (string)etag?.Value;
                         configLastModified = (string)lastModified?.Value;
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
-                        eventQueue?.QueueSDKConfigEvent(request, res);
                     }
                     catch (WasmtimeException e)
                     {
