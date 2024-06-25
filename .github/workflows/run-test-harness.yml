@@ -9,7 +9,7 @@ jobs:
     runs-on:
       labels: ubuntu-latest-4-core
     steps:
-      - uses: DevCycleHQ/test-harness@main
+      - uses: DevCycleHQ/test-harness@jamie/sdkconfig
         with:
           sdks-to-test: dotnet
           sdk-github-sha: ${{github.event.pull_request.head.sha}}

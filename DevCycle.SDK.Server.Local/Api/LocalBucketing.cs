@@ -27,7 +27,6 @@ namespace DevCycle.SDK.Server.Local.Api
         
         private static readonly SemaphoreSlim WasmMutex = new(1, 1);
         private static readonly SemaphoreSlim FlushMutex = new(1, 1);
-        private static string _clientUuid;
         private Func<string, string> handleError;
         
         private Dictionary<string, int> sdkKeyAddresses;
@@ -115,7 +114,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public LocalBucketing()
         {
-            ClientUUID = new Guid().ToString();
+            ClientUUID = Guid.NewGuid().ToString();
             WasmMutex.Wait();
             random = new Random();
             pinnedAddresses = new HashSet<int>();
@@ -234,10 +233,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new LocalBucketingException(message);
             };
             var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-            var clientUUIDAddress = GetParameter(ClientUUID);
+            var clientUuidAddress = GetParameter(ClientUUID);
             var optionsAddress = GetParameter(options);
 
-            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUUIDAddress, optionsAddress);
+            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUuidAddress, optionsAddress);
 
             ReleaseMutex();
         }
