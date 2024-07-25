@@ -186,18 +186,30 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 try
                 {
-                    localBucketing.StoreConfig(sdkKey, res.Content);
-                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
                     var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
+                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
+                    if (configLastModified != "" && lastModified != null && (string)lastModified.Value != "")
+                    {
+                        var parsedHeader = Convert.ToDateTime((string)lastModified.Value);
+                        var storedHeader = Convert.ToDateTime(configLastModified);
+                        // negative means that the stored header is before the returned parsed header
+                        if (DateTime.Compare(storedHeader, parsedHeader) >= 0)
+                        {
+                            logger.LogWarning("Received timestamp on last-modified that was before the stored one. Not updating config.");
+                            return;
+                        }
+                    }
+                    
+                    localBucketing.StoreConfig(sdkKey, res.Content);
                     configEtag = (string)etag?.Value;
                     configLastModified = (string)lastModified?.Value;
                     logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
                     eventQueue?.QueueSDKConfigEvent(request, res);
                 }
-                catch (WasmtimeException e)
+                catch (Exception e)
                 {
                     // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                    logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                    logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
                 }
             }
         }
