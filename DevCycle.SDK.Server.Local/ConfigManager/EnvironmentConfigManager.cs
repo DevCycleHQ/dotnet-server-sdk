@@ -187,9 +187,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 try
                 {
                     var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
-                    if (configLastModified != "")
+                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
+                    if (configLastModified != "" && lastModified != null && (string)lastModified.Value != "")
                     {
-                        var parsedHeader = Convert.ToDateTime(lastModified);
+                        var parsedHeader = Convert.ToDateTime((string)lastModified.Value);
                         var storedHeader = Convert.ToDateTime(configLastModified);
                         // negative means that the stored header is before the returned parsed header
                         if (DateTime.Compare(storedHeader, parsedHeader) >= 0)
@@ -200,16 +201,15 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     }
                     
                     localBucketing.StoreConfig(sdkKey, res.Content);
-                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
                     configEtag = (string)etag?.Value;
                     configLastModified = (string)lastModified?.Value;
                     logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
                     eventQueue?.QueueSDKConfigEvent(request, res);
                 }
-                catch (WasmtimeException e)
+                catch (Exception e)
                 {
                     // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                    logger.LogError($"Failed to set config: {e.InnerException?.Message}");
+                    logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
                 }
             }
         }
