@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
@@ -34,8 +35,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 .Respond(statusCode,
                     new List<KeyValuePair<string, string>>()
                     {
-                        new("test etag", "test etag value"),
-                        new("Last-Modified", "timestamp")
+                        new("Etag", "test etag value"),
+                        new("Last-Modified", DateTime.Now.AddHours(-1).ToString(CultureInfo.InvariantCulture))
                     },
                     "application/json",
                     isError ? "" : config);

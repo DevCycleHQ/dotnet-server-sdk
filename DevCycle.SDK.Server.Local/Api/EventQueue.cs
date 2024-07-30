@@ -179,20 +179,20 @@ namespace DevCycle.SDK.Server.Local.Api
                     { "clientUUID", localBucketing.ClientUUID },
                     {
                         "reqEtag",
-                        request.Parameters.GetParameters<HeaderParameter>().First(p => p.Name == "If-None-Match")
+                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-None-Match")
                     },
                     {
                         "reqLastModified",
-                        request.Parameters.GetParameters<HeaderParameter>().First(p => p.Name == "If-Modified-Since")
+                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-Modified-Since")
                     },
                     {
-                        "resEtag", response.Headers?.First(p => p.Name?.ToLower() == "etag")
+                        "resEtag", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "etag")
                     },
                     {
-                        "resLastModified", response.Headers?.First(p => p.Name?.ToLower() == "last-modified")
+                        "resLastModified", response.ContentHeaders?.FirstOrDefault(p => p.Name?.ToLower() == "last-modified")
                     },
                     {
-                        "resRayId", response.Headers?.First(p => p.Name?.ToLower() == "cf-ray")
+                        "resRayId", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "cf-ray")
                     },
                     {
                         "resStatus", response.StatusCode
