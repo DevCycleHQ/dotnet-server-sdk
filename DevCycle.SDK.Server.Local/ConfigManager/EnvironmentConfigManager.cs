@@ -188,7 +188,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 {
                     var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
                     var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
-                    if (configLastModified != "" && lastModified != null && (string)lastModified.Value != "")
+                    if (!string.IsNullOrEmpty(configLastModified) && lastModified != null && !string.IsNullOrEmpty((string)lastModified.Value) )
                     {
                         var parsedHeader = Convert.ToDateTime((string)lastModified.Value);
                         var storedHeader = Convert.ToDateTime(configLastModified);
