@@ -115,7 +115,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public LocalBucketing()
         {
-            ClientUUID = new Guid().ToString();
+            ClientUUID = Guid.NewGuid().ToString();
             WasmMutex.Wait();
             random = new Random();
             pinnedAddresses = new HashSet<int>();
