@@ -172,27 +172,27 @@ namespace DevCycle.SDK.Server.Local.Api
                 new DevCycleUser(userId: $"{localBucketing.ClientUUID}@{Dns.GetHostName()}"));
             QueueEvent(popU, new DevCycleEvent(
                 type: EventTypes.sdkConfig,
-                target: request.Resource,
+                target: localOptions.CdnUri + localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{sdkKey}.json",
                 value: -1,
                 metaData: new Dictionary<string, object>
                 {
                     { "clientUUID", localBucketing.ClientUUID },
                     {
                         "reqEtag",
-                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-None-Match")
+                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-None-Match")?.Value as string
                     },
                     {
                         "reqLastModified",
-                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-Modified-Since")
+                        request.Parameters.GetParameters<HeaderParameter>().FirstOrDefault(p => p.Name == "If-Modified-Since")?.Value as string
                     },
                     {
-                        "resEtag", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "etag")
+                        "resEtag", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "etag")?.Value as string
                     },
                     {
-                        "resLastModified", response.ContentHeaders?.FirstOrDefault(p => p.Name?.ToLower() == "last-modified")
+                        "resLastModified", response.ContentHeaders?.FirstOrDefault(p => p.Name?.ToLower() == "last-modified")?.Value as string
                     },
                     {
-                        "resRayId", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "cf-ray")
+                        "resRayId", response.Headers?.FirstOrDefault(p => p.Name?.ToLower() == "cf-ray")?.Value as string
                     },
                     {
                         "resStatus", response.StatusCode
