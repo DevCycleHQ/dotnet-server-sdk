@@ -172,7 +172,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 new DevCycleUser(userId: $"{localBucketing.ClientUUID}@{Dns.GetHostName()}"));
             QueueEvent(popU, new DevCycleEvent(
                 type: EventTypes.sdkConfig,
-                target: localOptions.CdnUri + request.Resource,
+                target: response.ResponseUri?.ToString(),
                 value: -1,
                 metaData: new Dictionary<string, object>
                 {
