@@ -1,3 +1,4 @@
+using System.Net;
 using Newtonsoft.Json;
 
 namespace DevCycle.SDK.Server.Common.Model.Local
@@ -53,7 +54,6 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
-    
 
         public PlatformData()
         {
@@ -61,7 +61,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             PlatformVersion = DefaultPlatformVersion;
             SdkType = DefaultSdkType.ToString().ToLower();
             SdkVersion = DefaultSdkVersion;
-            HostName = null;
+            HostName = Dns.GetHostName();
         }
     }
 }
