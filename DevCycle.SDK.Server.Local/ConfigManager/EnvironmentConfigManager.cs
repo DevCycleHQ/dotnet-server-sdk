@@ -204,7 +204,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     configEtag = etag;
                     configLastModified = lastModified;
                     logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
-                    eventQueue?.QueueSDKConfigEvent(request, res);
+                    //eventQueue?.QueueSDKConfigEvent(request, res);
                 }
                 catch (Exception e)
                 {
