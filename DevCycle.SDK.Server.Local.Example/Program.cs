@@ -92,7 +92,7 @@ namespace Example
                 .Set("nonSetValueBubbledCustomData4", new Value((object)null))
                 .Build();
             
-            Api.Instance.SetProvider(api.GetOpenFeatureProvider());
+            await Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
             FeatureClient oFeatureClient = Api.Instance.GetClient();
             var allVariables = await api.AllVariables(DevCycleUser.FromEvaluationContext(ctx));
             foreach (var readOnlyVariable in allVariables)
