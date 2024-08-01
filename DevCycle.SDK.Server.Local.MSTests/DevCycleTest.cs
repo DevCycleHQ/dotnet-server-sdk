@@ -338,7 +338,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task TestOpenFeatureInitialization()
         {
             var dvcClient = getTestClient();
-            OpenFeature.Api.Instance.SetProvider(dvcClient.GetOpenFeatureProvider());
+            await OpenFeature.Api.Instance.SetProviderAsync(dvcClient.GetOpenFeatureProvider());
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
 
             var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
@@ -350,7 +350,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task TestOpenFeatureJSON()
         {
             using DevCycleLocalClient api = getTestClient();
-            OpenFeature.Api.Instance.SetProvider(api.GetOpenFeatureProvider());
+            await OpenFeature.Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
 
             string key = "json";

@@ -38,8 +38,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private bool PollingEnabled = true;
 
-        private string configEtag;
-        private string configLastModified;
+        private string configEtag = "";
+        private string configLastModified = "";
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -186,11 +186,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 try
                 {
-                    var lastModified = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified");
-                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag");
-                    if (!string.IsNullOrEmpty(configLastModified) && lastModified != null && !string.IsNullOrEmpty((string)lastModified.Value) )
+                    var lastModified = res.ContentHeaders?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified")?.Value as string;
+                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value as string;
+                    if (!string.IsNullOrEmpty(configLastModified) && lastModified != null && !string.IsNullOrEmpty(lastModified) )
                     {
-                        var parsedHeader = Convert.ToDateTime((string)lastModified.Value);
+                        var parsedHeader = Convert.ToDateTime(lastModified);
                         var storedHeader = Convert.ToDateTime(configLastModified);
                         // negative means that the stored header is before the returned parsed header
                         if (DateTime.Compare(storedHeader, parsedHeader) >= 0)
@@ -201,10 +201,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     }
                     
                     localBucketing.StoreConfig(sdkKey, res.Content);
-                    configEtag = (string)etag?.Value;
-                    configLastModified = (string)lastModified?.Value;
+                    configEtag = etag;
+                    configLastModified = lastModified;
                     logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
-                    eventQueue?.QueueSDKConfigEvent(request, res);
+                    //eventQueue?.QueueSDKConfigEvent(request, res);
                 }
                 catch (Exception e)
                 {
