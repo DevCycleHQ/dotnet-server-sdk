@@ -90,6 +90,11 @@ namespace DevCycle.SDK.Server.Local.Api
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
 
+            if(dvcLocalOptions.CdnSlug != "")
+            {
+                logger.LogWarning("The config CDN slug is being overriden, please ensure to update the config to v2 according to the config CDN updates documentation.");
+
+            }
             timer = new Timer(dvcLocalOptions.EventFlushIntervalMs);
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;

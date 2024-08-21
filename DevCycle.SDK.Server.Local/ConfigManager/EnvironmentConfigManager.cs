@@ -120,7 +120,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private string GetConfigUrl()
         {
-            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v1/server/{sdkKey}.json";
+            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v2/server/{sdkKey}.json";
         }
 
         /**
