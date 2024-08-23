@@ -1,8 +1,18 @@
 name: Publish to NuGet and Version Bump
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      version-increment-type:
+      description: "Which part of the version to increment:"
+      required: true
+      type: choice
+      options:
+        - major
+        - minor
+        - patch
+      default: "patch"
 
-permissions: 
+permissions:
   contents: write
 jobs:
   publish:
@@ -22,10 +32,10 @@ jobs:
           curl -sSL https://bit.ly/install-xq | sudo bash
       - name: Get current version of Cloud SDK
         id: cloud-version
-        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj)" >> "$GITHUB_OUTPUT"    
+        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj)" >> "$GITHUB_OUTPUT"
       - name: Get current version of Common Library
         id: common-version
-        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj)" >> "$GITHUB_OUTPUT"    
+        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj)" >> "$GITHUB_OUTPUT"
       - name: Get current version of Local SDK
         id: local-version
         run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj)" >> "$GITHUB_OUTPUT"
@@ -45,10 +55,23 @@ jobs:
         with:
           version: ${{ steps.local-version.outputs.version }}
       - name: Replace the versions for all SDKs
+        if: ${{ github.event.inputs.version-increment-type == 'major' }}
+        run: | 
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.major }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.major }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.major }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
+        if: ${{ github.event.inputs.version-increment-type == 'minor' }}
         run: |
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.minor }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.minor }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
+          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.minor }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
+        if: ${{ github.event.inputs.version-increment-type == 'patch' }}
+        run: | 
           sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.patch }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
           sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.patch }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
           sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.patch }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
+      - name: Commit and Push Version Bumps
+        run: |
           git add .
           git commit -m "Version Bumping"
           git push -u origin main
