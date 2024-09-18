@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
@@ -10,6 +11,7 @@ using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Common.Policies;
+using LaunchDarkly.EventSource;
 using Microsoft.Extensions.Logging;
 using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
@@ -22,7 +24,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private const int MinimumPollingIntervalMs = 1000;
 
         private readonly string sdkKey;
-        private readonly int pollingIntervalMs;
+        private int pollingIntervalMs;
         private readonly int requestTimeoutMs;
         private readonly RestClient restClient;
         private readonly ILogger logger;
@@ -33,13 +35,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private EventQueue eventQueue;
         private Timer pollingTimer;
 
-        public virtual string Config { get; private set; }
-        public virtual bool Initialized { get; internal set; }
-
-        private bool PollingEnabled = true;
-
+        private bool pollingEnabled = true;
+        private SSEManager sseManager;
         private string configEtag = "";
         private string configLastModified = "";
+
+        public virtual string Config { get; private set; }
+        public virtual bool Initialized { get; internal set; }
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -48,7 +50,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             LocalBucketing localBucketing,
             EventHandler<DevCycleEventArgs> initializedHandler = null,
             DevCycleRestClientOptions restClientOptions = null
-            )
+        )
         {
             localOptions = dvcLocalOptions;
             this.sdkKey = sdkKey;
@@ -99,7 +101,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 OnInitialized(initializationEvent);
                 // check if polling is still enabled, we might have hit a non-retryable error
-                if (PollingEnabled)
+                if (pollingEnabled)
                 {
                     pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
                 }
@@ -131,9 +133,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
          *
          * Unexpected exceptions will still be thrown from here.
          */
-        private async Task FetchConfigAsyncWithTask()
+        private async Task FetchConfigAsyncWithTask(uint lastmodified = 0)
         {
-            if (!PollingEnabled)
+            if (!pollingEnabled)
             {
                 return;
             }
@@ -149,68 +151,133 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
             DevCycleException finalError;
-            
-            // Status code of 0 means some other error (like a network error) occurred
-            if (res.StatusCode >= HttpStatusCode.InternalServerError || res.StatusCode == 0)
+
+            switch (res.StatusCode)
             {
-                if (Config != null)
+                // Status code of 0 means some other error (like a network error) occurred
+                case >= HttpStatusCode.InternalServerError or 0 when Config != null:
+                    logger.LogError(res.ErrorException,
+                        "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag,
+                        configLastModified);
+                    break;
+                case >= HttpStatusCode.InternalServerError or 0:
+                    logger.LogError(res.ErrorException, "Failed to download DevCycle config");
+                    break;
+                case >= HttpStatusCode.BadRequest:
                 {
-                    logger.LogError(res.ErrorException, "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag, configLastModified);
+                    initializationEvent.Success = false;
+
+                    var errorMessage = (int)res.StatusCode == 403
+                        ? "Project configuration could not be found. Check your SDK key."
+                        : "Encountered non-retryable error fetching config. Client will not attempt to fetch configuration again.";
+
+                    finalError = new DevCycleException(res.StatusCode,
+                        new ErrorResponse(errorMessage));
+
+                    StopPolling();
+
+                    logger.LogError(finalError.ErrorResponse.Message);
+                    initializationEvent.Errors.Add(finalError);
+                    break;
                 }
-                else
-                {
-                    logger.LogError(res.ErrorException,"Failed to download DevCycle config");
-                }
-            }
-            else if (res.StatusCode >= HttpStatusCode.BadRequest)
-            {
-                initializationEvent.Success = false;
-
-                var errorMessage = (int)res.StatusCode == 403
-                    ? "Project configuration could not be found. Check your SDK key."
-                    : "Encountered non-retryable error fetching config. Client will not attempt to fetch configuration again.";
-
-                finalError = new DevCycleException(res.StatusCode,
-                    new ErrorResponse(errorMessage));
-
-                StopPolling();
-
-                logger.LogError(finalError.ErrorResponse.Message);
-                initializationEvent.Errors.Add(finalError);
-            }
-            else if (res.StatusCode == HttpStatusCode.NotModified)
-            {
-                logger.LogDebug("Config not modified, using cache, etag: {ConfigEtag}, lastmodified: {lastmodified}", configEtag, configLastModified);
-            }
-            else
-            {
-                try
-                {
-                    var lastModified = res.ContentHeaders?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified")?.Value as string;
-                    var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value as string;
-                    if (!string.IsNullOrEmpty(configLastModified) && lastModified != null && !string.IsNullOrEmpty(lastModified) )
+                case HttpStatusCode.NotModified:
+                    logger.LogDebug(
+                        "Config not modified, using cache, etag: {ConfigEtag}, lastmodified: {lastmodified}",
+                        configEtag, configLastModified);
+                    break;
+                default:
+                    try
                     {
-                        var parsedHeader = Convert.ToDateTime(lastModified);
-                        var storedHeader = Convert.ToDateTime(configLastModified);
-                        // negative means that the stored header is before the returned parsed header
-                        if (DateTime.Compare(storedHeader, parsedHeader) >= 0)
+                        var lastModified = res.ContentHeaders?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified")
+                            ?.Value as string;
+                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value as string;
+                        if (!string.IsNullOrEmpty(configLastModified) && lastModified != null &&
+                            !string.IsNullOrEmpty(lastModified))
                         {
-                            logger.LogWarning("Received timestamp on last-modified that was before the stored one. Not updating config.");
-                            return;
+                            var parsedHeader = Convert.ToDateTime(lastModified);
+                            var storedHeader = Convert.ToDateTime(configLastModified);
+                            // negative means that the stored header is before the returned parsed header
+                            if (DateTime.Compare(storedHeader, parsedHeader) >= 0)
+                            {
+                                logger.LogWarning(
+                                    "Received timestamp on last-modified that was before the stored one. Not updating config.");
+                                return;
+                            }
                         }
+
+                        try
+                        {
+                            var minimalConfig = JsonDocument.Parse(res.Content);
+                            var sseProp = minimalConfig.RootElement.GetProperty("sse");
+                            var sseUri = sseProp.GetProperty("hostname").GetString() +
+                                         sseProp.GetProperty("path").GetString();
+                            if (sseManager == null)
+                            {
+                                sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,
+                                    SSEErrorHandler);
+                                await sseManager.StartSSE();
+                            }
+                            else
+                            {
+                                sseManager.RestartSSE(sseUri);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            logger.LogWarning(e, "Failed to parse SSE config. Skipping SSE Initialization");
+                        }
+
+                        localBucketing.StoreConfig(sdkKey, res.Content);
+                        configEtag = etag;
+                        configLastModified = lastModified;
+                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
+                            configEtag, configLastModified);
+                        //eventQueue?.QueueSDKConfigEvent(request, res);
                     }
-                    
-                    localBucketing.StoreConfig(sdkKey, res.Content);
-                    configEtag = etag;
-                    configLastModified = lastModified;
-                    logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}", configEtag, configLastModified);
-                    //eventQueue?.QueueSDKConfigEvent(request, res);
-                }
-                catch (Exception e)
-                {
-                    // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                    logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
-                }
+                    catch (Exception e)
+                    {
+                        // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
+                        logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
+                    }
+
+                    break;
+            }
+        }
+
+        private async void SSEMessageHandler(object sender, MessageReceivedEventArgs args)
+        {
+            var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
+            if (message.Type is "refetchConfig" or "")
+            {
+                await FetchConfigAsyncWithTask(message.LastModified);
+            }
+        }
+
+        private void SSEErrorHandler(object sender, ExceptionEventArgs args)
+        {
+            logger.LogWarning(args.Exception, "SSE Connection Returned an error");
+        }
+
+        private void SSEStateHandler(object sender, StateChangedEventArgs args)
+        {
+            switch (args.ReadyState)
+            {
+                case ReadyState.Raw:
+                    break;
+                case ReadyState.Connecting:
+                    break;
+                case ReadyState.Open:
+                    var ssepollingIntervalMs = 60 * 60 * 15 * 1000;
+                    pollingTimer = new Timer(FetchConfigAsync, null, ssepollingIntervalMs, ssepollingIntervalMs);
+                    logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
+                    break;
+                case ReadyState.Closed:
+                case ReadyState.Shutdown:
+                    logger.LogInformation("SSE Shutdown");
+                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -229,7 +296,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void StopPolling()
         {
             pollingTimer?.Dispose();
-            PollingEnabled = false;
+            pollingEnabled = false;
         }
     }
 }

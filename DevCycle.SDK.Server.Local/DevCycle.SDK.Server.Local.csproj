@@ -47,6 +47,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="LaunchDarkly.EventSource" Version="5.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
     <PackageReference Include="Wasmtime" Version="22.0.0" />
