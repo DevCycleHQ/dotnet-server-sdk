@@ -36,6 +36,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [JsonProperty("eventRequestChunkSize")]
         public int EventRequestChunkSize { get; set; }
         
+        [JsonProperty("enableBetaRealtimeUpdates")]
+        public bool EnableBetaRealtimeUpdates { get; set; }
+        
         [IgnoreDataMember]
         public int FlushEventQueueSize { get; set; }
         
@@ -54,6 +57,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [IgnoreDataMember]
         public Dictionary<string, string> EventsApiCustomHeaders { get; set; }
 
+        
         public DevCycleLocalOptions(
             int configPollingIntervalMs = 1000,
             int configPollingTimeoutMs = 5000,
@@ -68,7 +72,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             int flushEventQueueSize = 1000,
             int maxEventsInQueue = 2000,
             int eventRequestChunkSize = 100,
-            int eventFlushIntervalMs = 10 * 1000
+            int eventFlushIntervalMs = 10 * 1000,
+            bool enableBetaRealtimeUpdates = false
             )
         {
             ConfigPollingIntervalMs = configPollingIntervalMs;
@@ -81,6 +86,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             EventsApiCustomHeaders = eventsApiCustomHeaders;
             DisableAutomaticEvents = disableAutomaticEvents;
             DisableCustomEvents = disableCustomEvents;
+            EnableBetaRealtimeUpdates = enableBetaRealtimeUpdates;
             
             switch (eventRequestChunkSize)
             {

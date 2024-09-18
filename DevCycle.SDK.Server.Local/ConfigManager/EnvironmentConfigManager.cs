@@ -211,13 +211,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                             var sseProp = minimalConfig.RootElement.GetProperty("sse");
                             var sseUri = sseProp.GetProperty("hostname").GetString() +
                                          sseProp.GetProperty("path").GetString();
-                            if (sseManager == null)
+                            if (sseManager == null && localOptions.EnableBetaRealtimeUpdates)
                             {
                                 sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,
                                     SSEErrorHandler);
                                 await sseManager.StartSSE();
                             }
-                            else
+                            else if (sseManager != null && localOptions.EnableBetaRealtimeUpdates)
                             {
                                 sseManager.RestartSSE(sseUri);
                             }
