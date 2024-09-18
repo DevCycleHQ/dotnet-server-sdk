@@ -22,12 +22,8 @@ namespace DevCycle.SDK.Server.Common.Model
             Dictionary<string, object> metaData = default)
         {
             // to ensure "type" is required (not null)
-            if (type == null)
-            {
-                throw new InvalidDataException("type is a required property for ModelEvent and cannot be null");
-            }
 
-            Type = type;
+            Type = type ?? throw new InvalidDataException("type is a required property for ModelEvent and cannot be null");
 
             Target = target;
             ClientDate = ClientDate;

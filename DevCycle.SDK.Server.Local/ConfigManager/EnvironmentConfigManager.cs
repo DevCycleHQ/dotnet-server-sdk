@@ -276,8 +276,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     logger.LogInformation("SSE Shutdown");
                     pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
         }
 
