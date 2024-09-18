@@ -42,6 +42,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; internal set; }
+        
+        private const int ssepollingIntervalMs = 15 * 60 * 60 * 1000;
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -267,7 +269,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    var ssepollingIntervalMs = 60 * 60 * 15 * 1000;
+                    
                     pollingTimer = new Timer(FetchConfigAsync, null, ssepollingIntervalMs, ssepollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
