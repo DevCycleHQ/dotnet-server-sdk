@@ -36,7 +36,7 @@ namespace Example
             }
 
             api = apiBuilder
-                .SetOptions(new DevCycleLocalOptions())
+                .SetOptions(new DevCycleLocalOptions(enableBetaRealtimeUpdates:true))
                 .SetInitializedSubscriber(InitializedEventHandler)
                 .SetRestClientOptions(
                     new DevCycleRestClientOptions()
@@ -48,15 +48,17 @@ namespace Example
                 .Build();
             
             
-            api.AddFlushedEventSubscriber((sender, dvcEventArgs) =>
+            api.AddFlushedEventSubscriber(async (sender, dvcEventArgs) =>
             {
                 Console.WriteLine(dvcEventArgs.Errors.Count > 0
                     ? $"Some events were not flushed. Errors: {dvcEventArgs.Errors}"
                     : "Events flushed successfully");
+                await api.AllVariables(user);
             });
 
+            
 
-            Task.Delay(15000).Wait();
+            Task.Delay(30000).Wait();
         }
 
         private static async Task ClientInitialized(DevCycleUser user)

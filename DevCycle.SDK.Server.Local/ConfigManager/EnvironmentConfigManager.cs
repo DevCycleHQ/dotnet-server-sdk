@@ -217,7 +217,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                             {
                                 sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,
                                     SSEErrorHandler);
-                                await sseManager.StartSSE();
+                                sseManager.StartSSE();
                             }
                             else if (sseManager != null && localOptions.EnableBetaRealtimeUpdates)
                             {

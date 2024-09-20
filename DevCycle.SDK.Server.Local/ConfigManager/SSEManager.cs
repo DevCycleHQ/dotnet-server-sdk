@@ -29,12 +29,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             sseClient.MessageReceived += messageHandler;
         }
 
-        public async Task StartSSE()
+        public void StartSSE()
         {
-            await sseClient.StartAsync();
+            sseClient.StartAsync();
         }
-
-        public async void RestartSSE(string uri = null, bool resetBackoffDelay = true)
+        public void RestartSSE(string uri = null, bool resetBackoffDelay = true)
         {
             if (uri != null && uri != sseUri && uri != "")
             {
@@ -47,7 +46,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 sseClient.Error += errorHandler;
                 sseClient.Closed += stateHandler;
                 sseClient.Opened += stateHandler;
-                await StartSSE();
+                StartSSE();
             }
             else
             {
