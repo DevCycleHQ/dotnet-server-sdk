@@ -8,7 +8,7 @@ on:
 
 env:
   # Using the DevCycle Internal Default key
-  DEVCYCLE_SERVER_SDK_KEY: "${{ secrets.EXAMPLE_DEVCYCLE_SERVER_SDK_KEY }}"
+  DEVCYCLE_SERVER_SDK_KEY: dvc_server_token_hash
 
 jobs:
   run-example:
