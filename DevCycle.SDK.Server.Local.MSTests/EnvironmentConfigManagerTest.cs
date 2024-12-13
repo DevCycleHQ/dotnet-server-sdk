@@ -47,8 +47,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
                 loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
                     { ConfigureMessageHandler = _ => mockHttp },
-                initializedHandler: (isError && !isRetryableError)
-                    ? DidNotInitializeSubscriber
+                initializedHandler: isError
+                    ? isRetryableError ? DidNotInitializeRetryableSubscriber : DidNotInitializeSubscriber
                     : DidInitializeSubscriber);
 
             return new Tuple<EnvironmentConfigManager, MockHttpMessageHandler, MockedRequest>(cfgManager, mockHttp,
@@ -126,6 +126,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(0, e.Errors.Count);
         }
 
+        private void DidNotInitializeRetryableSubscriber(object o, DevCycleEventArgs e)
+        {
+            Assert.IsFalse(e.Success);
+            Assert.AreEqual(0, e.Errors.Count);
+        }
+        
         private void DidNotInitializeSubscriber(object o, DevCycleEventArgs e)
         {
             Assert.IsFalse(e.Success);

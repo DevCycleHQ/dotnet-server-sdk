@@ -13,6 +13,7 @@ using RichardSzalay.MockHttp;
 using Environment = System.Environment;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading;
 using DevCycle.SDK.Server.Common;
 using OpenFeature;
 using OpenFeature.Constant;
@@ -44,7 +45,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 new NullLoggerFactory(),
                 localBucketing,
                 restClientOptions: new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
-            configManager.Initialized = !skipInitialize;
+            if (skipInitialize)
+                configManager.Initialized = !skipInitialize;
 
             DevCycleLocalClient api = new DevCycleLocalClientBuilder()
                 .SetLocalBucketing(localBucketing)
@@ -107,6 +109,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task GetFeaturesTest()
         {
             var api = getTestClient();
+            Thread.Sleep(3000);
             var user = new DevCycleUser("j_test");
             user.Country = "CA";
             user.Language = "en";
@@ -161,10 +164,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task GetVariableByKeyJsonObjTestAsync()
         {
             using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
+            Thread.Sleep(5000);
             var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
-            await Task.Delay(3000);
-
+            
             var expectedValue = Newtonsoft.Json.Linq.JObject.Parse("{\"sample\": \"A\"}");
             var defaultValue = Newtonsoft.Json.Linq.JObject.Parse("{\"key\": \"default\"}");
             var variable = await api.Variable(user, key, defaultValue);
@@ -221,10 +224,10 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task GetVariablesTest()
         {
             using DevCycleLocalClient api = getTestClient();
-
+            
             DevCycleUser user = new DevCycleUser("j_test");
             // Bucketing needs time to work.
-            await Task.Delay(5000);
+            Thread.Sleep(5000);
             var result = await api.AllVariables(user);
 
             Assert.IsTrue(result.ContainsKey("test"));
@@ -340,7 +343,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var dvcClient = getTestClient();
             await OpenFeature.Api.Instance.SetProviderAsync(dvcClient.GetOpenFeatureProvider());
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
-
+            Thread.Sleep(5000);
             var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
             var isEnabled = await client.GetBooleanValue("test", false, ctx);
             Assert.IsTrue(isEnabled);

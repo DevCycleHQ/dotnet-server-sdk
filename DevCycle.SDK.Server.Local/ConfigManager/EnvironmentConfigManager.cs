@@ -118,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void OnInitialized(DevCycleEventArgs e)
         {
-            e.Success = !(string.IsNullOrEmpty(configLastModified) || string.IsNullOrEmpty(configEtag));
+            e.Success = Config != null;
             Initialized = e.Success;
             initializedHandler?.Invoke(this, e);
         }
@@ -151,8 +151,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
             RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
-            // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
-            initializationEvent.Success = true;
             DevCycleException finalError;
 
             switch (res.StatusCode)
@@ -231,10 +229,12 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         }
 
                         localBucketing.StoreConfig(sdkKey, res.Content);
+                        Config = res.Content;
                         configEtag = etag;
                         configLastModified = lastModified;
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
                             configEtag, configLastModified);
+                        initializationEvent.Success = true;
                     }
                     catch (Exception e)
                     {
