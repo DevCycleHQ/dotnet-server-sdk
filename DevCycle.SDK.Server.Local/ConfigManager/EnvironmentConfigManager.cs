@@ -60,9 +60,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             pollingIntervalMs = dvcLocalOptions.ConfigPollingIntervalMs >= MinimumPollingIntervalMs
                 ? dvcLocalOptions.ConfigPollingIntervalMs
                 : MinimumPollingIntervalMs;
-            requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs <= pollingIntervalMs
-                ? pollingIntervalMs
-                : dvcLocalOptions.ConfigPollingTimeoutMs;
+            requestTimeoutMs = dvcLocalOptions.ConfigPollingTimeoutMs;
             dvcLocalOptions.CdnCustomHeaders ??= new Dictionary<string, string>();
 
             DevCycleRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DevCycleRestClientOptions();
@@ -156,7 +154,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             switch (res.StatusCode)
             {
                 // Status code of 0 means some other error (like a network error) occurred
-                case >= HttpStatusCode.InternalServerError or 0 when Config != null:
+                case >= HttpStatusCode.InternalServerError or 0 when configLastModified != null || configEtag != null:
                     logger.LogError(res.ErrorException,
                         "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag,
                         configLastModified);
@@ -164,7 +162,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case >= HttpStatusCode.InternalServerError or 0:
                     logger.LogError(res.ErrorException, "Failed to download DevCycle config");
                     break;
-                case >= HttpStatusCode.BadRequest:
+                case >= HttpStatusCode.BadRequest and < HttpStatusCode.InternalServerError:
                 {
                     initializationEvent.Success = false;
 
@@ -208,20 +206,26 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
                         try
                         {
-                            var minimalConfig = JsonDocument.Parse(res.Content);
-                            var sseProp = minimalConfig.RootElement.GetProperty("sse");
-                            var sseUri = sseProp.GetProperty("hostname").GetString() +
-                                         sseProp.GetProperty("path").GetString();
-                            if (sseManager == null && localOptions.EnableBetaRealtimeUpdates)
+
+                            if (localOptions.EnableBetaRealtimeUpdates)
                             {
-                                sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,
-                                    SSEErrorHandler);
-                                sseManager.StartSSE();
+                                var minimalConfig = JsonDocument.Parse(res.Content);
+                                var sseProp = minimalConfig.RootElement.GetProperty("sse");
+                                var sseUri = sseProp.GetProperty("hostname").GetString() +
+                                             sseProp.GetProperty("path").GetString();
+                                if (sseManager == null && localOptions.EnableBetaRealtimeUpdates)
+                                {
+                     
+                                    sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,
+                                        SSEErrorHandler);
+                                    sseManager.StartSSE();
+                                }
+                                else
+                                {
+                                    sseManager?.RestartSSE(sseUri);
+                                }
                             }
-                            else if (sseManager != null && localOptions.EnableBetaRealtimeUpdates)
-                            {
-                                sseManager.RestartSSE(sseUri);
-                            }
+                            
                         }
                         catch (Exception e)
                         {
