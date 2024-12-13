@@ -20,7 +20,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
     {
         private Tuple<EnvironmentConfigManager, MockHttpMessageHandler, MockedRequest> getTestConfigManager(
             bool isError = false,
-            bool isRetryableError = false)
+            bool isRetryableError = false, 
+            DevCycleLocalOptions options = null)
         {
             string config = new string(Fixtures.Config());
 
@@ -44,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             var sdkKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
+            var cfgManager = new EnvironmentConfigManager(sdkKey, options ?? new DevCycleLocalOptions(),
                 loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
                     { ConfigureMessageHandler = _ => mockHttp },
                 initializedHandler: isError
@@ -59,7 +60,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigTest()
         {
-            var configManager = getTestConfigManager();
+            var configManager = getTestConfigManager(options: new DevCycleLocalOptions(configPollingIntervalMs: 1000));
             await configManager.Item1.InitializeConfigAsync();
             await Task.Delay(2000);
             Assert.IsTrue(configManager.Item2.GetMatchCount(configManager.Item3) >= 2);
@@ -68,7 +69,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigNonRetryableTest()
         {
-            var configManager = getTestConfigManager(true);
+            var configManager = getTestConfigManager(true, options: new DevCycleLocalOptions(configPollingIntervalMs: 1000));
             await configManager.Item1.InitializeConfigAsync();
             await Task.Delay(2000);
             Assert.AreEqual(1, configManager.Item2.GetMatchCount(configManager.Item3));
@@ -78,7 +79,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task PollForConfigRetryableTest()
         {
-            var configManager = getTestConfigManager(true, true);
+            var configManager = getTestConfigManager(true, true, options: new DevCycleLocalOptions(configPollingIntervalMs: 1000));
             await configManager.Item1.InitializeConfigAsync();
             await Task.Delay(2000);
             Assert.IsTrue(configManager.Item2.GetMatchCount(configManager.Item3) >= 2);
