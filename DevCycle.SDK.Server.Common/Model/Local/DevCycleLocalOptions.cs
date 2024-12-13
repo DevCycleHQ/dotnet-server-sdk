@@ -59,8 +59,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         
         public DevCycleLocalOptions(
-            int configPollingIntervalMs = 1000,
-            int configPollingTimeoutMs = 5000,
+            int configPollingIntervalMs = 5000,
+            int configPollingTimeoutMs = 1000,
             string cdnUri = "https://config-cdn.devcycle.com",
             string cdnSlug = "",
             string eventsApiUri = "https://events.devcycle.com",
