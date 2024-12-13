@@ -48,7 +48,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
                     { ConfigureMessageHandler = _ => mockHttp },
                 initializedHandler: isError
-                    ? isRetryableError ? DidNotInitializeRetryableSubscriber : DidNotInitializeSubscriber
+                    ? (isRetryableError ? DidNotInitializeRetryableSubscriber : DidNotInitializeSubscriber)
                     : DidInitializeSubscriber);
 
             return new Tuple<EnvironmentConfigManager, MockHttpMessageHandler, MockedRequest>(cfgManager, mockHttp,
