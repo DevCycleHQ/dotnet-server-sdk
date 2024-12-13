@@ -116,7 +116,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var result = await api.AllFeatures(user);
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(4, result.Count);
             Assert.IsNotNull(result["test"]);
             Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationKey));
             Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationName));
