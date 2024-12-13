@@ -118,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void OnInitialized(DevCycleEventArgs e)
         {
-            Initialized = !(string.IsNullOrEmpty(configLastModified) || string.IsNullOrEmpty(configEtag));
+            Initialized = true;
             e.Success = !(string.IsNullOrEmpty(configLastModified) || string.IsNullOrEmpty(configEtag));
             initializedHandler?.Invoke(this, e);
         }
