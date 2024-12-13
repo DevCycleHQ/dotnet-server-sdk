@@ -95,5 +95,12 @@
   ],
   "variableHashes": {
     "test": 2447239932
+  },
+  "sse": {
+    "hostname": "https://realtime.ably.io",
+    "path": "/event-stream?key=azZpGQ.64zbWw:RXCvOj0NO8V5CwpiNhiImhd1n7zsiS0QXgcOWElBxg4&v=1.2&channels=dvc_server_89e38dc5596989552d540d44789498711a0cb4f2_v1"
+  },
+  "ably": {
+    "apiKey": "azZpGQ.64zbWw:RXCvOj0NO8V5CwpiNhiImhd1n7zsiS0QXgcOWElBxg4"
   }
 }

@@ -1,13 +1,24 @@
 {
   "project": {
+    "_id": "6216420c2ea68943c8833c09",
+    "key": "default",
+    "a0_organization": "org_NszUFyWBFy7cr95J",
     "settings": {
       "edgeDB": {
         "enabled": false
-      }
-    },
-    "_id": "6216420c2ea68943c8833c09",
-    "key": "default",
-    "a0_organization": "org_NszUFyWBFy7cr95J"
+      },
+      "optIn": {
+        "enabled": false,
+        "colors": {
+
+        }
+      },
+      "obfuscation": {
+        "required": false,
+        "enabled": false
+      },
+      "disablePassthroughRollouts": true
+    }
   },
   "environment": {
     "_id": "6216420c2ea68943c8833c0b",
@@ -42,54 +53,329 @@
           "_id": "6216422850294da359385e90"
         }
       ],
+      "tags": [
+
+      ],
       "configuration": {
         "_id": "621642332ea68943c8833c4a",
         "targets": [
           {
+            "_id": "62742fed1ac522f6bf0ec906",
             "distribution": [
               {
-                "percentage": 0.5,
+                "percentage": 1,
                 "_variation": "6216422850294da359385e8f"
-              },
-              {
-                "percentage": 0.5,
-                "_variation": "6216422850294da359385e90"
               }
             ],
             "_audience": {
-              "_id": "621642332ea68943c8833c4b",
+              "_id": "",
               "filters": {
-                "operator": "and",
                 "filters": [
                   {
-                    "values": [],
-                    "type": "all",
-                    "filters": []
+                    "_audiences": [
+
+                    ],
+                    "values": [
+
+                    ],
+                    "type": "all"
                   }
-                ]
+                ],
+                "operator": "and"
               }
             },
-            "_id": "621642332ea68943c8833c4d"
+            "bucketingKey": "user_id"
           }
-        ],
-        "forcedUsers": {}
+        ]
+      }
+    },
+    {
+      "_id": "62a250840ff6ef4d7f03db23",
+      "key": "june-9-test-1",
+      "type": "release",
+      "variations": [
+        {
+          "variables": [
+            {
+              "_var": "62a250840ff6ef4d7f03db25",
+              "value": true
+            }
+          ],
+          "name": "Variation On",
+          "key": "variation-on",
+          "_id": "62a250840ff6ef4d7f03db29"
+        },
+        {
+          "variables": [
+            {
+              "_var": "62a250840ff6ef4d7f03db25",
+              "value": false
+            }
+          ],
+          "name": "Variation Off",
+          "key": "variation-off",
+          "_id": "62a250840ff6ef4d7f03db2a"
+        }
+      ],
+      "tags": [
+
+      ],
+      "configuration": {
+        "_id": "62a25084c3d808abdafd23bd",
+        "targets": [
+          {
+            "_id": "62d1720e50dfc5077d3a1640",
+            "distribution": [
+              {
+                "percentage": 1,
+                "_variation": "62a250840ff6ef4d7f03db29"
+              }
+            ],
+            "_audience": {
+              "_id": "",
+              "filters": {
+                "filters": [
+                  {
+                    "_audiences": [
+
+                    ],
+                    "values": [
+
+                    ],
+                    "type": "all"
+                  }
+                ],
+                "operator": "and"
+              }
+            },
+            "bucketingKey": "user_id"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "62df0777cf68087c76427eba",
+      "key": "july-25-release",
+      "type": "release",
+      "variations": [
+        {
+          "variables": [
+            {
+              "_var": "62df0777cf68087c76427ebc",
+              "value": true
+            }
+          ],
+          "name": "Variation On",
+          "key": "variation-on",
+          "_id": "62df0777cf68087c76427ec0"
+        },
+        {
+          "variables": [
+            {
+              "_var": "62df0777cf68087c76427ebc",
+              "value": false
+            }
+          ],
+          "name": "Variation Off",
+          "key": "variation-off",
+          "_id": "62df0777cf68087c76427ec1"
+        }
+      ],
+      "tags": [
+
+      ],
+      "configuration": {
+        "_id": "62df0777cf68087c76427ed5",
+        "targets": [
+          {
+            "_id": "62df19326152fe44e34cbed3",
+            "distribution": [
+              {
+                "percentage": 1,
+                "_variation": "62df0777cf68087c76427ec0"
+              }
+            ],
+            "_audience": {
+              "_id": "",
+              "filters": {
+                "filters": [
+                  {
+                    "_audiences": [
+
+                    ],
+                    "values": [
+
+                    ],
+                    "type": "all"
+                  }
+                ],
+                "operator": "and"
+              }
+            },
+            "rollout": {
+              "stages": [
+                {
+                  "percentage": 1,
+                  "date": "2022-08-06T22:00:00.000Z",
+                  "type": "linear"
+                }
+              ],
+              "startDate": "2022-07-26T19:30:00.000Z",
+              "startPercentage": 0.01,
+              "type": "gradual"
+            },
+            "bucketingKey": "user_id"
+          },
+          {
+            "_id": "62df19326152fe44e34cbed1",
+            "distribution": [
+              {
+                "percentage": 1,
+                "_variation": "62df0777cf68087c76427ec0"
+              }
+            ],
+            "_audience": {
+              "_id": "",
+              "filters": {
+                "filters": [
+                  {
+                    "_audiences": [
+
+                    ],
+                    "values": [
+                      "1"
+                    ],
+                    "comparator": "=",
+                    "type": "user",
+                    "subType": "user_id"
+                  }
+                ],
+                "operator": "and"
+              }
+            },
+            "bucketingKey": "user_id"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "62e068c2b8b37c3d367dd2a3",
+      "key": "some-feature-july-26",
+      "type": "release",
+      "variations": [
+        {
+          "variables": [
+            {
+              "_var": "62e068c2b8b37c3d367dd2a5",
+              "value": true
+            },
+            {
+              "_var": "62e069028f88eca7a3ebb7e5",
+              "value": 11
+            }
+          ],
+          "name": "Variation On",
+          "key": "variation-on",
+          "_id": "62e068c2b8b37c3d367dd2a9"
+        },
+        {
+          "variables": [
+            {
+              "_var": "62e068c2b8b37c3d367dd2a5",
+              "value": false
+            },
+            {
+              "_var": "62e069028f88eca7a3ebb7e5",
+              "value": 0
+            }
+          ],
+          "name": "Variation Off",
+          "key": "variation-off",
+          "_id": "62e068c2b8b37c3d367dd2aa"
+        }
+      ],
+      "tags": [
+
+      ],
+      "configuration": {
+        "_id": "62e068c28f88eca7a3ebb7ca",
+        "targets": [
+          {
+            "_id": "62e06903b8b37c3d367dd2f4",
+            "distribution": [
+              {
+                "percentage": 1,
+                "_variation": "62e068c2b8b37c3d367dd2a9"
+              }
+            ],
+            "_audience": {
+              "_id": "",
+              "filters": {
+                "filters": [
+                  {
+                    "_audiences": [
+
+                    ],
+                    "values": [
+
+                    ],
+                    "type": "all"
+                  }
+                ],
+                "operator": "and"
+              }
+            },
+            "bucketingKey": "user_id"
+          }
+        ]
       }
     }
   ],
   "variables": [
+    {
+      "_id": "62df0777cf68087c76427ebc",
+      "key": "july-25-release",
+      "type": "Boolean"
+    },
+    {
+      "_id": "62a250840ff6ef4d7f03db25",
+      "key": "june-9-test-1",
+      "type": "Boolean"
+    },
+    {
+      "_id": "62e068c2b8b37c3d367dd2a5",
+      "key": "some-feature-july-26",
+      "type": "Boolean"
+    },
+    {
+      "_id": "62e069028f88eca7a3ebb7e5",
+      "key": "some-var",
+      "type": "Number"
+    },
     {
       "_id": "6216422850294da359385e8d",
       "key": "test",
       "type": "Boolean"
     }
   ],
-  "featureVariationMap": {
-    "6216422850294da359385e8b": "6216422850294da359385e8f"
-  },
-  "variableVariationMap": {
-    "test": "6216422850294da359385e8f"
-  },
   "variableHashes": {
+    "july-25-release": 352794632,
+    "june-9-test-1": 1673005043,
+    "some-feature-july-26": 3197965461,
+    "some-var": 3288238772,
     "test": 2447239932
+  },
+  "audiences": {
+
+  },
+  "debugUsers": [
+
+  ],
+  "sse": {
+    "hostname": "https://realtime.ably.io",
+    "path": "/event-stream?key=azZpGQ.64zbWw:RXCvOj0NO8V5CwpiNhiImhd1n7zsiS0QXgcOWElBxg4&v=1.2&channels=dvc_server_89e38dc5596989552d540d44789498711a0cb4f2_v1"
+  },
+  "ably": {
+    "apiKey": "azZpGQ.64zbWw:RXCvOj0NO8V5CwpiNhiImhd1n7zsiS0QXgcOWElBxg4"
   }
 }
