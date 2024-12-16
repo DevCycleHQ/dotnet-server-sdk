@@ -64,13 +64,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             dvcLocalOptions.CdnCustomHeaders ??= new Dictionary<string, string>();
 
             DevCycleRestClientOptions clientOptions = restClientOptions?.Clone() ?? new DevCycleRestClientOptions();
+            clientOptions.Timeout = TimeSpan.FromMilliseconds(requestTimeoutMs);
             // Explicitly override the base URL to use the one in local bucketing options. This allows the normal 
             // rest client options to override the Events api endpoint url; while sharing certificate and other information.
             clientOptions.BaseUrl = new Uri(dvcLocalOptions.CdnUri);
 
             restClient = new RestClient(clientOptions);
             restClient.AddDefaultHeaders(dvcLocalOptions.CdnCustomHeaders);
-
             logger = loggerFactory.CreateLogger<EnvironmentConfigManager>();
             this.localBucketing = localBucketing;
             initializationEvent = new DevCycleEventArgs();
@@ -103,7 +103,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 // check if polling is still enabled, we might have hit a non-retryable error
                 if (pollingEnabled)
                 {
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    pollingTimer = new Timer(FetchConfigAsync, null, 0, pollingIntervalMs);
                 }
             }
         }
@@ -147,7 +147,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
             if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
 
-            RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
+            RestResponse res = await ClientPolicy.GetInstance().ExponentialBackoffRetryPolicyWithTimeout
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
             DevCycleException finalError;
 
