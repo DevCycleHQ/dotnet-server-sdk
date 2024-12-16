@@ -147,7 +147,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
             if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
 
-            RestResponse res = await ClientPolicy.GetInstance().ExponentialBackoffRetryPolicyWithTimeout
+            RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
             DevCycleException finalError;
 
