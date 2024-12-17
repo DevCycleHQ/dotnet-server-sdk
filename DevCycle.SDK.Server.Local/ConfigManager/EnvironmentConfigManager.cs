@@ -118,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void OnInitialized(DevCycleEventArgs e)
         {
-            Initialized = true;
+            Initialized = e.Success;
             initializedHandler?.Invoke(this, e);
         }
 
