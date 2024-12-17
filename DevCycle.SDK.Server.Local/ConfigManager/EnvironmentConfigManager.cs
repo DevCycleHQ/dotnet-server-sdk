@@ -105,7 +105,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 // check if polling is still enabled, we might have hit a non-retryable error
                 if (pollingEnabled)
                 {
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    pollingTimer = new Timer(FetchConfigAsync, null, initializationEvent.Success ? pollingIntervalMs : 0 , pollingIntervalMs);
                 }
             }
         }
@@ -148,7 +148,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
             if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
 
-            RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
+            RestResponse res = await ClientPolicy.GetInstance().TimeoutPolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
