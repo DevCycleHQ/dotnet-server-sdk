@@ -148,7 +148,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
             if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
 
-            RestResponse res = await ClientPolicy.GetInstance().TimeoutPolicy
+            RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
             // initialization is always a success unless a user-caused error occurs (ie. a 4xx error)
             initializationEvent.Success = true;
