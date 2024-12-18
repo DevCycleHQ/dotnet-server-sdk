@@ -118,7 +118,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void OnInitialized(DevCycleEventArgs e)
         {
-            Initialized = true;
+            Initialized = e.Success;
             initializedHandler?.Invoke(this, e);
         }
 
@@ -157,13 +157,18 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             switch (res.StatusCode)
             {
                 // Status code of 0 means some other error (like a network error) occurred
-                case >= HttpStatusCode.InternalServerError or 0 when Config != null:
-                    logger.LogError(res.ErrorException,
-                        "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag,
-                        configLastModified);
-                    break;
                 case >= HttpStatusCode.InternalServerError or 0:
-                    logger.LogError(res.ErrorException, "Failed to download DevCycle config");
+                    if (Config != null)
+                    {
+                        logger.LogError(res.ErrorException,
+                            "Failed to download config, using cached version: {ConfigEtag}, {Lastmodified}", configEtag,
+                            configLastModified);
+                    }
+                    else
+                    {
+                        initializationEvent.Success = false;
+                        logger.LogError(res.ErrorException, "Failed to download initial DevCycle config");
+                    }
                     break;
                 case >= HttpStatusCode.BadRequest:
                 {
@@ -232,8 +237,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         localBucketing.StoreConfig(sdkKey, res.Content);
                         configEtag = etag;
                         configLastModified = lastModified;
+                        Config = res.Content;
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
                             configEtag, configLastModified);
+                        Initialized = true;
                     }
                     catch (Exception e)
                     {
