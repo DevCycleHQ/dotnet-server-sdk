@@ -240,6 +240,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         Config = res.Content;
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
                             configEtag, configLastModified);
+                        Initialized = true;
                     }
                     catch (Exception e)
                     {
