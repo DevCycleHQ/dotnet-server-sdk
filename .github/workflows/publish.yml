@@ -28,7 +28,7 @@ jobs:
         uses: DevCycleHQ/aws-secrets-action@main
         with:
           secrets_map: '{"NUGET_API_KEY": "DEVCYCLE_GITHUB_dotnet-server-sdk_NUGET_API_KEY"}'
-          aws_account_id: ''
+          aws_account_id: '134377926370'
       - name: Set Git User Config
         run: |
           git config --global user.email "foundation-admin@devcycle.com"
