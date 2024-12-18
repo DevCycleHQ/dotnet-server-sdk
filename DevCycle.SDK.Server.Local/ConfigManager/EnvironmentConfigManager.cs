@@ -105,7 +105,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 // check if polling is still enabled, we might have hit a non-retryable error
                 if (pollingEnabled)
                 {
-                    pollingTimer = new Timer(FetchConfigAsync, null, initializationEvent.Success ? pollingIntervalMs : 0 , pollingIntervalMs);
+                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
                 }
             }
         }
