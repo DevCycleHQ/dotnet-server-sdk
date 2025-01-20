@@ -37,7 +37,11 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public int EventRequestChunkSize { get; set; }
         
         [JsonProperty("enableBetaRealtimeUpdates")]
+        [Obsolete("EnableBetaRealtimeUpdates is deprecated. SSE connections are now enabled by default.")]
         public bool EnableBetaRealtimeUpdates { get; set; }
+        
+        [JsonProperty("disableRealtimeUpdates")]
+        public bool DisableRealtimeUpdates { get; set; }
         
         [IgnoreDataMember]
         public int FlushEventQueueSize { get; set; }
@@ -73,7 +77,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             int maxEventsInQueue = 2000,
             int eventRequestChunkSize = 100,
             int eventFlushIntervalMs = 10 * 1000,
-            bool enableBetaRealtimeUpdates = false
+            bool enableBetaRealtimeUpdates = false,
+            bool disableRealtimeUpdates = false
             )
         {
             ConfigPollingIntervalMs = configPollingIntervalMs;
@@ -86,7 +91,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             EventsApiCustomHeaders = eventsApiCustomHeaders;
             DisableAutomaticEvents = disableAutomaticEvents;
             DisableCustomEvents = disableCustomEvents;
-            EnableBetaRealtimeUpdates = enableBetaRealtimeUpdates;
+            DisableRealtimeUpdates = disableRealtimeUpdates;
             
             switch (eventRequestChunkSize)
             {

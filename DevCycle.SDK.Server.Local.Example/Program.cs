@@ -36,7 +36,7 @@ namespace Example
             }
 
             api = apiBuilder
-                .SetOptions(new DevCycleLocalOptions(enableBetaRealtimeUpdates:true))
+                .SetOptions(new DevCycleLocalOptions())
                 .SetInitializedSubscriber(InitializedEventHandler)
                 .SetRestClientOptions(
                     new DevCycleRestClientOptions()
