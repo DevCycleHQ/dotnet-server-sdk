@@ -342,7 +342,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
 
             var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
-            var isEnabled = await client.GetBooleanValue("test", false, ctx);
+            var isEnabled = await client.GetBooleanValueAsync("test", false, ctx);
             Assert.IsTrue(isEnabled);
         }
 
@@ -361,7 +361,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
 
             var defaultV = new Value(new Structure(jsonDict));
-            var variable = await client.GetObjectDetails("json", defaultV, ctx);
+            var variable = await client.GetObjectDetailsAsync("json", defaultV, ctx);
             Assert.IsNotNull(variable);
             Assert.AreEqual(defaultV.IsStructure, variable.Value.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
