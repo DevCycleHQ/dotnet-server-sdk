@@ -102,16 +102,16 @@ namespace Example
                 switch (readOnlyVariable.Value.Type)
                 {
                     case "String":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- "+ (await oFeatureClient.GetStringDetails(readOnlyVariable.Key, "default", ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- "+ (await oFeatureClient.GetStringDetailsAsync(readOnlyVariable.Key, "default", ctx)).Reason);
                         break;
                     case "Number":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetDoubleDetails(readOnlyVariable.Key, 0d, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetDoubleDetailsAsync(readOnlyVariable.Key, 0d, ctx)).Reason);
                         break;
                     case "JSON":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetObjectDetails(readOnlyVariable.Key, null, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetObjectDetailsAsync(readOnlyVariable.Key, null, ctx)).Reason);
                         break;
                     case "Boolean":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " +  (await oFeatureClient.GetBooleanDetails(readOnlyVariable.Key, false, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " +  (await oFeatureClient.GetBooleanDetailsAsync(readOnlyVariable.Key, false, ctx)).Reason);
                         break;
                 }
             }

@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json.Linq;
@@ -23,40 +24,32 @@ namespace DevCycle.SDK.Server.Common.API
             return new Metadata(Client.SdkPlatform);
         }
 
-        private async Task<ResolutionDetails<T>> EvaluateDevCycle<T>(string flagKey, T defaultValue,
-            EvaluationContext context = null)
-        {
-            var user = DevCycleUser.FromEvaluationContext(context);
-            var variable = await Client.Variable(user, flagKey, defaultValue);
-            return variable.GetResolutionDetails();
-        }
-
-        public override async Task<ResolutionDetails<bool>> ResolveBooleanValue(string flagKey, bool defaultValue,
-            EvaluationContext context = null)
+        public override async Task<ResolutionDetails<bool>> ResolveBooleanValueAsync(string flagKey, bool defaultValue, EvaluationContext context = null,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
-        public override async Task<ResolutionDetails<string>> ResolveStringValue(string flagKey, string defaultValue,
-            EvaluationContext context = null)
+        public override async Task<ResolutionDetails<string>> ResolveStringValueAsync(string flagKey, string defaultValue, EvaluationContext context = null,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
-        public override async Task<ResolutionDetails<int>> ResolveIntegerValue(string flagKey, int defaultValue,
-            EvaluationContext context = null)
+        public override async Task<ResolutionDetails<int>> ResolveIntegerValueAsync(string flagKey, int defaultValue, EvaluationContext context = null,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
-        public override async Task<ResolutionDetails<double>> ResolveDoubleValue(string flagKey, double defaultValue,
-            EvaluationContext context = null)
+        public override async Task<ResolutionDetails<double>> ResolveDoubleValueAsync(string flagKey, double defaultValue, EvaluationContext context = null,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             return await EvaluateDevCycle(flagKey, defaultValue, context);
         }
 
-        public override async Task<ResolutionDetails<Value>> ResolveStructureValue(string flagKey, Value defaultValue,
-            EvaluationContext context = null)
+        public override async Task<ResolutionDetails<Value>> ResolveStructureValueAsync(string flagKey, Value defaultValue, EvaluationContext context = null,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             if (!defaultValue.IsStructure)
                 throw new System.Exception("Cannot call ResolveStructureValue with non-structure Value's");
@@ -72,7 +65,14 @@ namespace DevCycle.SDK.Server.Common.API
             
             return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None,
                 variable.IsDefaulted ? Reason.Default : Reason.TargetingMatch);
+        }
 
+        private async Task<ResolutionDetails<T>> EvaluateDevCycle<T>(string flagKey, T defaultValue,
+            EvaluationContext context = null)
+        {
+            var user = DevCycleUser.FromEvaluationContext(context);
+            var variable = await Client.Variable(user, flagKey, defaultValue);
+            return variable.GetResolutionDetails();
         }
     }
 }
