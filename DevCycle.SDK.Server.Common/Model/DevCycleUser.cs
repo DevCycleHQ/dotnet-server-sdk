@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -60,14 +58,24 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="deviceModel">User&#x27;s device model.</param>
         /// <param name="sdkType">DevCycle SDK type.</param>
         /// <param name="sdkVersion">DevCycle SDK Version.</param>
-        public DevCycleUser(string userId = default, string email = default, string name = default,
+        public DevCycleUser(
+            string userId = default,
+            string email = default,
+            string name = default,
             string language = default,
             string country = default,
-            string appVersion = default, double appBuild = default, Dictionary<string, object> customData = default,
+            string appVersion = default, 
+            double appBuild = default,
+            Dictionary<string, object> customData = default,
             Dictionary<string, object> privateCustomData = default,
-            DateTime createdDate = default, DateTime lastSeenDate = default, string platform = default,
+            DateTime createdDate = default,
+            DateTime lastSeenDate = default,
+            string platform = default,
             string platformVersion = default,
-            string deviceModel = default, SdkTypeEnum? sdkType = default, string sdkVersion = default)
+            string deviceModel = default,
+            SdkTypeEnum? sdkType = default,
+            string sdkVersion = default,
+            string sdkPlatform = default)
         {
             // to ensure "userId" is required (not null)
             if (String.IsNullOrEmpty(userId))
@@ -98,6 +106,7 @@ namespace DevCycle.SDK.Server.Common.Model
             DeviceModel = deviceModel;
             SdkType = sdkType;
             SdkVersion = sdkVersion;
+            SdkPlatform = sdkPlatform;
         }
 
         /// <summary>
@@ -205,6 +214,13 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <value>DevCycle SDK Version</value>
         [DataMember(Name = "sdkVersion", EmitDefaultValue = false)]
         public string SdkVersion { get; set; }
+        
+        /// <summary>
+        /// DevCycle SDK Platform
+        /// </summary>
+        /// <value>DevCycle SDK Platform</value>
+        [DataMember(Name = "sdkPlatform", EmitDefaultValue = false)]
+        public string SdkPlatform { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -230,6 +246,7 @@ namespace DevCycle.SDK.Server.Common.Model
             sb.Append("  DeviceModel: ").Append(DeviceModel).Append("\n");
             sb.Append("  SdkType: ").Append(SdkType).Append("\n");
             sb.Append("  SdkVersion: ").Append(SdkVersion).Append("\n");
+            sb.Append("  SdkPlatform: ").Append(SdkPlatform).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -342,6 +359,12 @@ namespace DevCycle.SDK.Server.Common.Model
                     SdkVersion == input.SdkVersion ||
                     SdkVersion != null &&
                     SdkVersion.Equals(input.SdkVersion)
+                )
+                &&
+                (
+                    SdkPlatform == input.SdkPlatform ||
+                    SdkPlatform != null &&
+                    SdkPlatform.Equals(input.SdkPlatform)
                 );
         }
 
@@ -363,6 +386,7 @@ namespace DevCycle.SDK.Server.Common.Model
 
             var dvcuserId = userId ?? targetingKey;
             user = new DevCycleUser(dvcuserId.AsString);
+            user.SdkPlatform = "dotnet-of";
             user.CustomData = new Dictionary<string, object>();
             user.PrivateCustomData = new Dictionary<string, object>();
 

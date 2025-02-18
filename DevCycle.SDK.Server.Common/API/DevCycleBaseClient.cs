@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
 using Newtonsoft.Json;
-using OpenFeature;
-using OpenFeature.Model;
 using RestSharp;
 
 namespace DevCycle.SDK.Server.Common.API

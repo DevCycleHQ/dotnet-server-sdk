@@ -69,7 +69,6 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly ILogger logger;
         private readonly Timer timer;
         private bool closing;
-        private DevCycleProvider OpenFeatureProvider { get; }
 
         internal DevCycleLocalClient(
             string sdkKey,
@@ -87,8 +86,8 @@ namespace DevCycle.SDK.Server.Local.Api
             logger = loggerFactory.CreateLogger<DevCycleLocalClient>();
             eventQueue = new EventQueue(sdkKey, dvcLocalOptions, loggerFactory, localBucketing, restClientOptions);
             this.configManager.SetEventQueue(eventQueue);
-            var platformData = new PlatformData();
-            localBucketing.SetPlatformData(platformData.ToJson());
+
+            SetPlatformData();
 
             if(dvcLocalOptions.CdnSlug != "")
             {
@@ -100,9 +99,18 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.AutoReset = true;
             timer.Enabled = true;
             Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
-            OpenFeatureProvider = new DevCycleProvider(this);
         }
 
+        private void SetPlatformData(string sdkPlatform = null)
+        {
+            var platformData = new PlatformData();
+            if (sdkPlatform != null)
+            {
+                platformData.SdkPlatform = sdkPlatform;
+            }
+            localBucketing.SetPlatformData(platformData.ToJson());
+        }
+        
         private void OnTimedEvent(object source, ElapsedEventArgs e)
         {
             eventQueue?.ScheduleFlush();
@@ -232,9 +240,15 @@ namespace DevCycle.SDK.Server.Local.Api
             throw new NotImplementedException();
         }
 
+        private DevCycleProvider openFeatureProvider;
         public override DevCycleProvider GetOpenFeatureProvider()
-        {
-            return OpenFeatureProvider;
+        { 
+            if (openFeatureProvider == null)
+            {
+                openFeatureProvider = new DevCycleProvider(this);
+                SetPlatformData("dotnet-of");
+            }
+            return openFeatureProvider;
         }
 
         public override Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)
