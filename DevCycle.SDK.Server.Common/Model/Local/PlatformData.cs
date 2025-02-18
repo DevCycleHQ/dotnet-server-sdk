@@ -44,6 +44,13 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         public string SdkVersion { get; set; }
         
         /// <summary>
+        /// DevCycle SDK Platform
+        /// </summary>
+        /// <value>DevCycle SDK Platform</value>
+        [JsonProperty("sdkPlatform")]
+        public string SdkPlatform { get; set; }
+        
+        /// <summary>
         /// Server hostname. Used as the `user_id` for aggregated events.
         /// </summary>
         /// <value>null</value>
@@ -61,6 +68,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             PlatformVersion = DefaultPlatformVersion;
             SdkType = DefaultSdkType.ToString().ToLower();
             SdkVersion = DefaultSdkVersion;
+            SdkPlatform = null;
             HostName = Dns.GetHostName();
         }
     }

@@ -14,14 +14,14 @@ namespace Example
 {
     class Program
     {
-        private static DevCycleLocalClient api;
+        private static DevCycleLocalClient devCycleClient;
 
         public static async Task Main()
         {
             var SDK_ENV_VAR = Environment.GetEnvironmentVariable("DEVCYCLE_SERVER_SDK_KEY");
             var user = new DevCycleUser("testing");
 
-            var apiBuilder = new DevCycleLocalClientBuilder();
+            var devCycleCleintBuilder = new DevCycleLocalClientBuilder();
 
             async void InitializedEventHandler(object o, DevCycleEventArgs e)
             {
@@ -35,7 +35,7 @@ namespace Example
                 }
             }
 
-            api = apiBuilder
+            devCycleClient = devCycleCleintBuilder
                 .SetOptions(new DevCycleLocalOptions())
                 .SetInitializedSubscriber(InitializedEventHandler)
                 .SetRestClientOptions(
@@ -47,34 +47,32 @@ namespace Example
                 .SetLogger(LoggerFactory.Create(builder => builder.AddConsole()))
                 .Build();
             
-            
-            api.AddFlushedEventSubscriber(async (sender, dvcEventArgs) =>
+            devCycleClient.AddFlushedEventSubscriber(async (sender, dvcEventArgs) =>
             {
                 Console.WriteLine(dvcEventArgs.Errors.Count > 0
                     ? $"Some events were not flushed. Errors: {dvcEventArgs.Errors}"
                     : "Events flushed successfully");
-                await api.AllVariables(user);
+                await devCycleClient.AllVariables(user);
             });
 
-            
-
-            Task.Delay(30000).Wait();
+            Console.WriteLine("Waiting 30 seconds");
+            await Task.Delay(30000);
         }
 
         private static async Task ClientInitialized(DevCycleUser user)
         {
-            var result = await api.AllFeatures(user);
+            var result = await devCycleClient.AllFeatures(user);
 
             foreach (var entry in result)
             {
                 Console.WriteLine(entry.Key + " : " + entry.Value);
             }
 
-            Console.WriteLine((await api.Variable(user, "test-variable", true)).ToString());
-            Console.WriteLine(await api.AllVariables(user));
-            
+            Console.WriteLine((await devCycleClient.Variable(user, "test-variable", true)).ToString());
+            Console.WriteLine(await devCycleClient.AllVariables(user));
             
             // Below is an example for OpenFeature. This is not required to 
+            Console.WriteLine("OpenFeature Example");
             EvaluationContext ctx = EvaluationContext.Builder()
                 .Set("user_id", "test")
                 .Set("customData",
@@ -94,9 +92,11 @@ namespace Example
                 .Set("nonSetValueBubbledCustomData4", new Value((object)null))
                 .Build();
             
-            await Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
+            await Api.Instance.SetProviderAsync(devCycleClient.GetOpenFeatureProvider());
             FeatureClient oFeatureClient = Api.Instance.GetClient();
-            var allVariables = await api.AllVariables(DevCycleUser.FromEvaluationContext(ctx));
+            Console.WriteLine("Got OpenFeature Client");
+            
+            var allVariables = await devCycleClient.AllVariables(DevCycleUser.FromEvaluationContext(ctx));
             foreach (var readOnlyVariable in allVariables)
             {
                 switch (readOnlyVariable.Value.Type)
@@ -115,8 +115,14 @@ namespace Example
                         break;
                 }
             }
+            Console.WriteLine("Finished OpenFeature Example");
+            
+            await Task.Delay(30000);
+            Console.WriteLine("All events flushed");
+            
             // End openfeature example
-            api.Dispose();
+            devCycleClient.Dispose();
+            Console.WriteLine("DVC client disposed");
         }
     }
 }
