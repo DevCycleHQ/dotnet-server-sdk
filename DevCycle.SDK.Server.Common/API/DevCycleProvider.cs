@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Common.API
     public class DevCycleProvider : FeatureProvider
     {
         private DevCycleBaseClient Client { get; }
-
+        
         public DevCycleProvider(DevCycleBaseClient client)
         {
             Client = client;
@@ -66,6 +66,20 @@ namespace DevCycle.SDK.Server.Common.API
             return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None,
                 variable.IsDefaulted ? Reason.Default : Reason.TargetingMatch);
         }
+        
+        public override Task ShutdownAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            Client.Dispose();
+            return Task.CompletedTask;
+        }
+
+        public override async void Track(string trackingEventName, EvaluationContext evaluationContext = null,
+            TrackingEventDetails trackingEventDetails = null)
+        {
+            var e = DevCycleEvent.FromTrackingEventDetails(trackingEventDetails);
+            e.Type = trackingEventName;
+            await Client.Track(DevCycleUser.FromEvaluationContext(evaluationContext), e);
+        }
 
         private async Task<ResolutionDetails<T>> EvaluateDevCycle<T>(string flagKey, T defaultValue,
             EvaluationContext context = null)
@@ -74,5 +88,6 @@ namespace DevCycle.SDK.Server.Common.API
             var variable = await Client.Variable(user, flagKey, defaultValue);
             return variable.GetResolutionDetails();
         }
+        
     }
 }

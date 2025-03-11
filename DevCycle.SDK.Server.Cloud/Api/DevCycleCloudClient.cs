@@ -18,6 +18,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
         {
             return new DevCycleCloudClient(sdkKey, loggerFactory, options, restClientOptions);
         }
+
+        public override DevCycleProvider BuildOpenFeatureProvider()
+        {
+            return Build().GetOpenFeatureProvider();
+        }
     }
 
     public sealed class DevCycleCloudClient : DevCycleBaseClient
