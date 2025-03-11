@@ -55,5 +55,6 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public abstract ClientType Build();
+        public abstract DevCycleProvider BuildOpenFeatureProvider();
     }
 }

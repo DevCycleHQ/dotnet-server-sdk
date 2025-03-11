@@ -58,6 +58,11 @@ namespace DevCycle.SDK.Server.Local.Api
             return new DevCycleLocalClient(sdkKey, options, loggerFactory, configManager, localBucketing,
                 restClientOptions);
         }
+
+        public override DevCycleProvider BuildOpenFeatureProvider()
+        {
+            return Build().GetOpenFeatureProvider();
+        }
     }
 
     public class DevCycleLocalClient : DevCycleBaseClient

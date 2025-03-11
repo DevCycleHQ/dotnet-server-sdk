@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
+using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
@@ -29,6 +30,24 @@ namespace DevCycle.SDK.Server.Common.Model
             ClientDate = ClientDate;
             Value = value;
             MetaData = metaData;
+        }
+
+        public static DevCycleEvent FromTrackingEventDetails(TrackingEventDetails trackingEventDetails)
+        {
+            var ret = new DevCycleEvent();
+            var metadata = new Dictionary<string, object>();
+            ret.Value = trackingEventDetails.Value ?? 0;
+            foreach (var keyValuePair in trackingEventDetails.AsDictionary())
+            {
+                var value = keyValuePair.Value;
+                if (value.IsBoolean) metadata[keyValuePair.Key] = value.AsBoolean;
+                if (value.IsNumber) metadata[keyValuePair.Key] = value.AsDouble;
+                if (value.IsString) metadata[keyValuePair.Key] = value.AsString;
+                if (value.IsDateTime) metadata[keyValuePair.Key] = value.AsDateTime.ToString();
+            }
+
+            ret.MetaData = metadata;
+            return ret;
         }
 
         /// <summary>
