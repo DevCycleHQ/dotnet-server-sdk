@@ -19,9 +19,9 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             };
         }
 
-        public static Variable<bool> GetVariableByKeyAsync()
+        public static Variable<bool> GetVariableByKeyAsync(string key)
         {
-            return new Variable<bool>("test-false", false, false);
+            return new Variable<bool>(key, false, false);
         }
 
         public static Dictionary<string, Variable<bool>> GetVariablesAsync()

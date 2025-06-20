@@ -28,6 +28,7 @@
     <None Remove="ILogger.Moq" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DevCycle.SDK.Server.Cloud.MSTests\DevCycle.SDK.Server.Cloud.MSTests.csproj" />
     <ProjectReference Include="..\DevCycle.SDK.Server.Common\DevCycle.SDK.Server.Common.csproj" />
     <ProjectReference Include="..\DevCycle.SDK.Server.Local\DevCycle.SDK.Server.Local.csproj" />
   </ItemGroup>
