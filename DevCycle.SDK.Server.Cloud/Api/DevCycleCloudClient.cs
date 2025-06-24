@@ -31,6 +31,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
         private readonly ILogger logger;
         private DevCycleProvider OpenFeatureProvider { get; }
         private readonly DevCycleCloudOptions options;
+        private readonly EvalHooksRunner evalHooksRunner;
 
         internal DevCycleCloudClient(
             string sdkKey,
@@ -44,6 +45,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
             this.options = options != null ? (DevCycleCloudOptions)options : new DevCycleCloudOptions();
             OpenFeatureProvider = new DevCycleProvider(this);
+            evalHooksRunner = new EvalHooksRunner(logger);
         }
 
         public override string Platform()
@@ -114,12 +116,25 @@ namespace DevCycle.SDK.Server.Cloud.Api
             var queryParams = new Dictionary<string, string>();
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
-            Variable<T> variable;
+            Variable<T> variable = new Variable<T>(lowerKey, defaultValue);
 
             TypeEnum type = Common.Model.Variable<T>.DetermineType(defaultValue);
+            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
 
+            var hooks = evalHooksRunner.GetHooks();
+            var reversedHooks = new List<EvalHook>(hooks);
+            reversedHooks.Reverse();
             try
             {
+                BeforeHookError beforeHookError = null;
+                try
+                {
+                    hookContext = await evalHooksRunner.RunBeforeAsync(hooks, hookContext);
+                }
+                catch (BeforeHookError e)
+                {
+                    beforeHookError = e;
+                }
                 var variableResponse = await GetResponseAsync<Variable<object>>(user, urlFragment, queryParams);
                 variableResponse.DefaultValue = defaultValue;
                 variableResponse.IsDefaulted = false;
@@ -135,16 +150,32 @@ namespace DevCycle.SDK.Server.Cloud.Api
                     logger.LogWarning($"Type mismatch for variable {key}. " +
                                       $"Expected {type}, got {variableResponse.Type}");
                 }
-            }
-            catch (DevCycleException e)
-            {
-                if (!e.IsRetryable() && (int)e.HttpStatusCode >= 400 && (int)e.HttpStatusCode != 404)
+
+                if (beforeHookError != null)
                 {
-                    throw;
+                    throw beforeHookError;
+                }
+                await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, variable);
+            }
+            catch (Exception e)
+            {
+                if (e is DevCycleException devCycleException)
+                {
+                    if (!devCycleException.IsRetryable() && (int)devCycleException.HttpStatusCode >= 400 && (int)devCycleException.HttpStatusCode != 404)
+                    {
+                        throw;
+                    }
                 }
 
-                logger.LogError(e, "Failed to retrieve variable value, using default.");
-                variable = new Variable<T>(lowerKey, defaultValue);
+                if (!(e is BeforeHookError) && !(e is AfterHookError))
+                {
+                    logger.LogError(e, "Failed to retrieve variable value, using default.");
+                    variable = new Variable<T>(lowerKey, defaultValue);
+                }
+                await evalHooksRunner.RunErrorAsync(reversedHooks, hookContext, e);
+            } finally
+            {
+                await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, variable);
             }
 
             return variable;
@@ -204,6 +235,16 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 logger.LogError(e, "Failed to request AllVariables");
                 return new DevCycleResponse(e.ToString());
             }
+        }
+
+        public void AddEvalHook(EvalHook hook)
+        {
+            evalHooksRunner.AddHook(hook);
+        }
+
+        public void ClearEvalHooks()
+        {
+            evalHooksRunner.ClearHooks();
         }
 
         public override void Dispose()

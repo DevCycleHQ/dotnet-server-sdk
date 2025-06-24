@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Cloud.Api;
 using DevCycle.SDK.Server.Common.API;
@@ -78,14 +79,16 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTest()
         {
-            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync());
+            const string key = "show-quickstart";
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync(key));
 
             DevCycleUser user = new DevCycleUser("j_test");
-
-            const string key = "show-quickstart";
+            
             var result = await api.Variable(user, key, true);
             AssertUserDefaultsCorrect(user);
             Assert.IsNotNull(result);
+            
+            // Test the variable properties
             Assert.IsFalse(result.Value);
 
             var value = await api.VariableValue(user, key, true);
@@ -148,7 +151,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            using DevCycleCloudClient api = new DevCycleCloudClient("dvc_server" + Guid.NewGuid().ToString(), new NullLoggerFactory());
+            using DevCycleCloudClient api = new DevCycleCloudClient("dvc_server_" + Guid.NewGuid().ToString(), new NullLoggerFactory());
 
             Assert.ThrowsExceptionAsync<ArgumentNullException>(async () =>
             {
@@ -163,6 +166,90 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             {
                 DevCycleUser user = new DevCycleUser();
             });
+        }
+
+        [TestMethod]
+        public async Task BeforeHookError_ThrowsException()
+        {
+            const string key = "show-quickstart";
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync(key));
+            TestEvalHook hook = new TestEvalHook() { ThrowBefore = true };
+            api.AddEvalHook(hook);
+            
+            var result = await api.Variable(new DevCycleUser("test"), key, true); 
+            
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(0, hook.AfterCallCount);
+            Assert.AreEqual(1, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.ErrorCallCount);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.IsFalse(result.IsDefaulted);
+        }
+
+        [TestMethod]
+        public async Task AfterHookError_ThrowsException()
+        {
+            const string key = "show-quickstart";
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync(key));
+            TestEvalHook hook = new TestEvalHook() { ThrowAfter = true };
+            api.AddEvalHook(hook);
+            
+            var result = await api.Variable(new DevCycleUser("test"), key, true); 
+
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(1, hook.AfterCallCount);
+            Assert.AreEqual(1, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.FinallyCallCount);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.IsFalse(result.IsDefaulted);
+        }
+
+        [TestMethod]
+        public async Task ErrorHookError_ThrowsException()
+        {
+            const string key = "show-quickstart";
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync(key));
+            TestEvalHook hook = new TestEvalHook() { ThrowError = true, ThrowAfter = true };
+            api.AddEvalHook(hook);
+            
+            var result = await api.Variable(new DevCycleUser("test"), key, true); 
+
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(1, hook.AfterCallCount);
+            Assert.AreEqual(1, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.FinallyCallCount);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.IsFalse(result.IsDefaulted);
+        }
+
+        [TestMethod]
+        public async Task FinallyHookError_ThrowsException()
+        {
+            const string key = "show-quickstart";
+            DevCycleCloudClient api = getTestClient(TestResponse.GetVariableByKeyAsync(key));
+            TestEvalHook hook = new TestEvalHook() { ThrowFinally = true };
+            api.AddEvalHook(hook);
+            
+            var result = await api.Variable(new DevCycleUser("test"), "some_key", true); 
+
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(1, hook.AfterCallCount);
+            Assert.AreEqual(0, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.FinallyCallCount);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.IsFalse(result.IsDefaulted);
         }
 
         private void AssertUserDefaultsCorrect(DevCycleUser user)
