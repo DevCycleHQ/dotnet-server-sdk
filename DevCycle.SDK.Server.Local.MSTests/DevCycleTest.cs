@@ -535,5 +535,56 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(0, hook2.FinallyCallCount);
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public async Task EvalHooks_PassedInOptions()
+        {
+            const string key = "test";
+            TestEvalHook hook = new TestEvalHook();
+            var options = new DevCycleLocalOptions
+            {
+                EvalHooks = [hook]
+            };
+            using DevCycleLocalClient api = getTestClient(options);
+            
+            await Task.Delay(3000);
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
+
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(1, hook.AfterCallCount); 
+            Assert.AreEqual(0, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.FinallyCallCount);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.IsFalse(result.IsDefaulted);
+        }
+
+        [TestMethod]
+        public async Task EvalHooks_MultipleHooksInOptions()
+        {
+            const string key = "test";
+            TestEvalHook hook1 = new TestEvalHook();
+            TestEvalHook hook2 = new TestEvalHook();
+            var options = new DevCycleLocalOptions
+            {
+                EvalHooks = [hook1, hook2]
+            };
+            using DevCycleLocalClient api = getTestClient(options);
+            
+            await Task.Delay(3000);
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
+
+            Assert.AreEqual(1, hook1.BeforeCallCount);
+            Assert.AreEqual(1, hook1.AfterCallCount);
+            Assert.AreEqual(0, hook1.ErrorCallCount);
+            Assert.AreEqual(1, hook1.FinallyCallCount);
+            Assert.AreEqual(1, hook2.BeforeCallCount);
+            Assert.AreEqual(1, hook2.AfterCallCount);
+            Assert.AreEqual(0, hook2.ErrorCallCount);
+            Assert.AreEqual(1, hook2.FinallyCallCount);
+            Assert.IsNotNull(result);
+        }
     }
 }

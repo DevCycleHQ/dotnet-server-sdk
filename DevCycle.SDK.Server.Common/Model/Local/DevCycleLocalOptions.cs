@@ -61,6 +61,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
         [IgnoreDataMember]
         public Dictionary<string, string> EventsApiCustomHeaders { get; set; }
 
+        [IgnoreDataMember]
+        public List<EvalHook> EvalHooks { get; set; }
         
         public DevCycleLocalOptions(
             int configPollingIntervalMs = 1000,

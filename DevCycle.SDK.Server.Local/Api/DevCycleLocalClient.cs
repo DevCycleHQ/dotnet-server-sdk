@@ -97,7 +97,7 @@ namespace DevCycle.SDK.Server.Local.Api
             this.configManager.SetEventQueue(eventQueue);
             var platformData = new PlatformData();
             localBucketing.SetPlatformData(platformData.ToJson());
-            evalHooksRunner = new EvalHooksRunner(logger);
+            evalHooksRunner = new EvalHooksRunner(logger, dvcLocalOptions.EvalHooks);
 
             if(dvcLocalOptions.CdnSlug != "")
             {

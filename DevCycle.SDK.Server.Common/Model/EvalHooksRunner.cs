@@ -16,9 +16,9 @@ namespace DevCycle.SDK.Server.Common.Model
         public AfterHookError(string message, System.Exception e) : base(message) { }
     }
 
-    public class EvalHooksRunner(ILogger logger)
+    public class EvalHooksRunner(ILogger logger, List<EvalHook> hooks = null)
     {
-        private readonly List<EvalHook> hooks = [];
+        private readonly List<EvalHook> hooks = hooks ?? [];
 
         public void AddHook(EvalHook hook)
         {
@@ -38,7 +38,7 @@ namespace DevCycle.SDK.Server.Common.Model
         public async Task<HookContext<T>> RunBeforeAsync<T>(List<EvalHook> hooksList, HookContext<T> context, 
             CancellationToken cancellationToken = default)
         {
-            HookContext<T> result = context;
+            var result = context;
             try
             {
                 foreach (var hook in hooksList)
