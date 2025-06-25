@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
             this.options = options != null ? (DevCycleCloudOptions)options : new DevCycleCloudOptions();
             OpenFeatureProvider = new DevCycleProvider(this);
-            evalHooksRunner = new EvalHooksRunner(logger);
+            evalHooksRunner = new EvalHooksRunner(logger, this.options.EvalHooks);
         }
 
         public override string Platform()
