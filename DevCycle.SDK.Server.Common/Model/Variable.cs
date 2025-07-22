@@ -60,7 +60,7 @@ namespace DevCycle.SDK.Server.Common.Model
         {
         }
 
-        public static Variable<T> InitializeFromVariable(Variable<T> variable, string key, T defaultValue)
+        public static Variable<T> InitializeFromVariable(Variable<T> variable, string key, T defaultValue, string defaultReasonDetails = null)
         {
             var returnVariable = new Variable<T>();
             if (variable != null)
@@ -80,6 +80,10 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.DefaultValue = defaultValue;
                 returnVariable.IsDefaulted = true;
                 returnVariable.Type = DetermineType(defaultValue);
+                if (!string.IsNullOrEmpty(defaultReasonDetails))
+                {
+                    returnVariable.Eval = new EvalReason(EvalReasons.Default, defaultReasonDetails);
+                }
             }
 
             return returnVariable;

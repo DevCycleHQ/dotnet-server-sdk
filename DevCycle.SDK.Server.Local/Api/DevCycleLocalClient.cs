@@ -10,7 +10,6 @@ using DevCycle.SDK.Server.Local.Protobuf;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using DevCycle.SDK.Server.Common.Model;
 using System.Runtime.InteropServices;
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -312,7 +311,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig));
             }
 
             var userPb = GetDevCycleUser_PB(user);
@@ -338,7 +337,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 if (variableData == null)
                 {
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.UserNotTargeted));
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
@@ -346,7 +345,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableType != sdkVariable.Type)
                 {
                     logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.TypeMismatch));
                 }
 
                 var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
@@ -374,7 +373,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-                return Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                return Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig);
             }
 
             var userPb = GetDevCycleUser_PB(user);
@@ -417,6 +416,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableData == null)
                 {
                     logger.LogWarning("Variable data is null, using default value");
+                    existingVariable.Eval = new EvalReason(EvalReasons.Default, DefaultReasonDetails.UserNotTargeted);
                     await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable);
                     await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable);
                     return existingVariable;
@@ -427,6 +427,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableType != sdkVariable.Type)
                 {
                     logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
+                    existingVariable.Eval = new EvalReason(EvalReasons.Default, DefaultReasonDetails.TypeMismatch);
                 }
                 else
                 {
