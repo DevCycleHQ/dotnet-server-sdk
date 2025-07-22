@@ -99,7 +99,7 @@ namespace DevCycle.SDK.Server.Local.Api
             localBucketing.SetPlatformData(platformData.ToJson());
             evalHooksRunner = new EvalHooksRunner(logger, dvcLocalOptions.EvalHooks);
 
-            if(dvcLocalOptions.CdnSlug != "")
+            if (dvcLocalOptions.CdnSlug != "")
             {
                 logger.LogWarning("The config CDN slug is being overriden, please ensure to update the config to v2 according to the config CDN updates documentation.");
 
@@ -159,17 +159,17 @@ namespace DevCycle.SDK.Server.Local.Api
                     else if (entry.Value is string strValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { StringValue = strValue, Type = CustomDataType.Str };
+                        { StringValue = strValue, Type = CustomDataType.Str };
                     }
                     else if (entry.Value is double numValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { DoubleValue = numValue, Type = CustomDataType.Num };
+                        { DoubleValue = numValue, Type = CustomDataType.Num };
                     }
                     else if (entry.Value is bool boolValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { BoolValue = boolValue, Type = CustomDataType.Bool };
+                        { BoolValue = boolValue, Type = CustomDataType.Bool };
                     }
                 }
 
@@ -342,6 +342,12 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
+                Console.WriteLine("sdkVariable properties:");
+                foreach (var prop in sdkVariable.GetType().GetProperties())
+                {
+                    var value = prop.GetValue(sdkVariable, null);
+                    Console.WriteLine($"{prop.Name}: {value}");
+                }
 
                 if (variableType != sdkVariable.Type)
                 {
@@ -390,13 +396,13 @@ namespace DevCycle.SDK.Server.Local.Api
                 ShouldTrackEvent = true
             };
 
-            Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue);;
+            Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
             HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
-            
+
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);
             reversedHooks.Reverse();
-            
+
             try
             {
                 System.Exception beforeError = null;
@@ -408,7 +414,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 {
                     beforeError = e;
                 }
-                
+
                 var paramsBuffer = paramsPb.ToByteArray();
 
                 byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams: paramsBuffer);
@@ -426,7 +432,9 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableType != sdkVariable.Type)
                 {
                     logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                } else {
+                }
+                else
+                {
                     existingVariable = GetVariable<T>(sdkVariable, defaultValue);
                 }
 
@@ -451,7 +459,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return existingVariable;
         }
 
-    
+
 
         public override async Task<T> VariableValue<T>(DevCycleUser user, string key, T defaultValue)
         {

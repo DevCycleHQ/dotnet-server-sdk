@@ -69,6 +69,7 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.DefaultValue = defaultValue;
                 returnVariable.Type = variable.Type;
                 returnVariable.EvalReason = variable.EvalReason;
+                returnVariable.Eval = variable.Eval;
                 returnVariable.IsDefaulted = false;
             }
             else
@@ -109,6 +110,13 @@ namespace DevCycle.SDK.Server.Common.Model
         [DataMember(Name = "isDefaulted")] public bool IsDefaulted { get; set; }
         public string EvalReason { get; set; }
 
+        /// <summary>
+        /// Evaluation details
+        /// </summary>
+        /// <value>Evaluation details</value>
+        [DataMember(Name = "eval", EmitDefaultValue = false)]
+        public EvalReason Eval { get; set; }
+
         public static TypeEnum DetermineType(T variableValue)
         {
             TypeEnum typeEnum;
@@ -148,7 +156,7 @@ namespace DevCycle.SDK.Server.Common.Model
                 throw;
             }
         }
-        
+
         public override bool Equals(object input)
         {
             return Equals(input as Variable<T>);
@@ -164,23 +172,23 @@ namespace DevCycle.SDK.Server.Common.Model
             if (input == null)
                 return false;
 
-            return 
+            return
                 (
                     Key == input.Key ||
                     (Key != null &&
                      Key.Equals(input.Key))
-                ) && 
+                ) &&
                 (
                     Type == input.Type ||
                     Type.Equals(input.Type)
-                ) && 
+                ) &&
                 (
                     (Value != null &&
                      Value.Equals(input.Value))
                 );
         }
-        
-        
+
+
         /// <summary>
         /// Gets the hash code
         /// </summary>

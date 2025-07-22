@@ -14,7 +14,7 @@ namespace DevCycle.SDK.Server.Common.Model
         [DataMember(Name = "_id")]
         [JsonProperty("_id")]
         public string Id { get; set; }
-        
+
         /// <summary>
         /// Variable value can be a string, number, boolean, or JSON
         /// </summary>
@@ -27,7 +27,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// Variable type
         /// </summary>
         /// <value>Variable type</value>
-        [DataMember(Name="type")]
+        [DataMember(Name = "type")]
         [JsonProperty("type")]
         public string Type { get; set; }
 
@@ -38,8 +38,16 @@ namespace DevCycle.SDK.Server.Common.Model
         [DataMember(Name = "key")]
         [JsonProperty("key")]
         public string Key { get; set; }
-        
+
         public string EvalReason { get; set; }
+
+        /// <summary>
+        /// Evaluation details
+        /// </summary>
+        /// <value>Evaluation details</value>
+        [DataMember(Name = "eval", EmitDefaultValue = false)]
+        [JsonProperty("eval")]
+        public EvalReason Eval { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
