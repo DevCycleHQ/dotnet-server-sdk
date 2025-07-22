@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
         /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        public Variable(string key = default, T value = default, T defaultValue = default)
+        public Variable(string key = default, T value = default, T defaultValue = default, EvalReason evalReason = default)
         {
             // to ensure "key" is required (not null)
 
@@ -34,6 +34,7 @@ namespace DevCycle.SDK.Server.Common.Model
                                "defaultValue is a required property for Variable and cannot be null");
 
             IsDefaulted = false;
+            Eval = evalReason;
         }
 
         public Variable(string key, T defaultValue)

@@ -342,12 +342,6 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-                Console.WriteLine("sdkVariable properties:");
-                foreach (var prop in sdkVariable.GetType().GetProperties())
-                {
-                    var value = prop.GetValue(sdkVariable, null);
-                    Console.WriteLine($"{prop.Name}: {value}");
-                }
 
                 if (variableType != sdkVariable.Type)
                 {
@@ -355,7 +349,8 @@ namespace DevCycle.SDK.Server.Local.Api
                     return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
                 }
 
-                existingVariable = GetVariable<T>(sdkVariable, defaultValue);
+                var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
+                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
             }
             catch (Exception e)
             {
@@ -435,7 +430,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
                 else
                 {
-                    existingVariable = GetVariable<T>(sdkVariable, defaultValue);
+                    var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
+                    existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
                 }
 
                 if (beforeError != null)
@@ -516,30 +512,30 @@ namespace DevCycle.SDK.Server.Local.Api
             return userPb;
         }
 
-        private Variable<T> GetVariable<T>(SDKVariable_PB sdkVariable, T defaultValue)
+        private Variable<T> GetVariable<T>(SDKVariable_PB sdkVariable, T defaultValue, EvalReason evalReason)
         {
             Variable<T> existingVariable;
             switch (sdkVariable.Type)
             {
                 case VariableType_PB.Boolean:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
-                        value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue);
+                        value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.Number:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
                         value: (T)Convert.ChangeType(sdkVariable.DoubleValue, typeof(T)),
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.String:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
                         value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)),
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.Json:
                     // T is expected to be a JObject or JArray 
                     var jsonObj = JsonConvert.DeserializeObject<T>(sdkVariable.StringValue);
                     existingVariable = new Variable<T>(key: sdkVariable.Key, value: jsonObj,
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown variable type: " + sdkVariable.Type);

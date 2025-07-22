@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 namespace DevCycle.SDK.Server.Common.Model
 {
     [DataContract]
-    public class EvalReason : IEquatable<EvalReason>
+    public class EvalReason
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EvalReason" /> class.
@@ -16,7 +16,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="targetId">Target identifier for the evaluation.</param>
         public EvalReason(string reason = default, string details = default, string targetId = default)
         {
-            Reason = reason ?? throw new ArgumentException("reason is a required property for EvalReason and cannot be null");
+            Reason = reason;
             Details = details;
             TargetId = targetId;
         }
@@ -41,8 +41,8 @@ namespace DevCycle.SDK.Server.Common.Model
         /// Target identifier for the evaluation
         /// </summary>
         /// <value>Target identifier for the evaluation</value>
-        [DataMember(Name = "targetId", EmitDefaultValue = false)]
-        [JsonProperty("targetId")]
+        [DataMember(Name = "target_id", EmitDefaultValue = false)]
+        [JsonProperty("target_id")]
         public string TargetId { get; set; }
 
         /// <summary>
@@ -69,58 +69,5 @@ namespace DevCycle.SDK.Server.Common.Model
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return Equals(input as EvalReason);
-        }
-
-        /// <summary>
-        /// Returns true if EvalReason instances are equal
-        /// </summary>
-        /// <param name="input">Instance of EvalReason to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(EvalReason input)
-        {
-            if (input == null)
-                return false;
-
-            return
-                (
-                    Reason == input.Reason ||
-                    (Reason != null && Reason.Equals(input.Reason))
-                ) &&
-                (
-                    Details == input.Details ||
-                    (Details != null && Details.Equals(input.Details))
-                ) &&
-                (
-                    TargetId == input.TargetId ||
-                    (TargetId != null && TargetId.Equals(input.TargetId))
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (Reason != null)
-                    hashCode = hashCode * 59 + Reason.GetHashCode();
-                if (Details != null)
-                    hashCode = hashCode * 59 + Details.GetHashCode();
-                if (TargetId != null)
-                    hashCode = hashCode * 59 + TargetId.GetHashCode();
-                return hashCode;
-            }
-        }
     }
 }
