@@ -10,8 +10,7 @@ jobs:
       labels: ubuntu-latest-4-core
     steps:
       - uses: DevCycleHQ/test-harness@main
-        env:
-          SDK_CAPABILITIES: '["cloud", "local","edgeDB", "clientCustomData","v2Config", "allFeatures", "allVariables", "evalReason"]'
         with:
           sdks-to-test: dotnet
           sdk-github-sha: ${{github.event.pull_request.head.sha}}
+          sdk-capabilities: '{ "dotnet": ["cloud", "local","edgeDB", "clientCustomData","v2Config", "allFeatures", "allVariables", "evalReason"]}'
