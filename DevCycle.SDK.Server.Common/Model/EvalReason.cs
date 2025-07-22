@@ -75,6 +75,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="reason">The evaluation reason as string.</param>
         /// <param name="details">Additional details about the evaluation.</param>
         /// <param name="targetId">Target identifier for the evaluation.</param>
+        [JsonConstructor]
         public EvalReason(string reason, string details = null, string targetId = null)
         {
             // Parse string reason to enum, default to Error if not found
