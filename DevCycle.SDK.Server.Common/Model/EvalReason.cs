@@ -70,7 +70,7 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         /// <summary>
-        /// Constructor for backward compatibility with string-based reason
+        /// Constructor for dyanmic string to be parsed to EvalReason enum
         /// </summary>
         /// <param name="reason">The evaluation reason as string.</param>
         /// <param name="details">Additional details about the evaluation.</param>
@@ -108,9 +108,9 @@ namespace DevCycle.SDK.Server.Common.Model
         public string Details { get; set; }
 
         /// <summary>
-        /// Target identifier for the evaluation
+        /// TargetId for the evaluation
         /// </summary>
-        /// <value>Target identifier for the evaluation</value>
+        /// <value>TargetId for the evaluation</value>
         [DataMember(Name = "target_id", EmitDefaultValue = false)]
         [JsonProperty("target_id", NullValueHandling = NullValueHandling.Ignore)]
         public string TargetId { get; set; }
