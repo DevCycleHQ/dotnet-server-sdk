@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -45,6 +46,7 @@ namespace DevCycle.SDK.Server.Common.Model
 
         public bool IsDefaulted { get; set; }
 
+        [Obsolete("use Eval")]
         public string EvalReason { get; set; }
 
         public EvalReason Eval { get; set; }

@@ -69,7 +69,6 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.Value = variable.Value;
                 returnVariable.DefaultValue = defaultValue;
                 returnVariable.Type = variable.Type;
-                returnVariable.EvalReason = variable.EvalReason;
                 returnVariable.Eval = variable.Eval;
                 returnVariable.IsDefaulted = false;
             }
@@ -113,6 +112,7 @@ namespace DevCycle.SDK.Server.Common.Model
         public string Key { get; set; }
 
         [DataMember(Name = "isDefaulted")] public bool IsDefaulted { get; set; }
+        [Obsolete("use Eval")]
         public string EvalReason { get; set; }
 
         /// <summary>

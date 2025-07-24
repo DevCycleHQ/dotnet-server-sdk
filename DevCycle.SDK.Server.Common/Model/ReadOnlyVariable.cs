@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
@@ -39,6 +40,7 @@ namespace DevCycle.SDK.Server.Common.Model
         [JsonProperty("key")]
         public string Key { get; set; }
 
+        [Obsolete("use Eval")]
         public string EvalReason { get; set; }
 
         /// <summary>
