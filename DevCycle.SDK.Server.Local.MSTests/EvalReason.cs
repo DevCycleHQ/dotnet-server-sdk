@@ -9,6 +9,7 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Local.MSTests;
@@ -119,10 +120,30 @@ public class EvalReasonTests
     }
 
     [TestMethod]
-    public void EvalReasonConstructor_InvalidEnums_SetError()
+    public void EvalReasonConstructor_HandlesInvalidReasonEnum()
     {
         var evalObj = new EvalReason("invalidReason", "invalidDetails", "someTargetId");
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.Error, evalObj.Reason);
+        Assert.AreEqual(EvalReasons.Unknown, evalObj.Reason);
+    }
+
+    [TestMethod]
+    public void JSONSerializes_WhenValid()
+    {
+        const string jsonString = @"{""reason"": ""SPLIT"", ""details"": ""Missing Config"", ""target_id"": ""test-target""}";
+        var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
+        Assert.IsNotNull(evalObj);
+        Assert.AreEqual(EvalReasons.Split, evalObj.Reason);
+        Assert.AreEqual("Missing Config", evalObj.Details);
+        Assert.AreEqual("test-target", evalObj.TargetId);
+    }
+
+    [TestMethod]
+    public void JSONSerializes_WhenInValid()
+    {
+        const string jsonString = @"{""reason"": ""REASON_NOT_IN_ENUM"", ""UnexpectedProp"": 1}";
+        var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
+        Assert.IsNotNull(evalObj);
+        Assert.AreEqual(EvalReasons.Unknown, evalObj.Reason);
     }
 }

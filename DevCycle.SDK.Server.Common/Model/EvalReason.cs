@@ -14,24 +14,20 @@ namespace DevCycle.SDK.Server.Common.Model
     {
         [EnumMember(Value = "TARGETING_MATCH")]
         TargetingMatch,
-
         [EnumMember(Value = "SPLIT")]
         Split,
-
         [EnumMember(Value = "DEFAULT")]
         Default,
-
         [EnumMember(Value = "DISABLED")]
         Disabled,
-
         [EnumMember(Value = "ERROR")]
         Error,
-
         [EnumMember(Value = "OVERRIDE")]
         Override,
-
         [EnumMember(Value = "OPT_IN")]
-        OptIn
+        OptIn,
+        [EnumMember(Value = "UNKNOWN")]
+        Unknown
     }
 
 
@@ -85,7 +81,7 @@ namespace DevCycle.SDK.Server.Common.Model
             }
             else
             {
-                Reason = EvalReasons.Error;
+                Reason = EvalReasons.Unknown;
             }
             Details = details;
             TargetId = targetId;
