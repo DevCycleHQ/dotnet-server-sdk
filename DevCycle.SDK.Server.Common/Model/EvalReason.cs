@@ -68,7 +68,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>Additional details about the evaluation</value>
         [DataMember(Name = "details", EmitDefaultValue = false)]
-        [JsonProperty("details")]
+        [JsonProperty("details", NullValueHandling = NullValueHandling.Ignore)]
         public string Details { get; set; }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>TargetId for the evaluation</value>
         [DataMember(Name = "target_id", EmitDefaultValue = false)]
-        [JsonProperty("target_id")]
+        [JsonProperty("target_id", NullValueHandling = NullValueHandling.Ignore)]
         public string TargetId { get; set; }
 
         /// <summary>
