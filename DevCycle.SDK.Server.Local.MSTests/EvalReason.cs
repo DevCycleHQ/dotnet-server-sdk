@@ -156,15 +156,6 @@ public class EvalReasonTests
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
     }
     // ==== End of test section ====
-
-    [TestMethod]
-    public void EvalReasonConstructor_HandlesInvalidReasonEnum()
-    {
-        var evalObj = new EvalReason("invalidReason", "invalidDetails", "someTargetId");
-        Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.UNKNOWN, evalObj.Reason);
-    }
-
     [TestMethod]
     public void JSONSerializes_WhenValid()
     {
@@ -179,9 +170,9 @@ public class EvalReasonTests
     [TestMethod]
     public void JSONSerializes_WhenInValid()
     {
-        const string jsonString = @"{""reason"": ""REASON_NOT_IN_ENUM"", ""UnexpectedProp"": 1}";
+        const string jsonString = @"{""reason"": ""SOME_REASON"", ""UnexpectedProp"": 1}";
         var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.UNKNOWN, evalObj.Reason);
+        Assert.AreEqual("SOME_REASON", evalObj.Reason);
     }
 }

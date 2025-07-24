@@ -2,24 +2,21 @@ using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace DevCycle.SDK.Server.Common.Model
 {
     /// <summary>
-    /// Evaluation reasons enum
+    /// Evaluation reasons constants
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
-    public enum EvalReasons
+    public static class EvalReasons
     {
-        TARGETING_MATCH,
-        SPLIT,
-        DEFAULT,
-        DISABLED,
-        ERROR,
-        OVERRIDE,
-        OPT_IN,
-        UNKNOWN
+        public const string TARGETING_MATCH = "TARGETING_MATCH";
+        public const string SPLIT = "SPLIT";
+        public const string DEFAULT = "DEFAULT";
+        public const string DISABLED = "DISABLED";
+        public const string ERROR = "ERROR";
+        public const string OVERRIDE = "OVERRIDE";
+        public const string OPT_IN = "OPT_IN";
     }
 
 
@@ -47,34 +44,13 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="EvalReason" /> class.
         /// </summary>
-        /// <param name="reason">The evaluation reason (required).</param>
-        /// <param name="details">Additional details about the evaluation.</param>
-        /// <param name="targetId">Target identifier for the evaluation.</param>
-        public EvalReason(EvalReasons reason, string details = null, string targetId = null)
-        {
-            Reason = reason;
-            Details = details;
-            TargetId = targetId;
-        }
-
-        /// <summary>
-        /// Constructor for dyanmic string to be parsed to EvalReason enum
-        /// </summary>
-        /// <param name="reason">The evaluation reason as string.</param>
+        /// <param name="reason">The evaluation reason.</param>
         /// <param name="details">Additional details about the evaluation.</param>
         /// <param name="targetId">Target identifier for the evaluation.</param>
         [JsonConstructor]
         public EvalReason(string reason, string details = null, string targetId = null)
         {
-            // Parse string reason to enum, default to Unknown if not found
-            if (Enum.TryParse<EvalReasons>(reason, true, out var parsedReason))
-            {
-                Reason = parsedReason;
-            }
-            else
-            {
-                Reason = EvalReasons.UNKNOWN;
-            }
+            Reason = reason;
             Details = details;
             TargetId = targetId;
         }
@@ -85,14 +61,14 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <value>The evaluation reason</value>
         [DataMember(Name = "reason", EmitDefaultValue = false)]
         [JsonProperty("reason")]
-        public EvalReasons Reason { get; set; }
+        public string Reason { get; set; }
 
         /// <summary>
         /// Additional details about the evaluation
         /// </summary>
         /// <value>Additional details about the evaluation</value>
         [DataMember(Name = "details", EmitDefaultValue = false)]
-        [JsonProperty("details", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("details")]
         public string Details { get; set; }
 
         /// <summary>
@@ -100,7 +76,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// </summary>
         /// <value>TargetId for the evaluation</value>
         [DataMember(Name = "target_id", EmitDefaultValue = false)]
-        [JsonProperty("target_id", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("target_id")]
         public string TargetId { get; set; }
 
         /// <summary>
