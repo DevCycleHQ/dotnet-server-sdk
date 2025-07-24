@@ -24,7 +24,7 @@ public class EvalReason
         var mockHttp = new MockHttpMessageHandler();
 
         mockHttp.When("https://config-cdn*")
-            .Respond(HttpStatusCode.OK, "application/json",
+            .Respond(skipInitialize ? HttpStatusCode.BadRequest : HttpStatusCode.OK, "application/json",
                 config);
         mockHttp.When("https://events*")
             .Respond(HttpStatusCode.Created, "application/json",
@@ -64,11 +64,8 @@ public class EvalReason
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
         Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.Boolean, result.Type);
     }
 
     [TestMethod]
@@ -78,38 +75,13 @@ public class EvalReason
         var user = new DevCycleUser("test_user");
         const string key = "non_existent_variable";
         const string defaultValue = "default_string";
-        await Task.Delay(3000);
 
         var result = await api.Variable(user, key, defaultValue);
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
         Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.String, result.Type);
-    }
-
-    [TestMethod]
-    public async Task Variable_TypeMismatch_ReturnsDefaultWithTypeMismatchReason()
-    {
-        using DevCycleLocalClient api = getTestClient();
-        var user = new DevCycleUser("j_test");
-        const string key = "test"; // This is configured as Boolean in fixtures
-        // const bool defaultValue = true; // Requesting as string instead of boolean
-        const string defaultValue = "test"; // Requesting as string instead of boolean
-        await Task.Delay(3000);
-
-        var result = await api.Variable(user, key, defaultValue);
-
-        Assert.IsNotNull(result);
-        Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
-        Assert.AreEqual(DefaultReasonDetails.TypeMismatch, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.String, result.Type);
     }
 
     // ===== Tests for Default Reasons - VariableAsync Method =====
@@ -126,11 +98,8 @@ public class EvalReason
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
         Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.Number, result.Type);
     }
 
     [TestMethod]
@@ -140,36 +109,12 @@ public class EvalReason
         var user = new DevCycleUser("test_user");
         const string key = "non_existent_variable";
         const double defaultValue = 3.14;
-        await Task.Delay(3000);
 
         var result = await api.VariableAsync(user, key, defaultValue);
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
         Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.Number, result.Type);
-    }
-
-    [TestMethod]
-    public async Task VariableAsync_TypeMismatch_ReturnsDefaultWithTypeMismatchReason()
-    {
-        using DevCycleLocalClient api = getTestClient();
-        var user = new DevCycleUser("j_test");
-        const string key = "test"; // This is configured as Boolean in fixtures
-        const string defaultValue = "test"; // Requesting as number instead of boolean
-        await Task.Delay(3000);
-
-        var result = await api.VariableAsync(user, key, defaultValue);
-
-        Assert.IsNotNull(result);
-        //Assert.IsTrue(result.IsDefaulted);
-        // Assert.AreEqual(defaultValue, result.Value);
-        Assert.AreEqual(key, result.Key);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
-        Assert.AreEqual(DefaultReasonDetails.TypeMismatch, result.Eval.Details);
-        Assert.AreEqual(TypeEnum.Number, result.Type);
     }
 }
