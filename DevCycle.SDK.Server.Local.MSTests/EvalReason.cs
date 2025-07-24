@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
+using OpenFeature;
+using OpenFeature.Model;
 using RichardSzalay.MockHttp;
 
 namespace DevCycle.SDK.Server.Local.MSTests;
@@ -117,6 +119,24 @@ public class EvalReasonTests
         Assert.IsTrue(result.IsDefaulted);
         Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
+    }
+    
+    [TestMethod]
+    public async Task OF_Variable_MissingConfig_ReturnsDefaultWithMissingConfigReason()
+    {
+        using DevCycleBaseClient devCycleClient = getTestClient(skipInitialize: true);
+        await OpenFeature.Api.Instance.SetProviderAsync(devCycleClient.GetOpenFeatureProvider());
+        FeatureClient oFeatureClient = OpenFeature.Api.Instance.GetClient();
+        var ctx = EvaluationContext.Builder().Set("user_id", "test_user").Build();
+        const string key = "test";
+        const bool defaultValue = false;
+
+        var result = await oFeatureClient.GetBooleanDetailsAsync(key, defaultValue, ctx);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(defaultValue, result.Value);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Reason);
+        Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.FlagMetadata?.GetString("evalReasonDetails"));
     }
 
     // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate eval reason =====
