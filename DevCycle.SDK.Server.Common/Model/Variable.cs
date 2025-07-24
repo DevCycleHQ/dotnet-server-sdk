@@ -82,7 +82,7 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.Type = DetermineType(defaultValue);
                 if (!string.IsNullOrEmpty(defaultReasonDetails))
                 {
-                    returnVariable.Eval = new EvalReason(EvalReasons.Default, defaultReasonDetails);
+                    returnVariable.Eval = new EvalReason(EvalReasons.DEFAULT, defaultReasonDetails);
                 }
             }
 

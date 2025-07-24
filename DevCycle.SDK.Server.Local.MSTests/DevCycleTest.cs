@@ -136,7 +136,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = await api.Variable(user, key, false);
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.Value);
-            Assert.AreEqual(EvalReasons.Split, variable.Eval.Reason);
+            Assert.AreEqual(EvalReasons.SPLIT, variable.Eval.Reason);
             Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
             Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
@@ -156,7 +156,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual("öé 🐍 ¥", variable.Value);
-            Assert.AreEqual(EvalReasons.Split, variable.Eval.Reason);
+            Assert.AreEqual(EvalReasons.SPLIT, variable.Eval.Reason);
             Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
             Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
@@ -201,7 +201,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
-            Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
+            Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
             Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
             Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
         }
@@ -243,7 +243,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = result["test"];
             Assert.IsNotNull(variable);
             Assert.IsTrue((Boolean)variable.Value);
-            Assert.AreEqual(EvalReasons.Split, variable.Eval.Reason);
+            Assert.AreEqual(EvalReasons.SPLIT, variable.Eval.Reason);
             Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
             Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
         }

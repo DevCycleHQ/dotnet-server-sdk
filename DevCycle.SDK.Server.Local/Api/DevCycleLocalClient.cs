@@ -409,7 +409,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableData == null)
                 {
                     logger.LogWarning("Variable data is null, using default value");
-                    existingVariable.Eval = new EvalReason(EvalReasons.Default, DefaultReasonDetails.UserNotTargeted);
+                    existingVariable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.UserNotTargeted);
                     await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable);
                     await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable);
                     return existingVariable;

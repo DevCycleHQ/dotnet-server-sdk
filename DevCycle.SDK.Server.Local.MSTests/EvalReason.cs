@@ -65,7 +65,7 @@ public class EvalReasonTests
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.Eval.Details);
     }
 
@@ -81,7 +81,7 @@ public class EvalReasonTests
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
     }
 
@@ -99,7 +99,7 @@ public class EvalReasonTests
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.Eval.Details);
     }
 
@@ -115,13 +115,13 @@ public class EvalReasonTests
 
         Assert.IsNotNull(result);
         Assert.IsTrue(result.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
     }
 
-    // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate reason =====
+    // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate eval reason =====
     [TestMethod]
-    public async Task Variable_MismatchType_Bool_ReturnsDefault()
+    public async Task Variable_Bool_MismatchType_ReturnsDefault()
     {
         using DevCycleLocalClient api = getTestClient();
         var user = new DevCycleUser("test_user");
@@ -134,12 +134,12 @@ public class EvalReasonTests
 
         var invalidResult = await api.Variable(user, key, invalidDefaultValue);
         Assert.IsTrue(invalidResult.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, invalidResult.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, invalidResult.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
     }
 
     [TestMethod]
-    public async Task Variable_MismatchType_JSON_ReturnsDefault()
+    public async Task Variable_JSON_MismatchType_ReturnsDefault()
     {
         using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
         var user = new DevCycleUser("test_user");
@@ -152,7 +152,7 @@ public class EvalReasonTests
 
         var invalidResult = await api.Variable(user, key, invalidDefaultValue);
         Assert.IsTrue(invalidResult.IsDefaulted);
-        Assert.AreEqual(EvalReasons.Default, invalidResult.Eval.Reason);
+        Assert.AreEqual(EvalReasons.DEFAULT, invalidResult.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
     }
     // ==== End of test section ====
@@ -162,16 +162,16 @@ public class EvalReasonTests
     {
         var evalObj = new EvalReason("invalidReason", "invalidDetails", "someTargetId");
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.Unknown, evalObj.Reason);
+        Assert.AreEqual(EvalReasons.UNKNOWN, evalObj.Reason);
     }
 
     [TestMethod]
     public void JSONSerializes_WhenValid()
     {
-        const string jsonString = @"{""reason"": ""SPLIT"", ""details"": ""Missing Config"", ""target_id"": ""test-target""}";
+        const string jsonString = @"{""reason"": ""TARGETING_MATCH"", ""details"": ""Missing Config"", ""target_id"": ""test-target""}";
         var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.Split, evalObj.Reason);
+        Assert.AreEqual(EvalReasons.TARGETING_MATCH, evalObj.Reason);
         Assert.AreEqual("Missing Config", evalObj.Details);
         Assert.AreEqual("test-target", evalObj.TargetId);
     }
@@ -182,6 +182,6 @@ public class EvalReasonTests
         const string jsonString = @"{""reason"": ""REASON_NOT_IN_ENUM"", ""UnexpectedProp"": 1}";
         var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.Unknown, evalObj.Reason);
+        Assert.AreEqual(EvalReasons.UNKNOWN, evalObj.Reason);
     }
 }

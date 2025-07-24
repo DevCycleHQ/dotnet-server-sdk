@@ -12,22 +12,14 @@ namespace DevCycle.SDK.Server.Common.Model
     [JsonConverter(typeof(StringEnumConverter))]
     public enum EvalReasons
     {
-        [EnumMember(Value = "TARGETING_MATCH")]
-        TargetingMatch,
-        [EnumMember(Value = "SPLIT")]
-        Split,
-        [EnumMember(Value = "DEFAULT")]
-        Default,
-        [EnumMember(Value = "DISABLED")]
-        Disabled,
-        [EnumMember(Value = "ERROR")]
-        Error,
-        [EnumMember(Value = "OVERRIDE")]
-        Override,
-        [EnumMember(Value = "OPT_IN")]
-        OptIn,
-        [EnumMember(Value = "UNKNOWN")]
-        Unknown
+        TARGETING_MATCH,
+        SPLIT,
+        DEFAULT,
+        DISABLED,
+        ERROR,
+        OVERRIDE,
+        OPT_IN,
+        UNKNOWN
     }
 
 
@@ -74,14 +66,14 @@ namespace DevCycle.SDK.Server.Common.Model
         [JsonConstructor]
         public EvalReason(string reason, string details = null, string targetId = null)
         {
-            // Parse string reason to enum, default to Error if not found
-            if (Enum.TryParse<EvalReasons>(reason?.Replace("_", ""), true, out var parsedReason))
+            // Parse string reason to enum, default to Unknown if not found
+            if (Enum.TryParse<EvalReasons>(reason, true, out var parsedReason))
             {
                 Reason = parsedReason;
             }
             else
             {
-                Reason = EvalReasons.Unknown;
+                Reason = EvalReasons.UNKNOWN;
             }
             Details = details;
             TargetId = targetId;
