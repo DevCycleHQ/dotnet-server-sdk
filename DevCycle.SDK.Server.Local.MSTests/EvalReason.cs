@@ -162,7 +162,7 @@ public class EvalReasonTests
         const string jsonString = @"{""reason"": ""TARGETING_MATCH"", ""details"": ""Missing Config"", ""target_id"": ""test-target""}";
         var evalObj = JsonConvert.DeserializeObject<EvalReason>(jsonString);
         Assert.IsNotNull(evalObj);
-        Assert.AreEqual(EvalReasons.TARGETING_MATCH, evalObj.Reason);
+        Assert.AreEqual("TARGETING_MATCH", evalObj.Reason);
         Assert.AreEqual("Missing Config", evalObj.Details);
         Assert.AreEqual("test-target", evalObj.TargetId);
     }

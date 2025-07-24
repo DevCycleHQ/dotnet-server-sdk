@@ -10,13 +10,7 @@ namespace DevCycle.SDK.Server.Common.Model
     /// </summary>
     public static class EvalReasons
     {
-        public const string TARGETING_MATCH = "TARGETING_MATCH";
-        public const string SPLIT = "SPLIT";
         public const string DEFAULT = "DEFAULT";
-        public const string DISABLED = "DISABLED";
-        public const string ERROR = "ERROR";
-        public const string OVERRIDE = "OVERRIDE";
-        public const string OPT_IN = "OPT_IN";
     }
 
 
@@ -26,15 +20,7 @@ namespace DevCycle.SDK.Server.Common.Model
     public static class DefaultReasonDetails
     {
         public const string MissingConfig = "Missing Config";
-        public const string MissingVariable = "Missing Variable";
-        public const string MissingFeature = "Missing Feature";
-        public const string MissingVariation = "Missing Variation";
-        public const string MissingVariableForVariation = "Missing Variable for Variation";
-        public const string UserNotInRollout = "User Not in Rollout";
         public const string UserNotTargeted = "User Not Targeted";
-        public const string InvalidVariableType = "Invalid Variable Type";
-        public const string TypeMismatch = "Variable Type Mismatch";
-        public const string Unknown = "Unknown";
         public const string Error = "Error";
     }
 
