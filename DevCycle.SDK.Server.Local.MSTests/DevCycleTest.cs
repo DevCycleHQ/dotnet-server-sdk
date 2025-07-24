@@ -243,6 +243,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = result["test"];
             Assert.IsNotNull(variable);
             Assert.IsTrue((Boolean)variable.Value);
+            Assert.AreEqual(EvalReasons.Split, variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
         }
 
         [TestMethod]

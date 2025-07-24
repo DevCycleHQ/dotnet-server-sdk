@@ -14,7 +14,7 @@ using RichardSzalay.MockHttp;
 namespace DevCycle.SDK.Server.Local.MSTests;
 
 [TestClass]
-public class EvalReason
+public class EvalReasonTests
 {
     private DevCycleLocalClient getTestClient(DevCycleLocalOptions options = null, string config = null,
         bool skipInitialize = false)
@@ -116,5 +116,13 @@ public class EvalReason
         Assert.IsTrue(result.IsDefaulted);
         Assert.AreEqual(EvalReasons.Default, result.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
+    }
+
+    [TestMethod]
+    public void EvalReasonConstructor_InvalidEnums_SetError()
+    {
+        var evalObj = new EvalReason("invalidReason", "invalidDetails", "someTargetId");
+        Assert.IsNotNull(evalObj);
+        Assert.AreEqual(EvalReasons.Error, evalObj.Reason);
     }
 }
