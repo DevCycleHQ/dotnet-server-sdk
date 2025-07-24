@@ -306,9 +306,10 @@ namespace DevCycle.SDK.Server.Local.Api
             {
                 logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
 
+                var eventMetadata = new Dictionary<string, object> { { "evalReason", EvalReasons.DEFAULT } };
                 eventQueue.QueueAggregateEvent(
                     requestUser,
-                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
+                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key, metaData: eventMetadata),
                     null
                 );
                 return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig));
