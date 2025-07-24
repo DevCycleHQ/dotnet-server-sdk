@@ -119,6 +119,44 @@ public class EvalReasonTests
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
     }
 
+    // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate reason =====
+    [TestMethod]
+    public async Task Variable_MismatchType_Bool_ReturnsDefault()
+    {
+        using DevCycleLocalClient api = getTestClient();
+        var user = new DevCycleUser("test_user");
+        const string key = "test";
+        const bool validDefaultValue = false;
+        const string invalidDefaultValue = "default";
+
+        var validResult = await api.Variable(user, key, validDefaultValue);
+        Assert.IsFalse(validResult.IsDefaulted);
+
+        var invalidResult = await api.Variable(user, key, invalidDefaultValue);
+        Assert.IsTrue(invalidResult.IsDefaulted);
+        Assert.AreEqual(EvalReasons.Default, invalidResult.Eval.Reason);
+        Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
+    }
+
+    [TestMethod]
+    public async Task Variable_MismatchType_JSON_ReturnsDefault()
+    {
+        using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
+        var user = new DevCycleUser("test_user");
+        const string key = "test";
+        var validDefaultValue = Newtonsoft.Json.Linq.JObject.Parse("{\"key\": \"default\"}");
+        const int invalidDefaultValue = 0;
+
+        var validResult = await api.Variable(user, key, validDefaultValue);
+        Assert.IsFalse(validResult.IsDefaulted);
+
+        var invalidResult = await api.Variable(user, key, invalidDefaultValue);
+        Assert.IsTrue(invalidResult.IsDefaulted);
+        Assert.AreEqual(EvalReasons.Default, invalidResult.Eval.Reason);
+        Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
+    }
+    // ==== End of test section ====
+
     [TestMethod]
     public void EvalReasonConstructor_HandlesInvalidReasonEnum()
     {

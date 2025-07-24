@@ -341,20 +341,13 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-
-                if (variableType != sdkVariable.Type)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.TypeMismatch));
-                }
-
                 var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
                 existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
             }
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
-                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.Error));
             }
 
             return Task.FromResult(existingVariable);
@@ -423,17 +416,8 @@ namespace DevCycle.SDK.Server.Local.Api
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-
-                if (variableType != sdkVariable.Type)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                    existingVariable.Eval = new EvalReason(EvalReasons.Default, DefaultReasonDetails.TypeMismatch);
-                }
-                else
-                {
-                    var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
-                    existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
-                }
+                var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
+                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
 
                 if (beforeError != null)
                 {
