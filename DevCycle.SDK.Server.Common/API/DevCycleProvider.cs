@@ -63,7 +63,7 @@ namespace DevCycle.SDK.Server.Common.API
             var openFeatureValue = JsonSerializer.Deserialize<Value>(jsonValue,
                 new JsonSerializerOptions() { Converters = { new OpenFeatureValueJsonConverter() } });
 
-            var details = variable.GetResolutionDetails()
+            var details = variable.GetResolutionDetails();
             return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None, details.Reason, flagMetadata: details.FlagMetadata);
         }
 

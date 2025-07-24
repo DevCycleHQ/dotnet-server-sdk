@@ -76,6 +76,7 @@ public class EvalReasonTests
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
     }
 
+    // ===== Tests for Default Reasons - VariableAsync Method =====
     [TestMethod]
     public async Task OF_Variable_MissingConfig_ReturnsDefaultWithMissingConfigReason()
     {
@@ -92,6 +93,24 @@ public class EvalReasonTests
         Assert.AreEqual(defaultValue, result.Value);
         Assert.AreEqual(EvalReasons.DEFAULT, result.Reason);
         Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.FlagMetadata?.GetString("evalReasonDetails"));
+    }
+
+    [TestMethod]
+    public async Task OF_Variable_MissingConfig_ReturnsDefaultWithUserNotTargetedReason()
+    {
+        using DevCycleBaseClient devCycleClient = getTestClient();
+        await OpenFeature.Api.Instance.SetProviderAsync(devCycleClient.GetOpenFeatureProvider());
+        FeatureClient oFeatureClient = OpenFeature.Api.Instance.GetClient();
+        var ctx = EvaluationContext.Builder().Set("user_id", "test_user").Build();
+        const string key = "non_existent_variable";
+        const bool defaultValue = false;
+
+        var result = await oFeatureClient.GetBooleanDetailsAsync(key, defaultValue, ctx);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(defaultValue, result.Value);
+        Assert.AreEqual(EvalReasons.DEFAULT, result.Reason);
+        Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.FlagMetadata?.GetString("evalReasonDetails"));
     }
 
     // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate eval reason =====
@@ -130,6 +149,7 @@ public class EvalReasonTests
         Assert.AreEqual(EvalReasons.DEFAULT, invalidResult.Eval.Reason);
         Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, invalidResult.Eval.Details);
     }
+
     // ==== End of test section ====
     [TestMethod]
     public void JSONSerializes_WhenValid()
