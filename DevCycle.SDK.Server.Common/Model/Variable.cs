@@ -246,19 +246,19 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public ResolutionDetails<T> GetResolutionDetails()
-        { 
+        {
             //TODO: once eval enabled from cloud bucketing, eval reason won't be null unless defaulted
-            var reason = !string.IsNullOrEmpty(Eval.Reason) ? Eval.Reason : (IsDefaulted ? Reason.Default : Reason.TargetingMatch);
+            var reason = !string.IsNullOrEmpty(Eval?.Reason) ? Eval.Reason : (IsDefaulted ? Reason.Default : Reason.TargetingMatch);
             var metadata = new Dictionary<string, object>();
-            if (!string.IsNullOrEmpty(Eval.Details))
+            if (!string.IsNullOrEmpty(Eval?.Details))
             {
                 metadata.Add("evalReasonDetails", Eval.Details);
             }
-            if (!string.IsNullOrEmpty(Eval.TargetId))
+            if (!string.IsNullOrEmpty(Eval?.TargetId))
             {
                 metadata.Add("evalReasonTargetId", Eval.TargetId);
             }
-            return new ResolutionDetails<T>(Key, Value, ErrorType.None,reason, flagMetadata: new ImmutableMetadata(metadata));
+            return new ResolutionDetails<T>(Key, Value, ErrorType.None, reason, flagMetadata: new ImmutableMetadata(metadata));
         }
     }
 }
