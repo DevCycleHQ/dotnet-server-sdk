@@ -63,7 +63,6 @@ namespace DevCycle.SDK.Server.Common.Model
             return new Variable<T>(variable.Key, (T)value, (T)defaultValue, variable.Eval)
             {
                 IsDefaulted = variable.IsDefaulted,
-
             };
         }
     }
