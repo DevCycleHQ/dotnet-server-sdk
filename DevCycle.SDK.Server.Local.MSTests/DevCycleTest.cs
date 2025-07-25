@@ -340,7 +340,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
                 variable.Value.AsStructure.GetValue("key").AsString);
             Assert.AreEqual(Reason.Default, variable.Reason);
-            Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, variable.FlagMetadata.GetString("details"));
+            Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, variable.FlagMetadata.GetString("evalReasonDetails"));
         }
 
         [TestMethod]
@@ -358,8 +358,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.IsNotNull(variable);
             Assert.AreEqual("SPLIT", variable.Reason);
-            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("details"));
-            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("targetId"));
+            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("evalReasonDetails"));
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("evalReasonTargetId"));
         }
 
         [TestMethod]
@@ -382,8 +382,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var expectedValue = new Value(new Structure(expectedJsonDict));
             Assert.AreEqual(expectedValue.AsStructure.GetValue("sample").AsString, variable.Value.AsStructure.GetValue("sample").AsString);
             Assert.AreEqual("SPLIT", variable.Reason);
-            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("details"));
-            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("targetId"));
+            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("evalReasonDetails"));
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("evalReasonTargetId"));
         }
 
         [TestMethod]
