@@ -21,6 +21,7 @@ namespace DevCycle.SDK.Server.Common.Model
     {
         public const string MissingConfig = "Missing Config";
         public const string UserNotTargeted = "User Not Targeted";
+        public const string TypeMismatch = "Variable Type Mismatch";
         public const string Error = "Error";
     }
 
