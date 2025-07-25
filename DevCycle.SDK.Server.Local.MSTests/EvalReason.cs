@@ -137,7 +137,7 @@ public class EvalReasonTests
         Assert.IsNotNull(result);
         Assert.AreEqual(defaultValue, result.Value);
         Assert.AreEqual(EvalReasons.DEFAULT, result.Reason);
-        Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.FlagMetadata?.GetString("details"));
+        Assert.AreEqual(DefaultReasonDetails.MissingConfig, result.FlagMetadata?.GetString("evalReasonDetails"));
     }
 
     [TestMethod]
@@ -155,7 +155,7 @@ public class EvalReasonTests
         Assert.IsNotNull(result);
         Assert.AreEqual(defaultValue, result.Value);
         Assert.AreEqual(EvalReasons.DEFAULT, result.Reason);
-        Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.FlagMetadata?.GetString("details"));
+        Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.FlagMetadata?.GetString("evalReasonDetails"));
     }
 
     // ===== Start test section - validate mismatch types return null from wasm, so we cannot provide accurate eval reason =====

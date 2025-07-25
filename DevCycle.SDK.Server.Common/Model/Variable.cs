@@ -252,11 +252,11 @@ namespace DevCycle.SDK.Server.Common.Model
             var metadata = new Dictionary<string, object>();
             if (!string.IsNullOrEmpty(Eval.Details))
             {
-                metadata.Add("details", Eval.Details);
+                metadata.Add("evalReasonDetails", Eval.Details);
             }
             if (!string.IsNullOrEmpty(Eval.TargetId))
             {
-                metadata.Add("targetId", Eval.TargetId);
+                metadata.Add("evalReasonTargetId", Eval.TargetId);
             }
             return new ResolutionDetails<T>(Key, Value, ErrorType.None,reason, flagMetadata: new ImmutableMetadata(metadata));
         }
