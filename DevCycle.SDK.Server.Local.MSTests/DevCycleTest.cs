@@ -136,6 +136,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = await api.Variable(user, key, false);
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
             var value = await api.VariableValue(user, key, false);
             Assert.IsTrue(value);
@@ -153,6 +156,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual("öé 🐍 ¥", variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
             var value = await api.VariableValue(user, key, "default_value");
             Assert.IsNotNull(value);
@@ -195,8 +201,11 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
+            Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
+            Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
             Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
         }
+
 
         [TestMethod]
         public async Task GetJsonVariableByKeyReturnsDefaultObjectTest()
@@ -234,6 +243,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = result["test"];
             Assert.IsNotNull(variable);
             Assert.IsTrue((Boolean)variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
         }
 
         [TestMethod]
@@ -368,7 +380,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(defaultV.IsStructure, variable.Value.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
                 variable.Value.AsStructure.GetValue("key").AsString);
-            Assert.AreEqual( Reason.Default, variable.Reason);
+            Assert.AreEqual(Reason.Default, variable.Reason);
         }
 
         [TestMethod]
@@ -392,9 +404,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var defaultV = new Value(new Structure(jsonDict));
             var jsonString = JsonSerializer.Serialize(defaultV,
                 new JsonSerializerOptions()
-                    { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
-            var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
                 { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
+            var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
+            { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
             Console.WriteLine(jsonString);
             Assert.AreEqual(defaultV.IsStructure, deserialzed.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
@@ -409,9 +421,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             using DevCycleLocalClient api = getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowBefore = true };
             api.AddEvalHook(hook);
-            
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
-            
+
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
+
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(0, hook.AfterCallCount);
             Assert.AreEqual(1, hook.ErrorCallCount);
@@ -430,9 +442,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             using DevCycleLocalClient api = getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowAfter = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -452,9 +464,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             using DevCycleLocalClient api = getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowError = true, ThrowAfter = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -474,9 +486,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             using DevCycleLocalClient api = getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowFinally = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -496,9 +508,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             using DevCycleLocalClient api = getTestClient();
             TestEvalHook hook = new TestEvalHook();
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -521,9 +533,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             api.AddEvalHook(hook1);
             api.AddEvalHook(hook2);
             api.ClearEvalHooks();
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(0, hook1.BeforeCallCount);
             Assert.AreEqual(0, hook1.AfterCallCount);
@@ -546,12 +558,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 EvalHooks = [hook]
             };
             using DevCycleLocalClient api = getTestClient(options);
-            
+
             await Task.Delay(3000);
             var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
-            Assert.AreEqual(1, hook.AfterCallCount); 
+            Assert.AreEqual(1, hook.AfterCallCount);
             Assert.AreEqual(0, hook.ErrorCallCount);
             Assert.AreEqual(1, hook.FinallyCallCount);
             Assert.IsNotNull(result);
@@ -572,7 +584,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 EvalHooks = [hook1, hook2]
             };
             using DevCycleLocalClient api = getTestClient(options);
-            
+
             await Task.Delay(3000);
             var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 

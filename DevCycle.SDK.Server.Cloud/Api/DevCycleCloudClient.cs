@@ -147,6 +147,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 catch (InvalidCastException)
                 {
                     variable = new Variable<T>(lowerKey, defaultValue);
+                    variable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.TypeMismatch);
                     logger.LogWarning($"Type mismatch for variable {key}. " +
                                       $"Expected {type}, got {variableResponse.Type}");
                 }
@@ -171,9 +172,11 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 {
                     logger.LogError(e, "Failed to retrieve variable value, using default.");
                     variable = new Variable<T>(lowerKey, defaultValue);
+                    variable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.Error);
                 }
                 await evalHooksRunner.RunErrorAsync(reversedHooks, hookContext, e);
-            } finally
+            }
+            finally
             {
                 await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, variable);
             }

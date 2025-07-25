@@ -1,0 +1,93 @@
+using System;
+using System.Runtime.Serialization;
+using System.Text;
+using Newtonsoft.Json;
+
+namespace DevCycle.SDK.Server.Common.Model
+{
+    /// <summary>
+    /// Evaluation reasons constants
+    /// </summary>
+    public static class EvalReasons
+    {
+        public const string DEFAULT = "DEFAULT";
+    }
+
+
+    /// <summary>
+    /// Default reason details constants
+    /// </summary>
+    public static class DefaultReasonDetails
+    {
+        public const string MissingConfig = "Missing Config";
+        public const string UserNotTargeted = "User Not Targeted";
+        public const string TypeMismatch = "Variable Type Mismatch";
+        public const string Error = "Error";
+    }
+
+    [DataContract]
+    public class EvalReason
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EvalReason" /> class.
+        /// </summary>
+        /// <param name="reason">The evaluation reason.</param>
+        /// <param name="details">Additional details about the evaluation.</param>
+        /// <param name="targetId">Target identifier for the evaluation.</param>
+        [JsonConstructor]
+        public EvalReason(string reason, string details = null, string targetId = null)
+        {
+            Reason = reason;
+            Details = details;
+            TargetId = targetId;
+        }
+
+        /// <summary>
+        /// The evaluation reason
+        /// </summary>
+        /// <value>The evaluation reason</value>
+        [DataMember(Name = "reason", EmitDefaultValue = false)]
+        [JsonProperty("reason")]
+        public string Reason { get; set; }
+
+        /// <summary>
+        /// Additional details about the evaluation
+        /// </summary>
+        /// <value>Additional details about the evaluation</value>
+        [DataMember(Name = "details", EmitDefaultValue = false)]
+        [JsonProperty("details", NullValueHandling = NullValueHandling.Ignore)]
+        public string Details { get; set; }
+
+        /// <summary>
+        /// TargetId for the evaluation
+        /// </summary>
+        /// <value>TargetId for the evaluation</value>
+        [DataMember(Name = "target_id", EmitDefaultValue = false)]
+        [JsonProperty("target_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string TargetId { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class EvalReason {\n");
+            sb.Append("  Reason: ").Append(Reason).Append("\n");
+            sb.Append("  Details: ").Append(Details).Append("\n");
+            sb.Append("  TargetId: ").Append(TargetId).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public virtual string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+    }
+}

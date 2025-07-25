@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -42,13 +43,16 @@ namespace DevCycle.SDK.Server.Common.Model
         public TypeEnum Type { get; set; }
 
         public string Key { get; set; }
-        
+
         public bool IsDefaulted { get; set; }
 
+        [Obsolete("use Eval")]
         public string EvalReason { get; set; }
 
+        public EvalReason Eval { get; set; }
+
     }
-    
+
     public static class VariableHelper
     {
         public static Variable<T> Convert<T>(this Variable<object> variable)
@@ -56,9 +60,10 @@ namespace DevCycle.SDK.Server.Common.Model
             var defaultValue = variable.DefaultValue;
             var value = variable.Value;
 
-            return new Variable<T>(variable.Key, (T) value, (T) defaultValue)
+            return new Variable<T>(variable.Key, (T)value, (T)defaultValue, variable.Eval)
             {
                 IsDefaulted = variable.IsDefaulted,
+
             };
         }
     }

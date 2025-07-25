@@ -17,7 +17,7 @@ namespace DevCycle.SDK.Server.Common.Model
         /// <param name="key">Unique key by Project, can be used in the SDK / API to reference by &#x27;key&#x27; rather than _id. (required).</param>
         /// <param name="type">Variable type (required).</param>
         /// <param name="value">Variable value can be a string, number, boolean, or JSON (required).</param>
-        public Variable(string key = default, T value = default, T defaultValue = default)
+        public Variable(string key = default, T value = default, T defaultValue = default, EvalReason evalReason = default)
         {
             // to ensure "key" is required (not null)
 
@@ -34,6 +34,7 @@ namespace DevCycle.SDK.Server.Common.Model
                                "defaultValue is a required property for Variable and cannot be null");
 
             IsDefaulted = false;
+            Eval = evalReason;
         }
 
         public Variable(string key, T defaultValue)
@@ -59,7 +60,7 @@ namespace DevCycle.SDK.Server.Common.Model
         {
         }
 
-        public static Variable<T> InitializeFromVariable(Variable<T> variable, string key, T defaultValue)
+        public static Variable<T> InitializeFromVariable(Variable<T> variable, string key, T defaultValue, string defaultReasonDetails = null)
         {
             var returnVariable = new Variable<T>();
             if (variable != null)
@@ -68,7 +69,7 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.Value = variable.Value;
                 returnVariable.DefaultValue = defaultValue;
                 returnVariable.Type = variable.Type;
-                returnVariable.EvalReason = variable.EvalReason;
+                returnVariable.Eval = variable.Eval;
                 returnVariable.IsDefaulted = false;
             }
             else
@@ -78,6 +79,10 @@ namespace DevCycle.SDK.Server.Common.Model
                 returnVariable.DefaultValue = defaultValue;
                 returnVariable.IsDefaulted = true;
                 returnVariable.Type = DetermineType(defaultValue);
+                if (!string.IsNullOrEmpty(defaultReasonDetails))
+                {
+                    returnVariable.Eval = new EvalReason(EvalReasons.DEFAULT, defaultReasonDetails);
+                }
             }
 
             return returnVariable;
@@ -107,7 +112,15 @@ namespace DevCycle.SDK.Server.Common.Model
         public string Key { get; set; }
 
         [DataMember(Name = "isDefaulted")] public bool IsDefaulted { get; set; }
+        [Obsolete("use Eval")]
         public string EvalReason { get; set; }
+
+        /// <summary>
+        /// Evaluation details
+        /// </summary>
+        /// <value>Evaluation details</value>
+        [DataMember(Name = "eval", EmitDefaultValue = false)]
+        public EvalReason Eval { get; set; }
 
         public static TypeEnum DetermineType(T variableValue)
         {
@@ -148,7 +161,7 @@ namespace DevCycle.SDK.Server.Common.Model
                 throw;
             }
         }
-        
+
         public override bool Equals(object input)
         {
             return Equals(input as Variable<T>);
@@ -164,23 +177,23 @@ namespace DevCycle.SDK.Server.Common.Model
             if (input == null)
                 return false;
 
-            return 
+            return
                 (
                     Key == input.Key ||
                     (Key != null &&
                      Key.Equals(input.Key))
-                ) && 
+                ) &&
                 (
                     Type == input.Type ||
                     Type.Equals(input.Type)
-                ) && 
+                ) &&
                 (
                     (Value != null &&
                      Value.Equals(input.Value))
                 );
         }
-        
-        
+
+
         /// <summary>
         /// Gets the hash code
         /// </summary>
