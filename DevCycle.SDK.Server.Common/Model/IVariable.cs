@@ -60,9 +60,10 @@ namespace DevCycle.SDK.Server.Common.Model
             var defaultValue = variable.DefaultValue;
             var value = variable.Value;
 
-            return new Variable<T>(variable.Key, (T)value, (T)defaultValue)
+            return new Variable<T>(variable.Key, (T)value, (T)defaultValue, variable.Eval)
             {
                 IsDefaulted = variable.IsDefaulted,
+
             };
         }
     }
