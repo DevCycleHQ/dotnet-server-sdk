@@ -308,7 +308,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 eventQueue.QueueAggregateEvent(
                     requestUser,
-                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
+                    new DevCycleEvent(
+                        type: EventTypes.aggVariableDefaulted,
+                        target: key,
+                        metaData: new Dictionary<string, object> { { "evalReason", EvalReasons.DEFAULT } }
+                    ),
                     null
                 );
                 return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig));
@@ -363,7 +367,11 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 eventQueue.QueueAggregateEvent(
                     requestUser,
-                    new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
+                    new DevCycleEvent(
+                        type: EventTypes.aggVariableDefaulted,
+                        target: key,
+                        metaData: new Dictionary<string, object> { { "evalReason", EvalReasons.DEFAULT } }
+                    ),
                     null
                 );
                 return Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig);

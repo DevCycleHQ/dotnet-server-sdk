@@ -13,7 +13,7 @@ namespace DevCycle.SDK.Server.Common.API
     public class DevCycleProvider : FeatureProvider
     {
         private DevCycleBaseClient Client { get; }
-        
+
         public DevCycleProvider(DevCycleBaseClient client)
         {
             Client = client;
@@ -62,11 +62,11 @@ namespace DevCycle.SDK.Server.Common.API
             var jsonValue = Newtonsoft.Json.JsonConvert.SerializeObject(variable.Value);
             var openFeatureValue = JsonSerializer.Deserialize<Value>(jsonValue,
                 new JsonSerializerOptions() { Converters = { new OpenFeatureValueJsonConverter() } });
-            
-            return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None,
-                variable.IsDefaulted ? Reason.Default : Reason.TargetingMatch);
+
+            var details = variable.GetResolutionDetails();
+            return new ResolutionDetails<Value>(flagKey, openFeatureValue, ErrorType.None, details.Reason, flagMetadata: details.FlagMetadata);
         }
-        
+
         public override Task ShutdownAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             Client.Dispose();
@@ -86,8 +86,9 @@ namespace DevCycle.SDK.Server.Common.API
         {
             var user = DevCycleUser.FromEvaluationContext(context);
             var variable = await Client.Variable(user, flagKey, defaultValue);
+
             return variable.GetResolutionDetails();
         }
-        
+
     }
 }

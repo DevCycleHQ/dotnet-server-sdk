@@ -340,6 +340,50 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
                 variable.Value.AsStructure.GetValue("key").AsString);
             Assert.AreEqual(Reason.Default, variable.Reason);
+            Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, variable.FlagMetadata.GetString("evalReasonDetails"));
+        }
+
+        [TestMethod]
+        public async Task TestOpenFeatureEval()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            await OpenFeature.Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
+            FeatureClient client = OpenFeature.Api.Instance.GetClient();
+
+            var user = new DevCycleUser("j_test");
+            string key = "test";
+
+            var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
+            var variable = await client.GetBooleanDetailsAsync(key, false, ctx);
+
+            Assert.IsNotNull(variable);
+            Assert.AreEqual("SPLIT", variable.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("evalReasonDetails"));
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("evalReasonTargetId"));
+        }
+
+        [TestMethod]
+        public async Task TestOpenFeatureEvalJSON()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient(config: Fixtures.ConfigWithJSONValues());
+            await OpenFeature.Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
+            FeatureClient client = OpenFeature.Api.Instance.GetClient();
+
+            var user = new DevCycleUser("j_test");
+            string key = "test";
+
+            var jsonDict = new Dictionary<string, Value>() { { "key", new Value("value") } };
+            var defaultValue = new Value(new Structure(jsonDict));
+
+            var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
+            var variable = await client.GetObjectDetailsAsync(key, defaultValue, ctx);
+
+            var expectedJsonDict = new Dictionary<string, Value>() { { "sample", new Value("A") } };
+            var expectedValue = new Value(new Structure(expectedJsonDict));
+            Assert.AreEqual(expectedValue.AsStructure.GetValue("sample").AsString, variable.Value.AsStructure.GetValue("sample").AsString);
+            Assert.AreEqual("SPLIT", variable.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.FlagMetadata.GetString("evalReasonDetails"));
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.FlagMetadata.GetString("evalReasonTargetId"));
         }
 
         [TestMethod]
