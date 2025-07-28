@@ -114,6 +114,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             StopPolling();
             restClient.Dispose();
+            sseManager?.Dispose();
         }
 
         private void OnInitialized(DevCycleEventArgs e)
@@ -124,17 +125,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private string GetConfigUrl()
         {
-            return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v2/server/{sdkKey}.json";
+            var url = $"{localOptions.CdnUri}{localOptions.CdnSlug}/config/v1/server/{sdkKey}.json";
+            logger.LogDebug("Config URL: {ConfigUrl}", url);
+            return url;
         }
 
-        /**
-         * Fetches the config from the server and stores it in the local bucketing manager.
-         * This method should never throw on recoverable server errors. A 5xx error or other problem will only be
-         * logged. Any error caused by the user (e.g. a 400 error) will be communicated via the initializationEvent
-         * which is passed to the registered callback on the client.
-         *
-         * Unexpected exceptions will still be thrown from here.
-         */
         private async Task FetchConfigAsyncWithTask(uint lastmodified = 0)
         {
             if (!pollingEnabled)
@@ -238,6 +233,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         configEtag = etag;
                         configLastModified = lastModified;
                         Config = res.Content;
+                        
+                        // Extract and store configuration metadata
+                        ExtractAndStoreConfigMetadata(res.Content, etag, lastModified);
+                        
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
                             configEtag, configLastModified);
                         Initialized = true;
@@ -249,6 +248,47 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     }
 
                     break;
+            }
+        }
+
+        private void ExtractAndStoreConfigMetadata(string configContent, string etag, string lastModified)
+        {
+            try
+            {
+                var configMetadata = new ConfigMetadata
+                {
+                    ConfigETag = etag,
+                    ConfigLastModified = lastModified
+                };
+
+                var configDoc = JsonDocument.Parse(configContent);
+                var root = configDoc.RootElement;
+
+                // Extract project metadata
+                if (root.TryGetProperty("project", out var projectElement))
+                {
+                    configMetadata.Project = new ProjectMetadata
+                    {
+                        Id = projectElement.TryGetProperty("_id", out var projectId) ? projectId.GetString() : null,
+                        Key = projectElement.TryGetProperty("key", out var projectKey) ? projectKey.GetString() : null
+                    };
+                }
+
+                // Extract environment metadata
+                if (root.TryGetProperty("environment", out var environmentElement))
+                {
+                    configMetadata.Environment = new EnvironmentMetadata
+                    {
+                        Id = environmentElement.TryGetProperty("_id", out var envId) ? envId.GetString() : null,
+                        Key = environmentElement.TryGetProperty("key", out var envKey) ? envKey.GetString() : null
+                    };
+                }
+
+                localOptions.configMetadata = configMetadata;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "Failed to extract config metadata");
             }
         }
 
@@ -301,8 +341,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void StopPolling()
         {
-            pollingTimer?.Dispose();
             pollingEnabled = false;
+            pollingTimer?.Dispose();
+            pollingTimer = null;
         }
     }
 }

@@ -63,6 +63,9 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         [IgnoreDataMember]
         public List<EvalHook> EvalHooks { get; set; }
+
+        [IgnoreDataMember]
+        internal ConfigMetadata configMetadata { get; set; }
         
         public DevCycleLocalOptions(
             int configPollingIntervalMs = 1000,

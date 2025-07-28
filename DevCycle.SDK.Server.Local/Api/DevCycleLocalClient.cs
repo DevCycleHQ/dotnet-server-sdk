@@ -392,7 +392,7 @@ namespace DevCycle.SDK.Server.Local.Api
             };
 
             Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
-            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
+            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, options.configMetadata);
 
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);
@@ -485,6 +485,27 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.LogError(message);
                 return Task.FromResult(new DevCycleResponse(message));
             }
+        }
+
+        /// <summary>
+        /// GetMetadata returns the current configuration metadata
+        /// Returns error for cloud SDK or when config is not available
+        /// </summary>
+        /// <returns>ConfigMetadata object containing configuration metadata</returns>
+        /// <exception cref="InvalidOperationException">Thrown when metadata is not available</exception>
+        public ConfigMetadata GetMetadata()
+        {
+            if (!configManager.Initialized)
+            {
+                throw new InvalidOperationException("config metadata not available - config not loaded");
+            }
+
+            if (options.configMetadata == null)
+            {
+                throw new InvalidOperationException("config metadata not available - config not loaded");
+            }
+
+            return options.configMetadata;
         }
 
         private DVCUser_PB GetDevCycleUser_PB(DevCycleUser user)
