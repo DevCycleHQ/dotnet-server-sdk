@@ -3,6 +3,9 @@ using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
+using DevCycle.SDK.Server.Common.API;
+using OpenFeature;
+using OpenFeature.Model;
 
 namespace DevCycle.SDK.Server.Local.MSTests;
 
@@ -80,7 +83,7 @@ public class EvalReasonTests
     [TestMethod]
     public async Task OF_Variable_MissingConfig_ReturnsDefaultWithMissingConfigReason()
     {
-        using DevCycleBaseClient devCycleClient = getTestClient(skipInitialize: true);
+        using DevCycleBaseClient devCycleClient = DevCycleTestClient.getTestClient(skipInitialize: true);
         await OpenFeature.Api.Instance.SetProviderAsync(devCycleClient.GetOpenFeatureProvider());
         FeatureClient oFeatureClient = OpenFeature.Api.Instance.GetClient();
         var ctx = EvaluationContext.Builder().Set("user_id", "test_user").Build();
@@ -98,7 +101,7 @@ public class EvalReasonTests
     [TestMethod]
     public async Task OF_Variable_MissingConfig_ReturnsDefaultWithUserNotTargetedReason()
     {
-        using DevCycleBaseClient devCycleClient = getTestClient();
+        using DevCycleBaseClient devCycleClient = DevCycleTestClient.getTestClient();
         await OpenFeature.Api.Instance.SetProviderAsync(devCycleClient.GetOpenFeatureProvider());
         FeatureClient oFeatureClient = OpenFeature.Api.Instance.GetClient();
         var ctx = EvaluationContext.Builder().Set("user_id", "test_user").Build();
