@@ -10,7 +10,6 @@ using DevCycle.SDK.Server.Local.Protobuf;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using DevCycle.SDK.Server.Common.Model;
 using System.Runtime.InteropServices;
 
 namespace DevCycle.SDK.Server.Local.Api
@@ -99,7 +98,7 @@ namespace DevCycle.SDK.Server.Local.Api
             localBucketing.SetPlatformData(platformData.ToJson());
             evalHooksRunner = new EvalHooksRunner(logger, dvcLocalOptions.EvalHooks);
 
-            if(dvcLocalOptions.CdnSlug != "")
+            if (dvcLocalOptions.CdnSlug != "")
             {
                 logger.LogWarning("The config CDN slug is being overriden, please ensure to update the config to v2 according to the config CDN updates documentation.");
 
@@ -159,17 +158,17 @@ namespace DevCycle.SDK.Server.Local.Api
                     else if (entry.Value is string strValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { StringValue = strValue, Type = CustomDataType.Str };
+                        { StringValue = strValue, Type = CustomDataType.Str };
                     }
                     else if (entry.Value is double numValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { DoubleValue = numValue, Type = CustomDataType.Num };
+                        { DoubleValue = numValue, Type = CustomDataType.Num };
                     }
                     else if (entry.Value is bool boolValue)
                     {
                         nullableCustomData.Value[entry.Key] = new CustomDataValue()
-                            { BoolValue = boolValue, Type = CustomDataType.Bool };
+                        { BoolValue = boolValue, Type = CustomDataType.Bool };
                     }
                 }
 
@@ -312,7 +311,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig));
             }
 
             var userPb = GetDevCycleUser_PB(user);
@@ -338,23 +337,17 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 if (variableData == null)
                 {
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.UserNotTargeted));
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-
-                if (variableType != sdkVariable.Type)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
-                }
-
-                existingVariable = GetVariable<T>(sdkVariable, defaultValue);
+                var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
+                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
             }
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
-                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue));
+                return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.Error));
             }
 
             return Task.FromResult(existingVariable);
@@ -373,7 +366,7 @@ namespace DevCycle.SDK.Server.Local.Api
                     new DevCycleEvent(type: EventTypes.aggVariableDefaulted, target: key),
                     null
                 );
-                return Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue);
+                return Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.MissingConfig);
             }
 
             var userPb = GetDevCycleUser_PB(user);
@@ -390,13 +383,13 @@ namespace DevCycle.SDK.Server.Local.Api
                 ShouldTrackEvent = true
             };
 
-            Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue);;
+            Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
             HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
-            
+
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);
             reversedHooks.Reverse();
-            
+
             try
             {
                 System.Exception beforeError = null;
@@ -408,7 +401,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 {
                     beforeError = e;
                 }
-                
+
                 var paramsBuffer = paramsPb.ToByteArray();
 
                 byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams: paramsBuffer);
@@ -416,19 +409,15 @@ namespace DevCycle.SDK.Server.Local.Api
                 if (variableData == null)
                 {
                     logger.LogWarning("Variable data is null, using default value");
+                    existingVariable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.UserNotTargeted);
                     await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable);
                     await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable);
                     return existingVariable;
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-
-                if (variableType != sdkVariable.Type)
-                {
-                    logger.LogWarning("Type of Variable does not match DevCycle configuration. Using default value");
-                } else {
-                    existingVariable = GetVariable<T>(sdkVariable, defaultValue);
-                }
+                var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
+                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
 
                 if (beforeError != null)
                 {
@@ -451,7 +440,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return existingVariable;
         }
 
-    
+
 
         public override async Task<T> VariableValue<T>(DevCycleUser user, string key, T defaultValue)
         {
@@ -508,30 +497,30 @@ namespace DevCycle.SDK.Server.Local.Api
             return userPb;
         }
 
-        private Variable<T> GetVariable<T>(SDKVariable_PB sdkVariable, T defaultValue)
+        private Variable<T> GetVariable<T>(SDKVariable_PB sdkVariable, T defaultValue, EvalReason evalReason)
         {
             Variable<T> existingVariable;
             switch (sdkVariable.Type)
             {
                 case VariableType_PB.Boolean:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
-                        value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue);
+                        value: (T)Convert.ChangeType(sdkVariable.BoolValue, typeof(T)), defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.Number:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
                         value: (T)Convert.ChangeType(sdkVariable.DoubleValue, typeof(T)),
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.String:
                     existingVariable = new Variable<T>(key: sdkVariable.Key,
                         value: (T)Convert.ChangeType(sdkVariable.StringValue, typeof(T)),
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 case VariableType_PB.Json:
                     // T is expected to be a JObject or JArray 
                     var jsonObj = JsonConvert.DeserializeObject<T>(sdkVariable.StringValue);
                     existingVariable = new Variable<T>(key: sdkVariable.Key, value: jsonObj,
-                        defaultValue: defaultValue);
+                        defaultValue: defaultValue, evalReason: evalReason);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown variable type: " + sdkVariable.Type);

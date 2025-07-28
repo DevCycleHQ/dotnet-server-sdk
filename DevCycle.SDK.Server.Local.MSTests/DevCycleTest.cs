@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
-using DevCycle.SDK.Server.Local.ConfigManager;
-using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RichardSzalay.MockHttp;
 using Environment = System.Environment;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -25,40 +18,6 @@ namespace DevCycle.SDK.Server.Local.MSTests
     [TestClass]
     public class DevCycleTest
     {
-        private DevCycleLocalClient getTestClient(DevCycleLocalOptions options = null, string config = null,
-            bool skipInitialize = false)
-        {
-            config ??= new string(Fixtures.Config());
-
-            var mockHttp = new MockHttpMessageHandler();
-
-            mockHttp.When("https://config-cdn*")
-                .Respond(HttpStatusCode.OK, "application/json",
-                    config);
-            mockHttp.When("https://events*")
-                .Respond(HttpStatusCode.Created, "application/json",
-                    "{}");
-            var localBucketing = new LocalBucketing();
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-', '_')}_hash";
-            localBucketing.StoreConfig(sdkKey, config);
-            var configManager = new EnvironmentConfigManager(sdkKey, options ?? new DevCycleLocalOptions(),
-                new NullLoggerFactory(),
-                localBucketing,
-                restClientOptions: new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp });
-            configManager.Initialized = !skipInitialize;
-
-            DevCycleLocalClient api = new DevCycleLocalClientBuilder()
-                .SetLocalBucketing(localBucketing)
-                .SetConfigManager(configManager)
-                .SetRestClientOptions(new DevCycleRestClientOptions() { ConfigureMessageHandler = _ => mockHttp })
-                .SetOptions(options ?? new DevCycleLocalOptions())
-                .SetSDKKey(sdkKey)
-                .SetLogger(loggerFactory)
-                .Build();
-            return api;
-        }
-
         [TestMethod]
         public async Task CustomCDNURITest()
         {
@@ -108,7 +67,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetFeaturesTest()
         {
-            var api = getTestClient();
+            var api = DevCycleTestClient.getTestClient();
             var user = new DevCycleUser("j_test");
             user.Country = "CA";
             user.Language = "en";
@@ -127,7 +86,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeyTestAsync()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
             var user = new DevCycleUser("j_test");
             string key = "test";
@@ -136,6 +95,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = await api.Variable(user, key, false);
             Assert.IsNotNull(variable);
             Assert.IsTrue(variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
             var value = await api.VariableValue(user, key, false);
             Assert.IsTrue(value);
@@ -144,7 +106,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeySpecialCharactersTestAsync()
         {
-            using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithSpecialCharacters());
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient(config: Fixtures.ConfigWithSpecialCharacters());
             var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
@@ -153,6 +115,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.IsNotNull(variable);
             Assert.IsNotNull(variable.Value);
             Assert.AreEqual("öé 🐍 ¥", variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
 
             var value = await api.VariableValue(user, key, "default_value");
             Assert.IsNotNull(value);
@@ -162,7 +127,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariableByKeyJsonObjTestAsync()
         {
-            using DevCycleLocalClient api = getTestClient(config: Fixtures.ConfigWithJSONValues());
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient(config: Fixtures.ConfigWithJSONValues());
             var user = new DevCycleUser("j_test");
             string key = Fixtures.VariableKey;
             await Task.Delay(3000);
@@ -183,7 +148,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetJsonVariableByKeyReturnsDefaultArrayTest()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
             var user = new DevCycleUser("j_test");
             string key = "json";
@@ -195,13 +160,16 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsDefaulted);
+            Assert.AreEqual(EvalReasons.DEFAULT, result.Eval.Reason);
+            Assert.AreEqual(DefaultReasonDetails.UserNotTargeted, result.Eval.Details);
             Assert.AreEqual(expectedValue.ToString(), result.Value.ToString());
         }
+
 
         [TestMethod]
         public async Task GetJsonVariableByKeyReturnsDefaultObjectTest()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
             var user = new DevCycleUser("j_test");
             string key = "json";
@@ -222,7 +190,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task GetVariablesTest()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
             DevCycleUser user = new DevCycleUser("j_test");
             // Bucketing needs time to work.
@@ -234,12 +202,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var variable = result["test"];
             Assert.IsNotNull(variable);
             Assert.IsTrue((Boolean)variable.Value);
+            Assert.AreEqual("SPLIT", variable.Eval.Reason);
+            Assert.AreEqual("Random Distribution | All Users", variable.Eval.Details);
+            Assert.AreEqual("621642332ea68943c8833c4d", variable.Eval.TargetId);
         }
 
         [TestMethod]
         public async Task PostEventsTest()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -255,7 +226,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         {
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
-                using DevCycleLocalClient api = getTestClient();
+                using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
                 var variable = api.Variable(null, "some_key", true).Result;
             });
@@ -281,7 +252,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void SetClientCustomDataTest()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
             Dictionary<string, object> customData = new Dictionary<string, object>();
             customData.Add("strProp", "value");
@@ -339,7 +310,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestOpenFeatureInitialization()
         {
-            var dvcClient = getTestClient();
+            var dvcClient = DevCycleTestClient.getTestClient();
             await OpenFeature.Api.Instance.SetProviderAsync(dvcClient.GetOpenFeatureProvider());
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
 
@@ -351,7 +322,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestOpenFeatureJSON()
         {
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             await OpenFeature.Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
             FeatureClient client = OpenFeature.Api.Instance.GetClient();
 
@@ -368,7 +339,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(defaultV.IsStructure, variable.Value.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
                 variable.Value.AsStructure.GetValue("key").AsString);
-            Assert.AreEqual( Reason.Default, variable.Reason);
+            Assert.AreEqual(Reason.Default, variable.Reason);
         }
 
         [TestMethod]
@@ -392,9 +363,9 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var defaultV = new Value(new Structure(jsonDict));
             var jsonString = JsonSerializer.Serialize(defaultV,
                 new JsonSerializerOptions()
-                    { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
-            var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
                 { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
+            var deserialzed = JsonSerializer.Deserialize<Value>(jsonString, new JsonSerializerOptions()
+            { WriteIndented = true, Converters = { new OpenFeatureValueJsonConverter() } });
             Console.WriteLine(jsonString);
             Assert.AreEqual(defaultV.IsStructure, deserialzed.IsStructure);
             Assert.AreEqual(defaultV.AsStructure.GetValue("key").AsString,
@@ -406,12 +377,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task BeforeHookError_ThrowsException()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowBefore = true };
             api.AddEvalHook(hook);
-            
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
-            
+
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
+
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(0, hook.AfterCallCount);
             Assert.AreEqual(1, hook.ErrorCallCount);
@@ -427,12 +398,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task AfterHookError_ThrowsException()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowAfter = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -449,12 +420,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task ErrorHookError_ThrowsException()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowError = true, ThrowAfter = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -471,12 +442,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task FinallyHookError_ThrowsException()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook = new TestEvalHook() { ThrowFinally = true };
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -493,12 +464,12 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task EvalHooks_NormalExecution()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook = new TestEvalHook();
             api.AddEvalHook(hook);
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
             Assert.AreEqual(1, hook.AfterCallCount);
@@ -515,15 +486,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
         public async Task ClearEvalHooks_RemovesAllHooks()
         {
             const string key = "test";
-            using DevCycleLocalClient api = getTestClient();
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             TestEvalHook hook1 = new TestEvalHook();
             TestEvalHook hook2 = new TestEvalHook();
             api.AddEvalHook(hook1);
             api.AddEvalHook(hook2);
             api.ClearEvalHooks();
-            
+
             await Task.Delay(3000);
-            var result = await api.VariableAsync(new DevCycleUser("test"), key, true); 
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(0, hook1.BeforeCallCount);
             Assert.AreEqual(0, hook1.AfterCallCount);
@@ -545,13 +516,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 EvalHooks = [hook]
             };
-            using DevCycleLocalClient api = getTestClient(options);
-            
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient(options);
+
             await Task.Delay(3000);
             var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
             Assert.AreEqual(1, hook.BeforeCallCount);
-            Assert.AreEqual(1, hook.AfterCallCount); 
+            Assert.AreEqual(1, hook.AfterCallCount);
             Assert.AreEqual(0, hook.ErrorCallCount);
             Assert.AreEqual(1, hook.FinallyCallCount);
             Assert.IsNotNull(result);
@@ -571,8 +542,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
             {
                 EvalHooks = [hook1, hook2]
             };
-            using DevCycleLocalClient api = getTestClient(options);
-            
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient(options);
+
             await Task.Delay(3000);
             var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
 
