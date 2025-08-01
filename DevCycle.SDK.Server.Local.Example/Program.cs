@@ -57,7 +57,7 @@ namespace Example
                 await api.AllVariables(user);
             });
             
-            api.AddEvalHook(new hookTest());
+            api.AddEvalHook(new exampleHook());
 
             Task.Delay(30000).Wait();
         }
@@ -134,7 +134,7 @@ namespace Example
         }
     }
 
-    class hookTest : EvalHook
+    class exampleHook : EvalHook
     {
         public override async Task<DevCycle.SDK.Server.Common.Model.HookContext<T>> BeforeAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, CancellationToken cancellationToken = default)
         {
