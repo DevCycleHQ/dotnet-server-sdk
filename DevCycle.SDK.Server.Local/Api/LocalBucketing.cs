@@ -71,6 +71,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly Function setPlatformDataFunc;
         private readonly Function setClientCustomDataFunc;
         private readonly Function generateBucketedConfigForUserFunc;
+        private readonly Function getConfigMetadataFunc;
 
 
         private Function PinFunc => pinFunc;
@@ -106,6 +107,8 @@ namespace DevCycle.SDK.Server.Local.Api
         private Function SetClientCustomDataFunc => setClientCustomDataFunc;
 
         private Function GenerateBucketedConfigForUserFunc => generateBucketedConfigForUserFunc;
+
+        private Function GetConfigMetadataFunc => getConfigMetadataFunc;
 
         private const int WasmObjectIdString = 1;
         private const int WasmObjectIdUint8Array = 9;
@@ -221,6 +224,7 @@ namespace DevCycle.SDK.Server.Local.Api
             setPlatformDataFunc = GetFunction("setPlatformDataUTF8");
             setClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
             generateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
+            getConfigMetadataFunc = GetFunction("getConfigMetadata");
         
             ReleaseMutex();
         }
@@ -426,6 +430,29 @@ namespace DevCycle.SDK.Server.Local.Api
             
             ReleaseMutex();
             return varJSON;
+        }
+
+        public string GetConfigMetadata(string sdkKey)
+        {
+            WaitForMutex();
+
+            handleError = (message) =>
+            {
+                ReleaseMutex();
+                throw new LocalBucketingException(message);
+            };
+            
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+
+           var configMetadataAddress=  GetConfigMetadataFunc.Invoke(sdkKeyAddress);
+           string configMetadata = null;
+           if ((int)configMetadataAddress > 0)
+           {
+               configMetadata = ReadAssemblyScriptString(WASMMemory, (int)configMetadataAddress);
+           }
+           
+           ReleaseMutex();
+           return configMetadata;
         }
 
         public byte[] GetVariableForUserProtobuf(byte[] serializedParams)

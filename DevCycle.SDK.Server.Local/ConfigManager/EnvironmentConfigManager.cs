@@ -13,9 +13,11 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Common.Policies;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
 using Wasmtime;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
 {
@@ -125,6 +127,18 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private string GetConfigUrl()
         {
             return localOptions.CdnSlug != "" ? localOptions.CdnSlug : $"/config/v2/server/{sdkKey}.json";
+        }
+
+        public ConfigMetadata GetConfigMetadata()
+        {
+            ConfigMetadata configMetadata = new ConfigMetadata();
+            var metadata = localBucketing.GetConfigMetadata(this.sdkKey);
+            if (!string.IsNullOrEmpty(metadata))
+            {
+                Console.WriteLine(metadata);
+                configMetadata = JsonConvert.DeserializeObject<ConfigMetadata>(metadata);
+            }
+            return configMetadata;
         }
 
         /**

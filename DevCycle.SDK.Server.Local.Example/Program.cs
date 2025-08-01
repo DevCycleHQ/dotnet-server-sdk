@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
+using DevCycle.SDK.Server.Local.Api;
 using Microsoft.Extensions.Logging;
 using OpenFeature;
 using OpenFeature.Model;
@@ -55,8 +56,8 @@ namespace Example
                     : "Events flushed successfully");
                 await api.AllVariables(user);
             });
-
             
+            api.AddEvalHook(new hookTest());
 
             Task.Delay(30000).Wait();
         }
@@ -70,7 +71,7 @@ namespace Example
                 Console.WriteLine(entry.Key + " : " + entry.Value);
             }
 
-            Console.WriteLine((await api.Variable(user, "test-variable", true)).ToString());
+            Console.WriteLine((await api.Variable(user, "example-text", "")).Value.ToString());
             Console.WriteLine(await api.AllVariables(user));
             
             
@@ -102,21 +103,65 @@ namespace Example
                 switch (readOnlyVariable.Value.Type)
                 {
                     case "String":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- "+ (await oFeatureClient.GetStringDetailsAsync(readOnlyVariable.Key, "default", ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " +
+                                          (await oFeatureClient.GetStringDetailsAsync(readOnlyVariable.Key, "default",
+                                              ctx)).Reason);
                         break;
                     case "Number":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetDoubleDetailsAsync(readOnlyVariable.Key, 0d, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " +
+                                          (await oFeatureClient.GetDoubleDetailsAsync(readOnlyVariable.Key, 0d, ctx))
+                                          .Reason);
                         break;
                     case "JSON":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " + (await oFeatureClient.GetObjectDetailsAsync(readOnlyVariable.Key, null, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " +
+                                          (await oFeatureClient.GetObjectDetailsAsync(readOnlyVariable.Key, null, ctx))
+                                          .Reason);
                         break;
                     case "Boolean":
-                        Console.WriteLine(readOnlyVariable.Key + " ---- " +  (await oFeatureClient.GetBooleanDetailsAsync(readOnlyVariable.Key, false, ctx)).Reason);
+                        Console.WriteLine(readOnlyVariable.Key + " ---- " +
+                                          (await oFeatureClient.GetBooleanDetailsAsync(readOnlyVariable.Key, false,
+                                              ctx)).Reason);
                         break;
                 }
             }
+            Console.WriteLine(api.GetConfigMetadata().ToString());
+            
+            var variable = await api.VariableAsync(user, "exmaple-text", "default");
+            Console.WriteLine(variable);
+            
             // End openfeature example
             api.Dispose();
         }
+    }
+
+    class hookTest : EvalHook
+    {
+        public override async Task<DevCycle.SDK.Server.Common.Model.HookContext<T>> BeforeAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, CancellationToken cancellationToken = default)
+        {
+            Console.WriteLine("BeforeAsync");
+            Console.WriteLine(context.Metadata.Project.Id);
+            return await base.BeforeAsync(context, cancellationToken);
+        }
+
+        public override async Task AfterAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> details, CancellationToken cancellationToken = default)
+        {
+            Console.WriteLine("AfterAsync");
+            Console.WriteLine(context.Metadata.Project.Key);
+            await base.AfterAsync(context, details, cancellationToken);
+        }
+
+        public override async Task ErrorAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Exception error, CancellationToken cancellationToken = default)
+        {
+            Console.WriteLine("ErrorAsync");
+            Console.WriteLine(context.Metadata.Environment.Key);
+            await base.ErrorAsync(context, error, cancellationToken);
+        }
+
+        public override async Task FinallyAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> evaluationDetails, CancellationToken cancellationToken = default)
+        {
+            Console.WriteLine("FinallyAsync");
+            Console.WriteLine(context.Metadata.Environment.Id);
+            await base.FinallyAsync(context, evaluationDetails, cancellationToken);
+        }   
     }
 }

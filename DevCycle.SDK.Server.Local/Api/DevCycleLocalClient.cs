@@ -126,6 +126,11 @@ namespace DevCycle.SDK.Server.Local.Api
             evalHooksRunner.ClearHooks();
         }
 
+        public ConfigMetadata GetConfigMetadata()
+        { 
+            return configManager.GetConfigMetadata();
+        }
+
         private NullableString CreateNullableString(string value)
         {
             return value == null
@@ -390,9 +395,10 @@ namespace DevCycle.SDK.Server.Local.Api
                 VariableType = variableType,
                 ShouldTrackEvent = true
             };
+            var configMetadata = configManager.GetConfigMetadata();
 
             Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
-            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
+            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, configMetadata );
 
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);

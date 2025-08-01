@@ -117,9 +117,9 @@ namespace DevCycle.SDK.Server.Cloud.Api
             if (options.EnableEdgeDB) queryParams.Add("enableEdgeDB", "true");
 
             Variable<T> variable = new Variable<T>(lowerKey, defaultValue);
-
+            var metadata = new ConfigMetadata();
             TypeEnum type = Common.Model.Variable<T>.DetermineType(defaultValue);
-            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null);
+            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, metadata);
 
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);
