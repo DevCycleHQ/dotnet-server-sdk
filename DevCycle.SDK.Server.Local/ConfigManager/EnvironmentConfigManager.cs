@@ -135,7 +135,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             var metadata = localBucketing.GetConfigMetadata(this.sdkKey);
             if (!string.IsNullOrEmpty(metadata))
             {
-                Console.WriteLine(metadata);
                 configMetadata = JsonConvert.DeserializeObject<ConfigMetadata>(metadata);
             }
             return configMetadata;
