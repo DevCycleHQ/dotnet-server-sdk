@@ -54,14 +54,14 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public async Task RunAfterAsync<T>(List<EvalHook> hooksList, HookContext<T> context,
-            Variable<T> details,
+            Variable<T> details, VariableMetadata variableMetadata,
             CancellationToken cancellationToken = default)
         {
             try
             {
                 foreach (var hook in hooksList)
                 {
-                    await hook.AfterAsync(context, details, cancellationToken);
+                    await hook.AfterAsync(context, details, variableMetadata, cancellationToken);
                 }
             } catch (System.Exception e)    
             {
@@ -86,14 +86,14 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public async Task RunFinallyAsync<T>(List<EvalHook> hooksList, HookContext<T> context,
-            Variable<T> evaluationDetails,
+            Variable<T> evaluationDetails, VariableMetadata variableMetadata,
             CancellationToken cancellationToken = default)
         {
             try
             {
                 foreach (var hook in hooksList)
                 {
-                    await hook.FinallyAsync(context, evaluationDetails, cancellationToken);
+                    await hook.FinallyAsync(context, evaluationDetails, variableMetadata, cancellationToken);
                 }
             } catch (System.Exception e)
             {

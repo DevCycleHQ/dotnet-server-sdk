@@ -156,7 +156,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 {
                     throw beforeHookError;
                 }
-                await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, variable);
+                await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, variable, null);
             }
             catch (Exception e)
             {
@@ -178,7 +178,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             }
             finally
             {
-                await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, variable);
+                await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, variable, null);
             }
 
             return variable;

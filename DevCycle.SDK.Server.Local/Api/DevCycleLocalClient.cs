@@ -396,6 +396,7 @@ namespace DevCycle.SDK.Server.Local.Api
                 ShouldTrackEvent = true
             };
             var configMetadata = configManager.GetConfigMetadata();
+            VariableMetadata variableMetadata = new VariableMetadata();
 
             Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
             HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, configMetadata );
@@ -424,20 +425,22 @@ namespace DevCycle.SDK.Server.Local.Api
                 {
                     logger.LogWarning("Variable data is null, using default value");
                     existingVariable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.UserNotTargeted);
-                    await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable);
-                    await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable);
+                    await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
+                    await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
                     return existingVariable;
                 }
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
                 var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
                 existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
+                string featureValue = sdkVariable.Feature?.IsNull == false ? sdkVariable.Feature.Value : null;
+                variableMetadata.FeatureId = featureValue;
 
                 if (beforeError != null)
                 {
                     throw beforeError;
                 }
-                await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable);
+                await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
             }
             catch (Exception e)
             {
@@ -449,7 +452,7 @@ namespace DevCycle.SDK.Server.Local.Api
             }
             finally
             {
-                await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable);
+                await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
             }
             return existingVariable;
         }
