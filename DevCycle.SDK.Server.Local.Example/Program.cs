@@ -70,6 +70,12 @@ namespace Example
             {
                 Console.WriteLine(entry.Key + " : " + entry.Value);
             }
+            var resultVar = await api.AllVariables(user);
+
+            foreach (var entry in resultVar)
+            {
+                Console.WriteLine(entry.Key + " : " + entry.Value);
+            }
 
             Console.WriteLine((await api.Variable(user, "example-text", "")).Value.ToString());
             Console.WriteLine(await api.AllVariables(user));
@@ -126,7 +132,7 @@ namespace Example
             }
             Console.WriteLine(api.GetConfigMetadata().ToString());
             
-            var variable = await api.VariableAsync(user, "exmaple-text", "default");
+            var variable = await api.VariableAsync(user, "example-text", "default");
             Console.WriteLine(variable);
             
             // End openfeature example
@@ -143,11 +149,12 @@ namespace Example
             return await base.BeforeAsync(context, cancellationToken);
         }
 
-        public override async Task AfterAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> details, CancellationToken cancellationToken = default)
+        public override async Task AfterAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> details, VariableMetadata variableMetadata, CancellationToken cancellationToken = default)
         {
             Console.WriteLine("AfterAsync");
             Console.WriteLine(context.Metadata.Project.Key);
-            await base.AfterAsync(context, details, cancellationToken);
+            Console.WriteLine(variableMetadata.FeatureId);
+            await base.AfterAsync(context, details, variableMetadata, cancellationToken);
         }
 
         public override async Task ErrorAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Exception error, CancellationToken cancellationToken = default)
@@ -157,11 +164,12 @@ namespace Example
             await base.ErrorAsync(context, error, cancellationToken);
         }
 
-        public override async Task FinallyAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> evaluationDetails, CancellationToken cancellationToken = default)
+        public override async Task FinallyAsync<T>(DevCycle.SDK.Server.Common.Model.HookContext<T> context, Variable<T> evaluationDetails, VariableMetadata variableMetadata,  CancellationToken cancellationToken = default)
         {
             Console.WriteLine("FinallyAsync");
             Console.WriteLine(context.Metadata.Environment.Id);
-            await base.FinallyAsync(context, evaluationDetails, cancellationToken);
+            Console.WriteLine(variableMetadata.FeatureId);
+            await base.FinallyAsync(context, evaluationDetails, variableMetadata, cancellationToken);
         }   
     }
 }
