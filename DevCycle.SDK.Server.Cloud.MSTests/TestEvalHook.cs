@@ -47,14 +47,14 @@ public class TestEvalHook : EvalHook
                 await base.ErrorAsync(context, error, cancellationToken);
             }
 
-            public override async Task FinallyAsync<T>(HookContext<T> context, Variable<T> evaluationDetails,VariableMetadata variableMetadata,  CancellationToken cancellationToken = default)
+            public override async Task FinallyAsync<T>(HookContext<T> context, Variable<T> evaluationDetails, VariableMetadata variableMetadata,  CancellationToken cancellationToken = default)
             {
                 FinallyCallCount++;
                 if (ThrowFinally)
                 {
                     throw new Exception("Finally hook error");
                 }
-                await base.FinallyAsync(context, evaluationDetails,variableMetadata, cancellationToken);
+                await base.FinallyAsync(context, evaluationDetails, variableMetadata, cancellationToken);
             }
         }
 }
