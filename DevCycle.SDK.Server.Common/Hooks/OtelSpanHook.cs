@@ -38,7 +38,8 @@ namespace DevCycle.SDK.Server.Common.Hooks
             var activity = Activity.Current;
             if (activity != null && variableDetails != null)
             {
-                activity.SetTag("feature_flag.result.variant", variableDetails.Value?.ToString());
+                // should variant be the value? what if it is json?
+                // activity.SetTag("feature_flag.result.variant", variableDetails.Value?.ToString());
                 activity.SetTag("feature_flag.set.id", variableMetadata.FeatureId);
                 activity.SetTag("feature_flag.url", $"https://app.devcycle.com/r/p/{context.Metadata.Project.Id}/f/{variableMetadata.FeatureId}");
 
