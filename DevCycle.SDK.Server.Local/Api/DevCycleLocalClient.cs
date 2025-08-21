@@ -127,7 +127,7 @@ namespace DevCycle.SDK.Server.Local.Api
         }
 
         public ConfigMetadata GetConfigMetadata()
-        { 
+        {
             return configManager.GetConfigMetadata();
         }
 
@@ -399,7 +399,7 @@ namespace DevCycle.SDK.Server.Local.Api
             VariableMetadata variableMetadata = new VariableMetadata();
 
             Variable<T> existingVariable = Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue); ;
-            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, configMetadata );
+            HookContext<T> hookContext = new HookContext<T>(user, key, defaultValue, null, configMetadata);
 
             var hooks = evalHooksRunner.GetHooks();
             var reversedHooks = new List<EvalHook>(hooks);
@@ -426,7 +426,6 @@ namespace DevCycle.SDK.Server.Local.Api
                     logger.LogWarning("Variable data is null, using default value");
                     existingVariable.Eval = new EvalReason(EvalReasons.DEFAULT, DefaultReasonDetails.UserNotTargeted);
                     await evalHooksRunner.RunAfterAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
-                    await evalHooksRunner.RunFinallyAsync(reversedHooks, hookContext, existingVariable, variableMetadata);
                     return existingVariable;
                 }
 

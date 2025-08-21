@@ -527,6 +527,28 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
+        public async Task EvalHooks_Defaulted()
+        {
+            const string key = "should-default";
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            TestEvalHook hook = new TestEvalHook();
+            api.AddEvalHook(hook);
+
+            await Task.Delay(3000);
+            var result = await api.VariableAsync(new DevCycleUser("test"), key, true);
+
+            Assert.IsTrue(result.IsDefaulted);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(key, result.Key);
+            Assert.AreEqual(true, result.DefaultValue);
+            Assert.AreEqual(TypeEnum.Boolean, result.Type);
+            Assert.AreEqual(1, hook.BeforeCallCount);
+            Assert.AreEqual(1, hook.AfterCallCount);
+            Assert.AreEqual(0, hook.ErrorCallCount);
+            Assert.AreEqual(1, hook.FinallyCallCount);
+        }
+
+        [TestMethod]
         public async Task ClearEvalHooks_RemovesAllHooks()
         {
             const string key = "test";
