@@ -13,6 +13,7 @@ using DevCycle.SDK.Server.Common.Model.Local;
 using DevCycle.SDK.Server.Common.Policies;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 using ErrorResponse = DevCycle.SDK.Server.Common.Model.ErrorResponse;
 

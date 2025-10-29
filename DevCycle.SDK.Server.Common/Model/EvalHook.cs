@@ -11,7 +11,7 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public virtual Task AfterAsync<T>(HookContext<T> context,
-            Variable<T> details,
+            Variable<T> details, VariableMetadata variableMetadata,
             CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
@@ -25,7 +25,7 @@ namespace DevCycle.SDK.Server.Common.Model
         }
 
         public virtual Task FinallyAsync<T>(HookContext<T> context,
-            Variable<T> evaluationDetails,
+            Variable<T> evaluationDetails,  VariableMetadata variableMetadata,
             CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
