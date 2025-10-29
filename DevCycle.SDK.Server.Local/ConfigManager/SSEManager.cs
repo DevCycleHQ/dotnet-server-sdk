@@ -1,17 +1,16 @@
 using System;
-using System.Threading.Tasks;
 using LaunchDarkly.EventSource;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
 {
-    public class SSEManager
+    public class SSEManager : IDisposable
     {
         private EventSource sseClient { get; set; }
         private string sseUri { get; set; }
-        private EventHandler<StateChangedEventArgs> stateHandler { get; set; }
-        private EventHandler<MessageReceivedEventArgs> messageHandler { get; set; }
-        private EventHandler<ExceptionEventArgs> errorHandler { get; set; }
-        
+        private readonly EventHandler<StateChangedEventArgs> stateHandler;
+        private readonly EventHandler<MessageReceivedEventArgs> messageHandler;
+        private readonly EventHandler<ExceptionEventArgs> errorHandler;
+        private bool disposed = false;
         
         public SSEManager(string sseUri, EventHandler<StateChangedEventArgs> stateHandler,
             EventHandler<MessageReceivedEventArgs> messageHandler, EventHandler<ExceptionEventArgs> errorHandler)
@@ -23,29 +22,45 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             this.messageHandler = messageHandler;
             this.errorHandler = errorHandler;
             
-            sseClient.Closed += stateHandler;
-            sseClient.Opened += stateHandler;
-            sseClient.Error += errorHandler;
-            sseClient.MessageReceived += messageHandler;
+            AttachHandlers(sseClient);
         }
 
-        public void StartSSE()
+        private void AttachHandlers(EventSource client)
+        {
+            client.Closed += stateHandler;
+            client.Opened += stateHandler;
+            client.Error += errorHandler;
+            client.MessageReceived += messageHandler;
+        }
+
+        private void DetachHandlers(EventSource client)
+        {
+            client.Closed -= stateHandler;
+            client.Opened -= stateHandler;
+            client.Error -= errorHandler;
+            client.MessageReceived -= messageHandler;
+        }
+
+        public virtual void StartSSE()
         {
             sseClient.StartAsync();
         }
-        public void RestartSSE(string uri = null, bool resetBackoffDelay = true)
+        public virtual void RestartSSE(string uri = null, bool resetBackoffDelay = true)
         {
-            if (uri != null && uri != sseUri && uri != "")
+            if (disposed) return;
+            if (!string.IsNullOrEmpty(uri) && uri != sseUri)
             {
                 sseUri = uri;
-                sseClient.Close();
-                
+                try
+                {
+                    DetachHandlers(sseClient);
+                    sseClient.Close();
+                    (sseClient as IDisposable)?.Dispose();
+                }
+                catch {}
                 sseClient = new EventSource(Configuration.Builder(new Uri(uri))
                     .InitialRetryDelay(new TimeSpan(0, 0, 10)).Build());
-                sseClient.MessageReceived += messageHandler;
-                sseClient.Error += errorHandler;
-                sseClient.Closed += stateHandler;
-                sseClient.Opened += stateHandler;
+                AttachHandlers(sseClient);
                 StartSSE();
             }
             else
@@ -56,7 +71,25 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public void CloseSSE()
         {
-            sseClient.Close();
+            if (disposed) return;
+            try
+            {
+                sseClient.Close();
+            }
+            catch {}
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            try
+            {
+                DetachHandlers(sseClient);
+                sseClient.Close();
+                (sseClient as IDisposable)?.Dispose();
+            }
+            catch {}
         }
 
     }
