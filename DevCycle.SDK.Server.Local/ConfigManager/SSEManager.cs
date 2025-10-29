@@ -93,9 +93,12 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             {
                 try
                 {
-                    DetachHandlers(sseClient);
-                    sseClient.Close();
-                    (sseClient as IDisposable)?.Dispose();
+                    if (sseClient != null)
+                    {
+                        DetachHandlers(sseClient);
+                        sseClient.Close();
+                        (sseClient as IDisposable)?.Dispose();
+                    }
                 }
                 catch {}
             }
