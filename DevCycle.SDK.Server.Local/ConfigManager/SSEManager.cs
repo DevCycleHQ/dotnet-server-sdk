@@ -81,15 +81,24 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
             if (disposed) return;
             disposed = true;
-            try
+            if (disposing)
             {
-                DetachHandlers(sseClient);
-                sseClient.Close();
-                (sseClient as IDisposable)?.Dispose();
+                try
+                {
+                    DetachHandlers(sseClient);
+                    sseClient.Close();
+                    (sseClient as IDisposable)?.Dispose();
+                }
+                catch {}
             }
-            catch {}
         }
 
     }
