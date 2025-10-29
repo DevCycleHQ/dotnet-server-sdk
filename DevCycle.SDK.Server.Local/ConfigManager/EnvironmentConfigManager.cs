@@ -122,6 +122,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             sseManager?.CloseSSE();
             (sseManager as IDisposable)?.Dispose();
             restClient.Dispose();
+            fetchLock?.Dispose();
         }
 
         private void OnInitialized(DevCycleEventArgs e)
