@@ -278,7 +278,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         }
                         catch (Exception e)
                         {
-                            logger.LogError($"Failed to set config: {e.Message} {e.InnerException?.Message}");
+                            logger.LogError(e, "Failed to set config: {Message} {InnerMessage}", e.Message, e.InnerException?.Message);
                         }
 
                         break;
