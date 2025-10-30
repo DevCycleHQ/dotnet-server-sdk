@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; internal set; }
         
-        private const int ssePollingIntervalMs = 15 * 60 * 60 * 1000;
+        private const int ssePollingIntervalMs = 15 * 60 * 1000;
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -277,6 +277,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
+            sseManager.RestartSSE();
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
@@ -296,6 +297,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Shutdown:
                     logger.LogInformation("SSE Shutdown");
                     pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    sseManager.RestartSSE();
                     break;
             }
         }

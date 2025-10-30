@@ -13,10 +13,12 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private EventHandler<ExceptionEventArgs> errorHandler { get; set; }
         
         
+        
+        
         public SSEManager(string sseUri, EventHandler<StateChangedEventArgs> stateHandler,
             EventHandler<MessageReceivedEventArgs> messageHandler, EventHandler<ExceptionEventArgs> errorHandler)
         {
-            var sseConfig = Configuration.Builder(new Uri(sseUri)).InitialRetryDelay(new TimeSpan(0, 0, 10)).Build();
+            var sseConfig = Configuration.Builder(new Uri(sseUri)).InitialRetryDelay(TimeSpan.FromSeconds(1)).Build();
             sseClient = new EventSource(sseConfig);
             this.sseUri = sseUri;
             this.stateHandler = stateHandler;
@@ -41,7 +43,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 sseClient.Close();
                 
                 sseClient = new EventSource(Configuration.Builder(new Uri(uri))
-                    .InitialRetryDelay(new TimeSpan(0, 0, 10)).Build());
+                    .InitialRetryDelay(TimeSpan.FromSeconds(1)).Build());
                 sseClient.MessageReceived += messageHandler;
                 sseClient.Error += errorHandler;
                 sseClient.Closed += stateHandler;
