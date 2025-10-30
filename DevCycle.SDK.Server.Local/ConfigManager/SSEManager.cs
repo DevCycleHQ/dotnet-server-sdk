@@ -55,7 +55,34 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public void Dispose()
         {
-            sseClient?.Close();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (sseClient != null)
+                {
+                    // Unsubscribe event handlers
+                    sseClient.Closed -= stateHandler;
+                    sseClient.Opened -= stateHandler;
+                    sseClient.Error -= errorHandler;
+                    sseClient.MessageReceived -= messageHandler;
+
+                    // Dispose or Close sseClient
+                    if (sseClient is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    else
+                    {
+                        sseClient.Close();
+                    }
+                    sseClient = null;
+                }
+            }
         }
     }
 }
