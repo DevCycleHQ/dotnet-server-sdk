@@ -285,7 +285,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
-            sseManager.RestartSSE(resetBackoffDelay: false);
+            sseManager?.RestartSSE(resetBackoffDelay: false);
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
