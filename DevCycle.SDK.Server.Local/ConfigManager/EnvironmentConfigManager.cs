@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; internal set; }
         
-        private const int ssePollingIntervalMs = 15 * 60 * 60 * 1000;
+        private const int ssePollingIntervalMs = 15 * 60 * 1000;
 
         public EnvironmentConfigManager(
             string sdkKey,
@@ -116,6 +116,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             StopPolling();
             restClient.Dispose();
+            sseManager?.Dispose();
         }
 
         private void OnInitialized(DevCycleEventArgs e)
@@ -258,7 +259,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     catch (Exception e)
                     {
                         // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                        logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
+                        logger.LogError(e, "Failed to set config: {EMessage} {InnerExceptionMessage}", e.Message, e.InnerException?.Message);
                     }
 
                     break;
@@ -267,16 +268,24 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private async void SSEMessageHandler(object sender, MessageReceivedEventArgs args)
         {
-            var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
-            if (message.Type is "refetchConfig" or "")
+            try
             {
-                await FetchConfigAsyncWithTask(message.LastModified);
+                var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
+                if (message.Type is "refetchConfig" or "")
+                {
+                    await FetchConfigAsyncWithTask(message.LastModified);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogDebug(e, "Error handling SSE message");
             }
         }
 
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
+            sseManager?.RestartSSE(resetBackoffDelay: false);
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
@@ -284,18 +293,17 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             switch (args.ReadyState)
             {
                 case ReadyState.Raw:
-                    break;
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    
                     pollingTimer = new Timer(FetchConfigAsync, null, ssePollingIntervalMs, ssePollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
                 case ReadyState.Closed:
-                case ReadyState.Shutdown:
-                    logger.LogInformation("SSE Shutdown");
                     pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    break;
+                case ReadyState.Shutdown:
+                    // This is called as part of the normal process when restarting SSE
                     break;
             }
         }
