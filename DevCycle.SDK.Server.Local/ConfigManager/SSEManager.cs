@@ -55,7 +55,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public void Dispose()
         {
-            sseClient.Close();
+            sseClient?.Close();
         }
     }
 }
