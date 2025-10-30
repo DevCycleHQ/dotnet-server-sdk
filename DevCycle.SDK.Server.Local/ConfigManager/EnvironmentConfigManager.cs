@@ -116,6 +116,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             StopPolling();
             restClient.Dispose();
+            sseManager?.Dispose();
         }
 
         private void OnInitialized(DevCycleEventArgs e)
@@ -258,7 +259,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     catch (Exception e)
                     {
                         // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                        logger.LogError($"Failed to set config: {e.Message} {e.InnerException.Message}");
+                        logger.LogError(e, "Failed to set config: {EMessage} {InnerExceptionMessage}", e.Message, e.InnerException.Message);
                     }
 
                     break;
@@ -267,10 +268,17 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private async void SSEMessageHandler(object sender, MessageReceivedEventArgs args)
         {
-            var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
-            if (message.Type is "refetchConfig" or "")
+            try
             {
-                await FetchConfigAsyncWithTask(message.LastModified);
+                var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
+                if (message.Type is "refetchConfig" or "")
+                {
+                    await FetchConfigAsyncWithTask(message.LastModified);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogDebug(e, "Error handling SSE message");
             }
         }
 
@@ -289,15 +297,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    
                     pollingTimer = new Timer(FetchConfigAsync, null, ssePollingIntervalMs, ssePollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
                 case ReadyState.Closed:
-                case ReadyState.Shutdown:
-                    logger.LogInformation("SSE Shutdown");
                     pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
-                    sseManager.RestartSSE();
+                    break;
+                case ReadyState.Shutdown:
+                    // This is called as part of the normal process when restarting SSE
                     break;
             }
         }
