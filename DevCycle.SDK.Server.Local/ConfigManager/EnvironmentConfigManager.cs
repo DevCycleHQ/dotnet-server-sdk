@@ -259,7 +259,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     catch (Exception e)
                     {
                         // This is to catch any exception that is thrown by the SetConfig method if the config is not valid
-                        logger.LogError(e, "Failed to set config: {EMessage} {InnerExceptionMessage}", e.Message, e.InnerException.Message);
+                        logger.LogError(e, "Failed to set config: {EMessage} {InnerExceptionMessage}", e.Message, e.InnerException?.Message);
                     }
 
                     break;
