@@ -24,10 +24,16 @@ jobs:
         with:
           token: ${{ secrets.AUTOMATION_USER_TOKEN }}
           fetch-depth: 0
+      # Get a short-lived NuGet API key
+      - name: NuGet login 
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: devcycle-admin
       - name: Set Secrets
         uses: DevCycleHQ/aws-secrets-action@main
         with:
-          secrets_map: '{"NUGET_API_KEY": "DEVCYCLE_GITHUB_dotnet-server-sdk_NUGET_API_KEY"}'
+          secrets_map: '{}'
           aws_account_id: '134377926370'
       - name: Set Git User Config
         run: |
@@ -86,8 +92,8 @@ jobs:
       - name: Package
         run: dotnet build -c Release
       - name: Publish Local to NuGet
-        run: dotnet nuget push DevCycle.SDK.Server.Local/bin/Release/DevCycle.SDK.Server.Local.*.nupkg -k ${{env.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push DevCycle.SDK.Server.Local/bin/Release/DevCycle.SDK.Server.Local.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Cloud to NuGet
-        run: dotnet nuget push DevCycle.SDK.Server.Cloud/bin/Release/DevCycle.SDK.Server.Cloud.*.nupkg -k ${{env.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push DevCycle.SDK.Server.Cloud/bin/Release/DevCycle.SDK.Server.Cloud.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Common to NuGet
-        run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg -k ${{env.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
