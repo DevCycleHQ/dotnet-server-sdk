@@ -285,7 +285,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
-            sseManager.RestartSSE();
+            sseManager.RestartSSE(resetBackoffDelay: false);
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
@@ -293,7 +293,6 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             switch (args.ReadyState)
             {
                 case ReadyState.Raw:
-                    break;
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:

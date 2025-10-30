@@ -40,7 +40,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 sseClient.Close();
                 
                 sseClient = new EventSource(Configuration.Builder(new Uri(uri))
-                    .InitialRetryDelay(TimeSpan.FromSeconds(1)).Build());
+                    .InitialRetryDelay(TimeSpan.FromSeconds(10)).Build());
                 sseClient.MessageReceived += messageHandler;
                 sseClient.Error += errorHandler;
                 sseClient.Closed += stateHandler;
