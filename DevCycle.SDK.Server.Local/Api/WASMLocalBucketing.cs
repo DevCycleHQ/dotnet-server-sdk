@@ -30,7 +30,7 @@ public class WASMLocalBucketing : ILocalBucketing
     private static string _clientUuid;
     private Func<string, string> handleError;
         
-    private Dictionary<string, int> sdkKeyAddresses;
+    private readonly Dictionary<string, int> sdkKeyAddresses;
 
     private readonly HashSet<int> pinnedAddresses;
 
