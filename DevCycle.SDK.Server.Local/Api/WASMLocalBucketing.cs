@@ -32,7 +32,7 @@ public class WASMLocalBucketing : ILocalBucketing
         
     private Dictionary<string, int> sdkKeyAddresses;
 
-    private HashSet<int> pinnedAddresses;
+    private readonly HashSet<int> pinnedAddresses;
 
     private Engine WASMEngine => wasmEngine;
 
