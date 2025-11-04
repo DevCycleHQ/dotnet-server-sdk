@@ -666,7 +666,7 @@ public class WASMLocalBucketing : ILocalBucketing
         }
         else
         {
-            throw new DevCycleException(new ErrorResponse($"{name} global value from WebAssembly binary is wrong type: " + global.Kind.ToString()));
+            throw new DevCycleException(new ErrorResponse($"{name} global value from WebAssembly binary is wrong type: " + global.Kind));
         }
     }
 }
