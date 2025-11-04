@@ -513,8 +513,8 @@ public class WASMLocalBucketing : ILocalBucketing
         Span<byte> paramSpan = WASMMemory.GetSpan<byte>(paramAddress, data.Length);
         data.CopyTo(paramSpan);
 #elif NETSTANDARD2_1
-            var paramAddress = (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
-            Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
+        var paramAddress = (int)NewFunc.Invoke(Encoding.Unicode.GetByteCount(param), WasmObjectIdString)!;
+        Encoding.Unicode.GetBytes(param, WASMMemory.GetSpan(paramAddress, Encoding.Unicode.GetByteCount(param)));
 #endif
 
         return paramAddress;
