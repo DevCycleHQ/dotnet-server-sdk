@@ -47,7 +47,7 @@ public class WASMLocalBucketing : ILocalBucketing
     private Instance WASMInstance => wasmInstance;
 
     private Random random;
-    private Dictionary<TypeEnum, int> variableTypeMap = new Dictionary<TypeEnum, int>();
+    private readonly Dictionary<TypeEnum, int> variableTypeMap = new Dictionary<TypeEnum, int>();
     private readonly Engine wasmEngine;
     private readonly Module wasmModule;
     private readonly Linker wasmLinker;
