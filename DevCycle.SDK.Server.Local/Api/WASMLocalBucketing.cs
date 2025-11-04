@@ -649,11 +649,11 @@ public class WASMLocalBucketing : ILocalBucketing
         WasmMutex.Release();
     }
         
-    /**
-     * Gets a global value from the WebAssembly binary.
-     * @param name The name of the global value to retrieve.
-     * @returns The value of the global.
-     */
+    /// <summary>
+    /// Gets a global value from the WebAssembly binary.
+    /// </summary>
+    /// <param name="name">The name of the global value to retrieve.</param>
+    /// <returns>The value of the global.</returns>
     private T GetGlobalValue<T>(string name)
     {
         var global = WASMInstance.GetGlobal(name);
