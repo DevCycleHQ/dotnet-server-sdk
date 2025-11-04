@@ -454,7 +454,7 @@ public class WASMLocalBucketing : ILocalBucketing
         return configMetadata;
     }
 
-    public byte[] GetVariableForUserProtobuf(byte[] serializedParams)
+    public byte[] GetVariable(byte[] serializedParams)
     {
         WaitForMutex();
 

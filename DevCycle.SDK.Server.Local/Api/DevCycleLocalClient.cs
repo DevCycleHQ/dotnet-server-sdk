@@ -341,25 +341,32 @@ namespace DevCycle.SDK.Server.Local.Api
             try
             {
                 var paramsBuffer = paramsPb.ToByteArray();
-
-                byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams: paramsBuffer);
-
-                if (variableData == null)
+                try
                 {
-                    return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.UserNotTargeted));
-                }
+                    byte[] variableData = localBucketing.GetVariable(serializedParams: paramsBuffer);
+                    if (variableData == null)
+                    {
+                        return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue,
+                            DefaultReasonDetails.UserNotTargeted));
+                    }
 
-                SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
-                var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
-                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
+                    SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
+                    var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details,
+                        sdkVariable.Eval.TargetId);
+                    existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
+                    return Task.FromResult(existingVariable);
+                }
+                catch (NotImplementedException)
+                {
+                    // C Local bucketing
+                }
             }
             catch (Exception e)
             {
                 logger.LogError("Unexpected exception getting variable: {Exception}", e.Message);
                 return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.Error));
             }
-
-            return Task.FromResult(existingVariable);
+            return Task.FromResult(Common.Model.Variable<T>.InitializeFromVariable(null, key, defaultValue, DefaultReasonDetails.Error));
         }
 
         public async Task<Variable<T>> VariableAsync<T>(DevCycleUser user, string key, T defaultValue)
@@ -387,7 +394,7 @@ namespace DevCycle.SDK.Server.Local.Api
             var type = Common.Model.Variable<T>.DetermineType(defaultValue);
             VariableType_PB variableType = TypeEnumToVariableTypeProtobuf(type);
 
-            VariableForUserParams_PB paramsPb = new VariableForUserParams_PB()
+            VariableForUserParams_PB paramsPb = new VariableForUserParams_PB
             {
                 SdkKey = sdkKey,
                 User = userPb,
@@ -407,19 +414,19 @@ namespace DevCycle.SDK.Server.Local.Api
 
             try
             {
-                System.Exception beforeError = null;
+                Exception beforeError = null;
                 try
                 {
                     hookContext = await evalHooksRunner.RunBeforeAsync(hooks, hookContext);
                 }
-                catch (System.Exception e)
+                catch (Exception e)
                 {
                     beforeError = e;
                 }
 
                 var paramsBuffer = paramsPb.ToByteArray();
 
-                byte[] variableData = localBucketing.GetVariableForUserProtobuf(serializedParams: paramsBuffer);
+                byte[] variableData = localBucketing.GetVariable(serializedParams: paramsBuffer);
 
                 if (variableData == null)
                 {
@@ -431,7 +438,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
                 SDKVariable_PB sdkVariable = SDKVariable_PB.Parser.ParseFrom(variableData);
                 var evalReason = new EvalReason(sdkVariable.Eval.Reason, sdkVariable.Eval.Details, sdkVariable.Eval.TargetId);
-                existingVariable = GetVariable<T>(sdkVariable, defaultValue, evalReason);
+                existingVariable = GetVariable(sdkVariable, defaultValue, evalReason);
                 string featureValue = sdkVariable.Feature?.IsNull == false ? sdkVariable.Feature.Value : null;
                 variableMetadata.FeatureId = featureValue;
 
