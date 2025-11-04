@@ -19,8 +19,8 @@ public interface ILocalBucketing
     public void StoreConfig(string sdkKey, string config);
     public void SetPlatformData(string platformData);
     public string GetVariable(string sdkKey, string userJSON, string key, TypeEnum variableType, bool shouldTrackEvent);
+    public byte[] GetVariable(byte[] serializedParams);
     public string GetConfigMetadata(string sdkKey);
-    public byte[] GetVariableForUserProtobuf(byte[] serializedParams);
     public void SetClientCustomData(string sdkKey, string customData);
     public void StartFlush();
     public void EndFlush();
