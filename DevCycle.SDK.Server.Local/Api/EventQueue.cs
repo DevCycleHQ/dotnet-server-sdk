@@ -18,7 +18,7 @@ namespace DevCycle.SDK.Server.Local.Api
     {
         private readonly DevCycleLocalOptions localOptions;
         private readonly DevCycleEventsApiClient devCycleEventsApiClient;
-        private readonly LocalBucketing localBucketing;
+        private readonly ILocalBucketing localBucketing;
         private readonly string sdkKey;
         private bool closing;
 
@@ -32,7 +32,7 @@ namespace DevCycle.SDK.Server.Local.Api
             string sdkKey,
             DevCycleLocalOptions localOptions,
             ILoggerFactory loggerFactory,
-            LocalBucketing localBucketing,
+            ILocalBucketing localBucketing,
             DevCycleRestClientOptions restClientOptions = null
         )
         {

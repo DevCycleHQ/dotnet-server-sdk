@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly RestClient restClient;
         private readonly ILogger logger;
         private readonly DevCycleEventArgs initializationEvent;
-        private readonly LocalBucketing localBucketing;
+        private readonly ILocalBucketing localBucketing;
         private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
         private EventQueue eventQueue;
@@ -51,7 +51,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             string sdkKey,
             DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
-            LocalBucketing localBucketing,
+            ILocalBucketing localBucketing,
             EventHandler<DevCycleEventArgs> initializedHandler = null,
             DevCycleRestClientOptions restClientOptions = null
         )

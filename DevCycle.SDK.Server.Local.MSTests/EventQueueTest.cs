@@ -41,7 +41,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 builder.AddConsole();
                 builder.SetMinimumLevel(logLevel);
             });
-            var localBucketing = new LocalBucketing();
+            var localBucketing = new WASMLocalBucketing();
             string config = new string(Fixtures.Config());
             localBucketing.StoreConfig(sdkKey, config);
             localBucketing.SetPlatformData(JsonConvert.SerializeObject(new PlatformData()));
