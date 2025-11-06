@@ -18,7 +18,7 @@ namespace DevCycle.SDK.Server.Local.Api
         DevCycleLocalClientBuilder>
     {
         private EnvironmentConfigManager configManager;
-        private LocalBucketing localBucketing;
+        private ILocalBucketing localBucketing;
 
         protected override DevCycleLocalClientBuilder BuilderInstance => this;
 
@@ -28,7 +28,7 @@ namespace DevCycle.SDK.Server.Local.Api
             return this;
         }
 
-        public DevCycleLocalClientBuilder SetLocalBucketing(LocalBucketing localBucketingWrapper)
+        public DevCycleLocalClientBuilder SetLocalBucketing(ILocalBucketing localBucketingWrapper)
         {
             localBucketing = localBucketingWrapper;
             return this;
@@ -43,7 +43,7 @@ namespace DevCycle.SDK.Server.Local.Api
 
         public override DevCycleLocalClient Build()
         {
-            localBucketing ??= new LocalBucketing();
+            localBucketing ??= new WASMLocalBucketing();
 
             options ??= new DevCycleLocalOptions();
 
@@ -71,7 +71,7 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly string sdkKey;
         private readonly EnvironmentConfigManager configManager;
         private readonly EventQueue eventQueue;
-        private readonly LocalBucketing localBucketing;
+        private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
         private readonly Timer timer;
         private bool closing;
@@ -83,7 +83,7 @@ namespace DevCycle.SDK.Server.Local.Api
             DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             EnvironmentConfigManager configManager,
-            LocalBucketing localBucketing,
+            ILocalBucketing localBucketing,
             DevCycleRestClientOptions restClientOptions = null
         )
         {

@@ -45,7 +45,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var sdkKey = $"server-{Guid.NewGuid()}";
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             var cfgManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
-                loggerFactory, new LocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
+                loggerFactory, new WASMLocalBucketing(), restClientOptions: new DevCycleRestClientOptions()
                     { ConfigureMessageHandler = _ => mockHttp },
                 initializedHandler: isError
                     ? (isRetryableError ? DidInitializeSubscriberFailFirstConfigFetch : DidNotInitializeSubscriber)
