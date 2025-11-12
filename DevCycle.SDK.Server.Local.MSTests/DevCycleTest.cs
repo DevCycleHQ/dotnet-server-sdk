@@ -31,7 +31,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 })
                 .SetInitializedSubscriber((_, args) =>
                 {
-                    Assert.IsTrue(args.Errors.Count != 0);
+                    Assert.IsNotEmpty(args.Errors);
                     Console.WriteLine("Failed to get config because: " + args.Errors[0].ErrorResponse);
                 })
                 .SetSDKKey("dvc_server_CustomCDNURITest")
@@ -57,7 +57,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
             await Task.Delay(5000);
             var resp = await api.AllFeatures(new DevCycleUser("test"));
-            Assert.IsTrue(resp.Count > 0);
+            Assert.IsNotEmpty(resp);
             foreach (var (key, value) in resp)
             {
                 Console.WriteLine(key, value);
@@ -77,7 +77,7 @@ namespace DevCycle.SDK.Server.Local.MSTests
             var result = await api.AllFeatures(user);
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, result.Count);
+            Assert.HasCount(1, result);
             Assert.IsNotNull(result["test"]);
             Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationKey));
             Assert.IsFalse(string.IsNullOrEmpty(result["test"].VariationName));
@@ -224,7 +224,8 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void Variable_NullUser_ThrowsException()
         {
-            Assert.ThrowsException<ArgumentNullException>(() =>
+            
+            Assert.Throws<ArgumentNullException>(() =>
             {
                 using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
 
@@ -235,13 +236,13 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public void User_NullUserId_ThrowsException()
         {
-            Assert.ThrowsException<ArgumentException>(() => { _ = new DevCycleUser(); });
+            Assert.Throws<ArgumentException>(() => { _ = new DevCycleUser(); });
         }
 
         [TestMethod]
         public void User_InvalidUserIdLength_ThrowsException()
         {
-            Assert.ThrowsException<ArgumentException>(() =>
+            Assert.Throws<ArgumentException>(() =>
             {
                 _ = new DevCycleUser("Oy0mkUHONE6Qg36DhrOrwbvkCaxiMQPClHsELgFdfdlYCcE0AGyJqgl2tnV6Ago2"
                                      + "7uUXlXvChzLiLHPGRDavA9H82lM47B1pFOW51KQhT9kxLU1PgLfs2NOlekOWldtT9jh"
@@ -288,18 +289,18 @@ namespace DevCycle.SDK.Server.Local.MSTests
             DevCycleUser user = DevCycleUser.FromEvaluationContext(ctx);
 
             Assert.AreEqual(user.UserId, ctx.GetValue("user_id").AsString);
-            Assert.AreEqual(user.CustomData["customkey"], "customValue");
-            Assert.AreEqual(user.PrivateCustomData["privateCustomKey"], "privateCustomValue");
-            Assert.AreEqual(user.Email, "email@email.com");
-            Assert.AreEqual(user.Name, "Name Name");
-            Assert.AreEqual(user.Language, "EN");
-            Assert.AreEqual(user.Country, "CA");
-            Assert.AreEqual(user.AppVersion, "0.0.1");
-            Assert.AreEqual(user.AppBuild, 1);
-            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData"], true);
-            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData2"], "true");
-            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData3"], 1d);
-            Assert.AreEqual(user.CustomData["nonSetValueBubbledCustomData4"], null);
+            Assert.AreEqual("customValue", user.CustomData["customkey"]);
+            Assert.AreEqual("privateCustomValue", user.PrivateCustomData["privateCustomKey"]);
+            Assert.AreEqual("email@email.com", user.Email);
+            Assert.AreEqual("Name Name", user.Name);
+            Assert.AreEqual("EN", user.Language);
+            Assert.AreEqual("CA", user.Country);
+            Assert.AreEqual("0.0.1", user.AppVersion);
+            Assert.AreEqual(1, user.AppBuild);
+            Assert.IsTrue((bool?)user.CustomData["nonSetValueBubbledCustomData"]);
+            Assert.AreEqual("true", user.CustomData["nonSetValueBubbledCustomData2"]);
+            Assert.AreEqual(1d, user.CustomData["nonSetValueBubbledCustomData3"]);
+            Assert.IsNull(user.CustomData["nonSetValueBubbledCustomData4"]);
 
 
             ctx = EvaluationContext.Builder().Set("targetingKey", "test").Build();
