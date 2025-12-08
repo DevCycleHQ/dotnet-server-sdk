@@ -53,17 +53,17 @@ jobs:
         run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj)" >> "$GITHUB_OUTPUT"
       - name: Bump Cloud Version
         id: semverbump-cloud
-        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
         with:
           version: ${{ steps.cloud-version.outputs.version }}
       - name: Bump Common Version
         id: semverbump-common
-        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
         with:
           version: ${{ steps.common-version.outputs.version }}
       - name: Bump Local Version
         id: semverbump-local
-        uses: WyriHaximus/github-action-next-semvers@v1.2.1
+        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
         with:
           version: ${{ steps.local-version.outputs.version }}
       - name: Replace the versions for all SDKs (major)
