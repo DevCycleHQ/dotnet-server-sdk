@@ -263,7 +263,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         configLastModified = lastModified;
                         Config = res.Content;
                         logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, lastmodified: {lastmodified}, fetch method: {pollingMethod}",
-                            configEtag, configLastModified, sseManager == null ? "polling" : "sse");
+                            configEtag, configLastModified, sseConnected ? "sse" : "polling");
                         Initialized = true;
                     }
                     catch (Exception e)
