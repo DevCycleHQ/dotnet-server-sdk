@@ -34,13 +34,16 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly ILocalBucketing localBucketing;
         private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
-        private EventQueue eventQueue;
-        private Timer pollingTimer;
+        private readonly object pollingTimerLock = new object();
+        private EventQueue _eventQueue;
+        private Timer? pollingTimer;
 
         private bool pollingEnabled = true;
-        private SSEManager sseManager;
-        private string configEtag = "";
-        private string configLastModified = "";
+        private bool isDisposed;
+        private bool sseConnected;
+        private SSEManager? sseManager;
+        private string? configEtag = "";
+        private string? configLastModified = "";
 
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; internal set; }
@@ -52,8 +55,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             ILocalBucketing localBucketing,
-            EventHandler<DevCycleEventArgs> initializedHandler = null,
-            DevCycleRestClientOptions restClientOptions = null
+            EventHandler<DevCycleEventArgs>? initializedHandler = null,
+            DevCycleRestClientOptions? restClientOptions = null
         )
         {
             localOptions = dvcLocalOptions;
@@ -87,11 +90,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         internal void SetEventQueue(EventQueue queue)
         {
-            eventQueue = queue;
+            _eventQueue = queue;
         }
 
         public async Task InitializeConfigAsync()
         {
+            // Initialize the timer before any SSE callbacks can attempt to change polling cadence.
+            EnsurePollingTimerExists();
+
             try
             {
                 await FetchConfigAsyncWithTask().ConfigureAwait(false);
@@ -107,13 +113,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 // check if polling is still enabled, we might have hit a non-retryable error
                 if (pollingEnabled)
                 {
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    UpdatePollingTimerInterval(sseConnected ? ssePollingIntervalMs : pollingIntervalMs);
                 }
             }
         }
 
         public void Dispose()
         {
+            isDisposed = true;
             StopPolling();
             restClient.Dispose();
             sseManager?.Dispose();
@@ -149,7 +156,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
          *
          * Unexpected exceptions will still be thrown from here.
          */
-        private async Task FetchConfigAsyncWithTask(uint lastmodified = 0)
+        private async Task FetchConfigAsyncWithTask(string? sseLastModified = null)
         {
             if (!pollingEnabled)
             {
@@ -160,7 +167,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
             var request = new RestRequest(GetConfigUrl());
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
-            if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
+            
+            // Use SSE-provided lastModified if available, otherwise fall back to stored state
+            var requestLastModified = sseLastModified ?? configLastModified;
+            if (requestLastModified != null) request.AddHeader("If-Modified-Since", requestLastModified);
 
             RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
@@ -210,8 +220,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     try
                     {
                         var lastModified = res.ContentHeaders?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified")
-                            ?.Value as string;
-                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value as string;
+                            ?.Value;
+                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value;
                         if (!string.IsNullOrEmpty(configLastModified) && lastModified != null &&
                             !string.IsNullOrEmpty(lastModified))
                         {
@@ -240,7 +250,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                             }
                             else if (sseManager != null && !localOptions.DisableRealtimeUpdates)
                             {
-                                sseManager.RestartSSE(sseUri);
+                                sseManager.UpdateSSEUri(sseUri);
                             }
                         }
                         catch (Exception e)
@@ -252,8 +262,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         configEtag = etag;
                         configLastModified = lastModified;
                         Config = res.Content;
-                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
-                            configEtag, configLastModified);
+                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, lastmodified: {lastmodified}, fetch method: {pollingMethod}",
+                            configEtag, configLastModified, sseConnected ? "sse" : "polling");
                         Initialized = true;
                     }
                     catch (Exception e)
@@ -270,11 +280,21 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             try
             {
-                var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
-                if (message.Type is "refetchConfig" or "")
+                var sseEvent = JsonSerializer.Deserialize<SSEEvent>(args.Message.Data);
+                var messageData = sseEvent?.GetMessageData();
+                if (messageData == null)
                 {
-                    await FetchConfigAsyncWithTask(message.LastModified);
+                    return;
                 }
+
+                // Pass SSE-provided lastModified so the CDN fetch uses it
+                // without updating stored state prematurely.
+                string? sseLastModified = messageData.LastModified > 0
+                    ? DateTimeOffset.FromUnixTimeMilliseconds(messageData.LastModified)
+                        .UtcDateTime.ToString("R")
+                    : null;
+
+                await FetchConfigAsyncWithTask(sseLastModified);
             }
             catch (Exception e)
             {
@@ -285,7 +305,19 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
-            sseManager?.RestartSSE(resetBackoffDelay: false);
+            if (!pollingEnabled || isDisposed)
+            {
+                return;
+            }
+
+            try
+            {
+                sseManager?.RestartSSE(resetBackoffDelay: false);
+            }
+            catch (Exception e)
+            {
+                logger.LogDebug(e, "Failed to restart SSE connection");
+            }
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
@@ -296,11 +328,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    pollingTimer = new Timer(FetchConfigAsync, null, ssePollingIntervalMs, ssePollingIntervalMs);
+                    sseConnected = true;
+                    UpdatePollingTimerInterval(ssePollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
                 case ReadyState.Closed:
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    sseConnected = false;
+                    UpdatePollingTimerInterval(pollingIntervalMs);
                     break;
                 case ReadyState.Shutdown:
                     // This is called as part of the normal process when restarting SSE
@@ -308,7 +342,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
         }
 
-        private async void FetchConfigAsync(object state = null)
+        private async void FetchConfigAsync(object? state = null)
         {
             try
             {
@@ -322,8 +356,47 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void StopPolling()
         {
-            pollingTimer?.Dispose();
-            pollingEnabled = false;
+            lock (pollingTimerLock)
+            {
+                pollingTimer?.Dispose();
+                pollingTimer = null;
+                pollingEnabled = false;
+            }
+        }
+
+        private void EnsurePollingTimerExists()
+        {
+            lock (pollingTimerLock)
+            {
+                if (pollingTimer != null || !pollingEnabled || isDisposed)
+                {
+                    return;
+                }
+
+                pollingTimer = new Timer(FetchConfigAsync, null, Timeout.Infinite, Timeout.Infinite);
+            }
+        }
+
+        private void UpdatePollingTimerInterval(int intervalMs)
+        {
+            lock (pollingTimerLock)
+            {
+                if (!pollingEnabled || isDisposed)
+                {
+                    return;
+                }
+
+                EnsurePollingTimerExists();
+
+                try
+                {
+                    pollingTimer?.Change(intervalMs, intervalMs);
+                }
+                catch (ObjectDisposedException)
+                {
+                    logger.LogDebug("Polling timer was disposed before interval could be updated");
+                }
+            }
         }
     }
 }
