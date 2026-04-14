@@ -34,13 +34,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly ILocalBucketing localBucketing;
         private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
-        private EventQueue eventQueue;
+        private EventQueue _eventQueue;
         private Timer pollingTimer;
 
         private bool pollingEnabled = true;
-        private SSEManager sseManager;
-        private string configEtag = "";
-        private string configLastModified = "";
+        private SSEManager? sseManager;
+        private string? configEtag = "";
+        private string? configLastModified = "";
 
         public virtual string Config { get; private set; }
         public virtual bool Initialized { get; internal set; }
@@ -52,8 +52,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             DevCycleLocalOptions dvcLocalOptions,
             ILoggerFactory loggerFactory,
             ILocalBucketing localBucketing,
-            EventHandler<DevCycleEventArgs> initializedHandler = null,
-            DevCycleRestClientOptions restClientOptions = null
+            EventHandler<DevCycleEventArgs>? initializedHandler = null,
+            DevCycleRestClientOptions? restClientOptions = null
         )
         {
             localOptions = dvcLocalOptions;
@@ -87,7 +87,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         internal void SetEventQueue(EventQueue queue)
         {
-            eventQueue = queue;
+            _eventQueue = queue;
         }
 
         public async Task InitializeConfigAsync()
@@ -149,7 +149,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
          *
          * Unexpected exceptions will still be thrown from here.
          */
-        private async Task FetchConfigAsyncWithTask(uint lastmodified = 0)
+        private async Task FetchConfigAsyncWithTask()
         {
             if (!pollingEnabled)
             {
@@ -210,8 +210,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                     try
                     {
                         var lastModified = res.ContentHeaders?.FirstOrDefault(e => e.Name?.ToLower() == "last-modified")
-                            ?.Value as string;
-                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value as string;
+                            ?.Value;
+                        var etag = res.Headers?.FirstOrDefault(e => e.Name?.ToLower() == "etag")?.Value;
                         if (!string.IsNullOrEmpty(configLastModified) && lastModified != null &&
                             !string.IsNullOrEmpty(lastModified))
                         {
@@ -252,8 +252,8 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         configEtag = etag;
                         configLastModified = lastModified;
                         Config = res.Content;
-                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, {lastmodified}",
-                            configEtag, configLastModified);
+                        logger.LogDebug("Config successfully initialized with etag: {ConfigEtag}, lastmodified: {lastmodified}, fetch method: {pollingMethod}",
+                            configEtag, configLastModified, sseManager == null ? "polling" : "sse");
                         Initialized = true;
                     }
                     catch (Exception e)
@@ -271,9 +271,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             try
             {
                 var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
-                if (message.Type is "refetchConfig" or "")
+                if (message?.Type is "refetchConfig" or "")
                 {
-                    await FetchConfigAsyncWithTask(message.LastModified);
+                    await FetchConfigAsyncWithTask();
                 }
             }
             catch (Exception e)
@@ -296,11 +296,11 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    pollingTimer = new Timer(FetchConfigAsync, null, ssePollingIntervalMs, ssePollingIntervalMs);
+                    pollingTimer.Change(ssePollingIntervalMs, ssePollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
                 case ReadyState.Closed:
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    pollingTimer.Change(pollingIntervalMs, pollingIntervalMs);
                     break;
                 case ReadyState.Shutdown:
                     // This is called as part of the normal process when restarting SSE
@@ -308,7 +308,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
         }
 
-        private async void FetchConfigAsync(object state = null)
+        private async void FetchConfigAsync(object? state = null)
         {
             try
             {

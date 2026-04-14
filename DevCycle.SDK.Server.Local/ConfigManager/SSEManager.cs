@@ -1,12 +1,13 @@
 using System;
 using System.Threading.Tasks;
 using LaunchDarkly.EventSource;
+using Microsoft.Extensions.Logging;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
 {
     public class SSEManager : IDisposable
     {
-        private EventSource sseClient { get; set; }
+        private EventSource? sseClient { get; set; }
         private string sseUri { get; set; }
         private EventHandler<StateChangedEventArgs> stateHandler { get; }
         private EventHandler<MessageReceivedEventArgs> messageHandler { get; }
@@ -32,12 +33,12 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             sseClient.StartAsync();
         }
-        public void RestartSSE(string uri = null, bool resetBackoffDelay = true)
+        public void RestartSSE(string? uri = null, bool resetBackoffDelay = true)
         {
             if (uri != null && uri != sseUri && uri != "")
             {
                 sseUri = uri;
-                sseClient.Close();
+                sseClient?.Close();
                 
                 sseClient = new EventSource(Configuration.Builder(new Uri(uri))
                     .InitialRetryDelay(TimeSpan.FromSeconds(10)).Build());
@@ -49,7 +50,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             }
             else
             {
-                sseClient.Restart(resetBackoffDelay);
+                sseClient?.Restart(resetBackoffDelay);
             }
         }
 
@@ -61,28 +62,25 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                if (sseClient != null)
-                {
-                    // Unsubscribe event handlers
-                    sseClient.Closed -= stateHandler;
-                    sseClient.Opened -= stateHandler;
-                    sseClient.Error -= errorHandler;
-                    sseClient.MessageReceived -= messageHandler;
+            if (!disposing) return;
+            if (sseClient == null) return;
+            
+            // Unsubscribe event handlers
+            sseClient.Closed -= stateHandler;
+            sseClient.Opened -= stateHandler;
+            sseClient.Error -= errorHandler;
+            sseClient.MessageReceived -= messageHandler;
 
-                    // Dispose or Close sseClient
-                    if (sseClient is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                    else
-                    {
-                        sseClient.Close();
-                    }
-                    sseClient = null;
-                }
+            // Dispose or Close sseClient
+            if (sseClient is IDisposable disposable)
+            {
+                disposable.Dispose();
             }
+            else
+            {
+                sseClient.Close();
+            }
+            sseClient = null;
         }
     }
 }
