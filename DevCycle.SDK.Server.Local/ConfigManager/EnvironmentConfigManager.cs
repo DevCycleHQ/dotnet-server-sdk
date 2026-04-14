@@ -156,7 +156,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
          *
          * Unexpected exceptions will still be thrown from here.
          */
-        private async Task FetchConfigAsyncWithTask()
+        private async Task FetchConfigAsyncWithTask(string? sseLastModified = null)
         {
             if (!pollingEnabled)
             {
@@ -167,7 +167,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
             cts.CancelAfter(TimeSpan.FromMilliseconds(requestTimeoutMs));
             var request = new RestRequest(GetConfigUrl());
             if (configEtag != null) request.AddHeader("If-None-Match", configEtag);
-            if (configLastModified != null) request.AddHeader("If-Modified-Since", configLastModified);
+            
+            // Use SSE-provided lastModified if available, otherwise fall back to stored state
+            var requestLastModified = sseLastModified ?? configLastModified;
+            if (requestLastModified != null) request.AddHeader("If-Modified-Since", requestLastModified);
 
             RestResponse res = await ClientPolicy.GetInstance().RetryOncePolicy
                 .ExecuteAsync(() => restClient.ExecuteAsync(request, cts.Token));
@@ -247,7 +250,7 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                             }
                             else if (sseManager != null && !localOptions.DisableRealtimeUpdates)
                             {
-                                sseManager.RestartSSE(sseUri);
+                                sseManager.UpdateSSEUri(sseUri);
                             }
                         }
                         catch (Exception e)
@@ -277,11 +280,21 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             try
             {
-                var message = JsonSerializer.Deserialize<SSEMessage>(args.Message.Data);
-                if (message?.Type is "refetchConfig" or "")
+                var sseEvent = JsonSerializer.Deserialize<SSEEvent>(args.Message.Data);
+                var messageData = sseEvent?.GetMessageData();
+                if (messageData == null)
                 {
-                    await FetchConfigAsyncWithTask();
+                    return;
                 }
+
+                // Pass SSE-provided lastModified so the CDN fetch uses it
+                // without updating stored state prematurely.
+                string? sseLastModified = messageData.LastModified > 0
+                    ? DateTimeOffset.FromUnixTimeMilliseconds(messageData.LastModified)
+                        .UtcDateTime.ToString("R")
+                    : null;
+
+                await FetchConfigAsyncWithTask(sseLastModified);
             }
             catch (Exception e)
             {

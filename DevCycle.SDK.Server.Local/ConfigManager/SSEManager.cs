@@ -1,7 +1,5 @@
 using System;
-using System.Threading.Tasks;
 using LaunchDarkly.EventSource;
-using Microsoft.Extensions.Logging;
 
 namespace DevCycle.SDK.Server.Local.ConfigManager
 {
@@ -33,6 +31,19 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         {
             sseClient.StartAsync();
         }
+        /// <summary>
+        /// Only reconnects if the URI has actually changed. No-op otherwise.
+        /// </summary>
+        public void UpdateSSEUri(string newUri)
+        {
+            if (string.IsNullOrEmpty(newUri) || newUri == sseUri)
+            {
+                return;
+            }
+
+            RestartSSE(newUri);
+        }
+
         public void RestartSSE(string? uri = null, bool resetBackoffDelay = true)
         {
             if (uri != null && uri != sseUri && uri != "")
