@@ -34,10 +34,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private readonly ILocalBucketing localBucketing;
         private readonly EventHandler<DevCycleEventArgs> initializedHandler;
         private readonly DevCycleLocalOptions localOptions;
+        private readonly object pollingTimerLock = new object();
         private EventQueue _eventQueue;
-        private Timer pollingTimer;
+        private Timer? pollingTimer;
 
         private bool pollingEnabled = true;
+        private bool isDisposed;
+        private bool sseConnected;
         private SSEManager? sseManager;
         private string? configEtag = "";
         private string? configLastModified = "";
@@ -92,6 +95,9 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         public async Task InitializeConfigAsync()
         {
+            // Initialize the timer before any SSE callbacks can attempt to change polling cadence.
+            EnsurePollingTimerExists();
+
             try
             {
                 await FetchConfigAsyncWithTask().ConfigureAwait(false);
@@ -107,13 +113,14 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 // check if polling is still enabled, we might have hit a non-retryable error
                 if (pollingEnabled)
                 {
-                    pollingTimer = new Timer(FetchConfigAsync, null, pollingIntervalMs, pollingIntervalMs);
+                    UpdatePollingTimerInterval(sseConnected ? ssePollingIntervalMs : pollingIntervalMs);
                 }
             }
         }
 
         public void Dispose()
         {
+            isDisposed = true;
             StopPolling();
             restClient.Dispose();
             sseManager?.Dispose();
@@ -285,7 +292,19 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
         private void SSEErrorHandler(object sender, ExceptionEventArgs args)
         {
             logger.LogWarning(args.Exception, "SSE Connection Returned an error");
-            sseManager?.RestartSSE(resetBackoffDelay: false);
+            if (!pollingEnabled || isDisposed)
+            {
+                return;
+            }
+
+            try
+            {
+                sseManager?.RestartSSE(resetBackoffDelay: false);
+            }
+            catch (Exception e)
+            {
+                logger.LogDebug(e, "Failed to restart SSE connection");
+            }
         }
 
         private void SSEStateHandler(object sender, StateChangedEventArgs args)
@@ -296,11 +315,13 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                 case ReadyState.Connecting:
                     break;
                 case ReadyState.Open:
-                    pollingTimer.Change(ssePollingIntervalMs, ssePollingIntervalMs);
+                    sseConnected = true;
+                    UpdatePollingTimerInterval(ssePollingIntervalMs);
                     logger.LogInformation("Connected to SSE - setting polling to 15 minutes");
                     break;
                 case ReadyState.Closed:
-                    pollingTimer.Change(pollingIntervalMs, pollingIntervalMs);
+                    sseConnected = false;
+                    UpdatePollingTimerInterval(pollingIntervalMs);
                     break;
                 case ReadyState.Shutdown:
                     // This is called as part of the normal process when restarting SSE
@@ -322,8 +343,47 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
 
         private void StopPolling()
         {
-            pollingTimer?.Dispose();
-            pollingEnabled = false;
+            lock (pollingTimerLock)
+            {
+                pollingTimer?.Dispose();
+                pollingTimer = null;
+                pollingEnabled = false;
+            }
+        }
+
+        private void EnsurePollingTimerExists()
+        {
+            lock (pollingTimerLock)
+            {
+                if (pollingTimer != null || !pollingEnabled || isDisposed)
+                {
+                    return;
+                }
+
+                pollingTimer = new Timer(FetchConfigAsync, null, Timeout.Infinite, Timeout.Infinite);
+            }
+        }
+
+        private void UpdatePollingTimerInterval(int intervalMs)
+        {
+            lock (pollingTimerLock)
+            {
+                if (!pollingEnabled || isDisposed)
+                {
+                    return;
+                }
+
+                EnsurePollingTimerExists();
+
+                try
+                {
+                    pollingTimer?.Change(intervalMs, intervalMs);
+                }
+                catch (ObjectDisposedException)
+                {
+                    logger.LogDebug("Polling timer was disposed before interval could be updated");
+                }
+            }
         }
     }
 }
