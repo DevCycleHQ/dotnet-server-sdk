@@ -240,8 +240,10 @@ namespace DevCycle.SDK.Server.Local.ConfigManager
                         {
                             var minimalConfig = JsonDocument.Parse(res.Content);
                             var sseProp = minimalConfig.RootElement.GetProperty("sse");
-                            var sseUri = sseProp.GetProperty("hostname").GetString() +
-                                         sseProp.GetProperty("path").GetString();
+                            var sseHostname = !string.IsNullOrEmpty(localOptions.SseUri)
+                                ? localOptions.SseUri
+                                : sseProp.GetProperty("hostname").GetString();
+                            var sseUri = sseHostname + sseProp.GetProperty("path").GetString();
                             if (sseManager == null && !localOptions.DisableRealtimeUpdates)
                             {
                                 sseManager = new SSEManager(sseUri, SSEStateHandler, SSEMessageHandler,

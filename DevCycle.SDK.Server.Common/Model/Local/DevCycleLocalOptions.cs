@@ -54,6 +54,14 @@ namespace DevCycle.SDK.Server.Common.Model.Local
 
         [IgnoreDataMember]
         public string EventsApiSlug { get; set; }
+
+        /// <summary>
+        /// Overrides the SSE hostname from the config response. When set, the path
+        /// from the config is preserved but the host is replaced with this value,
+        /// e.g. "http://localhost:9000". Useful for routing SSE through a proxy.
+        /// </summary>
+        [IgnoreDataMember]
+        public string SseUri { get; set; }
         
         [IgnoreDataMember]
         public Dictionary<string, string> CdnCustomHeaders { get; set; }
@@ -80,7 +88,8 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             int eventRequestChunkSize = 100,
             int eventFlushIntervalMs = 10 * 1000,
             bool enableBetaRealtimeUpdates = false,
-            bool disableRealtimeUpdates = false
+            bool disableRealtimeUpdates = false,
+            string sseUri = null
             )
         {
             ConfigPollingIntervalMs = configPollingIntervalMs;
@@ -94,6 +103,7 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             DisableAutomaticEvents = disableAutomaticEvents;
             DisableCustomEvents = disableCustomEvents;
             DisableRealtimeUpdates = disableRealtimeUpdates;
+            SseUri = sseUri;
             
             switch (eventRequestChunkSize)
             {
