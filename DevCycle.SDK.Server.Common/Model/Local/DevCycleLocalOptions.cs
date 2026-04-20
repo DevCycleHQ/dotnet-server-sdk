@@ -99,12 +99,12 @@ namespace DevCycle.SDK.Server.Common.Model.Local
             EventsApiUri = eventsApiUri;
             EventsApiSlug = eventsApiSlug;
             CdnCustomHeaders = cdnCustomHeaders;
+            SseUri = sseUri;
             EventsApiCustomHeaders = eventsApiCustomHeaders;
             DisableAutomaticEvents = disableAutomaticEvents;
             DisableCustomEvents = disableCustomEvents;
             DisableRealtimeUpdates = disableRealtimeUpdates;
-            SseUri = sseUri;
-            
+
             switch (eventRequestChunkSize)
             {
                 case < 10:
