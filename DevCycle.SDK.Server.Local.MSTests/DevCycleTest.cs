@@ -624,5 +624,17 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreEqual(1, hook2.FinallyCallCount);
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public async Task TestOpenFeatureProviderWaitsForClientInit()
+        {
+            using var dvcClient = DevCycleTestClient.getTestClient();
+            await OpenFeature.Api.Instance.SetProviderAsync(dvcClient.GetOpenFeatureProvider());
+            // Verify that immediately after SetProviderAsync resolves the provider is ready:
+            // flag evaluation should return a real config value, not the default.
+            var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
+            var result = await OpenFeature.Api.Instance.GetClient().GetBooleanValueAsync("test", false, ctx);
+            Assert.IsTrue(result);
+        }
     }
 }

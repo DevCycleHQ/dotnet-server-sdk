@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Exception;
 using DevCycle.SDK.Server.Common.Model;
@@ -22,6 +23,7 @@ namespace DevCycle.SDK.Server.Common.API
         public abstract string Platform();
         public abstract IDevCycleApiClient GetApiClient();
         public abstract DevCycleProvider GetOpenFeatureProvider();
+        public virtual Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public abstract Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user);
         public abstract Task<Dictionary<string, ReadOnlyVariable<object>>> AllVariables(DevCycleUser user);
         public abstract Task<Variable<T>> Variable<T>(DevCycleUser user, string key, T defaultValue);
