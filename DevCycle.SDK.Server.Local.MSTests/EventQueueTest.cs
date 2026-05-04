@@ -190,5 +190,152 @@ namespace DevCycle.SDK.Server.Local.MSTests
             Assert.AreNotEqual(0, e.Errors.Count);
             Assert.IsFalse(e.Success);
         }
+
+        // ---------------------------------------------------------------
+        // Tests for the FlushMutex leak fix.
+        //
+        // Background: when the WASM bucketing engine traps inside
+        // flushEventQueue (e.g. its event queue state is corrupted from
+        // accumulated AssemblyScript throws), the previous implementation
+        // of FlushEvents() let the exception escape AFTER calling
+        // localBucketing.StartFlush() but BEFORE calling EndFlush(). That
+        // permanently leaked the FlushMutex and every subsequent flush
+        // would deadlock, causing events to accumulate in the WASM heap
+        // indefinitely. The fix wraps StartFlush/EndFlush in try/finally
+        // and swallows WASM exceptions so the mutex is always released.
+        // ---------------------------------------------------------------
+
+        [TestMethod]
+        public async Task FlushEvents_WhenFlushEventQueueThrows_DoesNotPropagate()
+        {
+            var bucketing = new TrappingLocalBucketing(throwOnFlushEventQueue: true);
+            var eventQueue = BuildEventQueueWithFakeBucketing(bucketing);
+
+            // Should NOT throw - the fix swallows the exception so the
+            // mutex outer try/finally can release the FlushMutex.
+            await eventQueue.FlushEvents();
+        }
+
+        [TestMethod]
+        public async Task FlushEvents_WhenFlushEventQueueThrows_StillCallsEndFlush()
+        {
+            var bucketing = new TrappingLocalBucketing(throwOnFlushEventQueue: true);
+            var eventQueue = BuildEventQueueWithFakeBucketing(bucketing);
+
+            await eventQueue.FlushEvents();
+
+            Assert.AreEqual(1, bucketing.StartFlushCount,
+                "StartFlush should have been called exactly once.");
+            Assert.AreEqual(1, bucketing.EndFlushCount,
+                "EndFlush MUST be called even when FlushEventQueue throws, "
+                + "otherwise the FlushMutex semaphore is permanently leaked.");
+        }
+
+        [TestMethod]
+        public async Task FlushEvents_WhenFlushEventQueueThrows_RaisesFailureToSubscribers()
+        {
+            var bucketing = new TrappingLocalBucketing(throwOnFlushEventQueue: true);
+            var eventQueue = BuildEventQueueWithFakeBucketing(bucketing);
+
+            DevCycleEventArgs received = null;
+            var completion = new ManualResetEvent(false);
+            eventQueue.AddFlushedEventsSubscriber((sender, e) =>
+            {
+                received = e;
+                completion.Set();
+            });
+
+            await eventQueue.FlushEvents();
+            completion.WaitOne(TimeSpan.FromSeconds(2));
+
+            Assert.IsNotNull(received, "FlushedEvents subscriber should have been invoked.");
+            Assert.IsFalse(received.Success);
+            Assert.IsTrue(received.Errors.Count > 0,
+                "Errors collection should contain the underlying exception.");
+        }
+
+        [TestMethod]
+        public async Task FlushEvents_AfterFailedFlush_NextFlushDoesNotDeadlock()
+        {
+            // This test would hang forever before the fix: the first flush
+            // throws inside FlushEventQueue, EndFlush never runs, FlushMutex
+            // is leaked, and the second flush blocks on StartFlush forever.
+            var bucketing = new TrappingLocalBucketing(throwOnFlushEventQueue: true);
+            var eventQueue = BuildEventQueueWithFakeBucketing(bucketing);
+
+            await eventQueue.FlushEvents();
+
+            // Now turn off the fault and try again. With the fix, this
+            // completes promptly. Without the fix, this deadlocks.
+            bucketing.ThrowOnFlushEventQueue = false;
+            var second = eventQueue.FlushEvents();
+            var completed = await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(5)));
+
+            Assert.AreSame(second, completed,
+                "Second flush should complete instead of deadlocking on a leaked FlushMutex.");
+            Assert.AreEqual(2, bucketing.StartFlushCount);
+            Assert.AreEqual(2, bucketing.EndFlushCount);
+        }
+
+        private EventQueue BuildEventQueueWithFakeBucketing(TrappingLocalBucketing bucketing)
+        {
+            var sdkKey = $"server-{Guid.NewGuid()}";
+            var loggerFactory = LoggerFactory.Create(b => b.SetMinimumLevel(LogLevel.None));
+            var options = new DevCycleLocalOptions(10, 10);
+
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When("https://*").Respond(HttpStatusCode.Created, "application/json", "{}");
+
+            return new EventQueue(sdkKey, options, loggerFactory, bucketing,
+                new DevCycleRestClientOptions { ConfigureMessageHandler = _ => mockHttp });
+        }
+
+        /// <summary>
+        /// Test fake of <see cref="ILocalBucketing"/> that simulates a WASM
+        /// trap inside <c>FlushEventQueue</c>. Tracks Start/EndFlush call
+        /// counts so tests can assert the FlushMutex was released.
+        /// </summary>
+        private class TrappingLocalBucketing : ILocalBucketing
+        {
+            public bool ThrowOnFlushEventQueue { get; set; }
+            public int StartFlushCount { get; private set; }
+            public int EndFlushCount { get; private set; }
+
+            public TrappingLocalBucketing(bool throwOnFlushEventQueue)
+            {
+                ThrowOnFlushEventQueue = throwOnFlushEventQueue;
+            }
+
+            public string ClientUUID => "test-client-uuid";
+
+            public List<FlushPayload> FlushEventQueue(string sdkKey)
+            {
+                if (ThrowOnFlushEventQueue)
+                {
+                    // Mimics a wasmtime trap surfaced as LocalBucketingException.
+                    throw new LocalBucketingException("Simulated WASM trap during flushEventQueue");
+                }
+                return new List<FlushPayload>();
+            }
+
+            public void StartFlush() { StartFlushCount++; }
+            public void EndFlush() { EndFlushCount++; }
+
+            // Unused on the flush path - return safe defaults / no-ops.
+            public void InitEventQueue(string sdkKey, string options) { }
+            public BucketedUserConfig GenerateBucketedConfig(string sdkKey, string user) =>
+                new BucketedUserConfig();
+            public int EventQueueSize(string sdkKey) => 0;
+            public void QueueEvent(string sdkKey, string user, string eventString) { }
+            public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr) { }
+            public void OnPayloadSuccess(string sdkKey, string payloadId) { }
+            public void OnPayloadFailure(string sdkKey, string payloadId, bool retryable) { }
+            public void StoreConfig(string sdkKey, string config) { }
+            public void SetPlatformData(string platformData) { }
+            public string GetVariable(string sdkKey, string userJSON, string key, TypeEnum variableType, bool shouldTrackEvent) => null;
+            public string GetConfigMetadata(string sdkKey) => null;
+            public byte[] GetVariableForUserProtobuf(byte[] serializedParams) => null;
+            public void SetClientCustomData(string sdkKey, string customData) { }
+        }
     }
 }

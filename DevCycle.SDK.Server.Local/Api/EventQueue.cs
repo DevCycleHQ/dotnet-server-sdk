@@ -64,16 +64,51 @@ namespace DevCycle.SDK.Server.Local.Api
         public virtual async Task FlushEvents()
         {
             localBucketing.StartFlush();
-            var flushPayloads = GetPayloads();
+            try
+            {
+                await FlushEventsInternal();
+            }
+            finally
+            {
+                // Ensure the FlushMutex is always released, even if the WASM
+                // bucketing engine throws inside flushEventQueue or any of
+                // the downstream calls. Without this, a single WASM trap
+                // during a flush would permanently leak the mutex and all
+                // subsequent flushes would deadlock - causing events to
+                // accumulate indefinitely in the WASM heap.
+                localBucketing.EndFlush();
+            }
+        }
+
+        private async Task FlushEventsInternal()
+        {
             var flushResultEvent = new DevCycleEventArgs
             {
                 Success = true
             };
 
+            List<FlushPayload> flushPayloads;
+            try
+            {
+                flushPayloads = GetPayloads();
+            }
+            catch (Exception ex)
+            {
+                // GetPayloads can throw if the WASM bucketing engine traps
+                // (e.g. its event queue state is corrupted, or a flush-path
+                // throw fires inside the AssemblyScript). Surface the
+                // failure to flush subscribers and return cleanly so the
+                // mutex gets released by the outer finally.
+                flushResultEvent.Success = false;
+                flushResultEvent.Errors.Add(ex as DevCycleException
+                    ?? new DevCycleException(new ErrorResponse(ex.Message)));
+                OnFlushedEvents(flushResultEvent);
+                return;
+            }
+
             if (flushPayloads.Count == 0)
             {
                 OnFlushedEvents(flushResultEvent);
-                localBucketing.EndFlush();
                 return;
             }
 
@@ -105,17 +140,27 @@ namespace DevCycle.SDK.Server.Local.Api
                         localBucketing.OnPayloadSuccess(sdkKey, flushPayload.PayloadID);
                     }
                 }
-                catch (DevCycleException ex)
+                catch (Exception ex)
                 {
                     logger.LogError($"DevCycle Error Flushing Events response message: ${ex.Message}");
-                    localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, true);
+                    // Best-effort mark as failure; if this itself throws
+                    // (because the WASM is corrupted), swallow so we still
+                    // get to the outer finally and release the FlushMutex.
+                    try
+                    {
+                        localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, true);
+                    }
+                    catch (Exception markEx)
+                    {
+                        logger.LogError($"DevCycle Error marking payload as failure: ${markEx.Message}");
+                    }
                     flushResultEvent.Success = false;
-                    flushResultEvent.Errors.Add(ex);
+                    flushResultEvent.Errors.Add(ex as DevCycleException
+                        ?? new DevCycleException(new ErrorResponse(ex.Message)));
                 }
             }
 
             OnFlushedEvents(flushResultEvent);
-            localBucketing.EndFlush();
         }
 
         private List<FlushPayload> GetPayloads()
