@@ -27,9 +27,6 @@ public class WASMLocalBucketing : ILocalBucketing
         
     private static readonly SemaphoreSlim WasmMutex = new(1, 1);
     private static readonly SemaphoreSlim FlushMutex = new(1, 1);
-    private static string _clientUuid;
-    private Func<string, string> handleError;
-        
     private readonly Dictionary<string, int> sdkKeyAddresses;
 
     private readonly HashSet<int> pinnedAddresses;
@@ -119,378 +116,292 @@ public class WASMLocalBucketing : ILocalBucketing
     {
         ClientUUID = Guid.NewGuid().ToString();
         WasmMutex.Wait();
-        random = new Random();
-        pinnedAddresses = new HashSet<int>();
-        sdkKeyAddresses = new Dictionary<string, int>();
-            
-        Console.WriteLine("Initializing Local Bucketing");
-        Assembly assembly = typeof(WASMLocalBucketing).GetTypeInfo().Assembly;
-            
-        Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
-        if (wasmResource == null)
+        try
         {
-            throw new ApplicationException("Could not find the bucketing-lib.release.wasm file");
-        }
+            random = new Random();
+            pinnedAddresses = new HashSet<int>();
+            sdkKeyAddresses = new Dictionary<string, int>();
+            Console.WriteLine("Initializing Local Bucketing");
+            Assembly assembly = typeof(WASMLocalBucketing).GetTypeInfo().Assembly;
 
-        wasmEngine = new Engine();
-        wasmModule = Module.FromStream(WASMEngine, "devcycle-local-bucketing", wasmResource);
-        wasmLinker = new Linker(WASMEngine);
-        wasmStore = new Store(WASMEngine);
+            Stream wasmResource = assembly.GetManifestResourceStream("DevCycle.bucketing-lib.release.wasm");
+            if (wasmResource == null)
+            {
+                throw new ApplicationException("Could not find the bucketing-lib.release.wasm file");
+            }
 
-        WASMStore.SetWasiConfiguration(
-            new WasiConfiguration()
-                .WithInheritedStandardOutput()
-                .WithInheritedStandardError()
-        );
+            wasmEngine = new Engine();
+            wasmModule = Module.FromStream(WASMEngine, "devcycle-local-bucketing", wasmResource);
+            wasmLinker = new Linker(WASMEngine);
+            wasmStore = new Store(WASMEngine);
 
-        WASMLinker.DefineWasi();
-        WASMLinker.Define(
-            "env",
-            "abort",
-            Function.FromCallback(WASMStore,
-                (Caller caller, int messagePtr, int filenamePtr, int linenum, int colnum) =>
-                {
-                    var memory = caller.GetMemory("memory");
-                    if (memory is null)
+            WASMStore.SetWasiConfiguration(
+                new WasiConfiguration()
+                    .WithInheritedStandardOutput()
+                    .WithInheritedStandardError()
+            );
+
+            WASMLinker.DefineWasi();
+            WASMLinker.Define(
+                "env",
+                "abort",
+                Function.FromCallback(WASMStore,
+                    (Caller caller, int messagePtr, int filenamePtr, int linenum, int colnum) =>
                     {
-                        throw new InvalidOperationException();
-                    }
+                        var memory = caller.GetMemory("memory");
+                        if (memory is null)
+                        {
+                            throw new InvalidOperationException();
+                        }
 
-                    var message = ReadAssemblyScriptString(memory, messagePtr);
-                    var filename = ReadAssemblyScriptString(memory, filenamePtr);
-                    handleError($"WASM Error: {message} ({filename}:{linenum}:{colnum})");
-                })
-        );
-        WASMLinker.Define(
-            "env",
-            "console.log",
-            Function.FromCallback(WASMStore,
-                (Caller caller, int messagePtr) =>
-                {
-                    var memory = caller.GetMemory("memory");
-                    if (memory is null)
+                        var message = ReadAssemblyScriptString(memory, messagePtr);
+                        var filename = ReadAssemblyScriptString(memory, filenamePtr);
+                        throw new LocalBucketingException($"WASM Error: {message} ({filename}:{linenum}:{colnum})");
+                    })
+            );
+            WASMLinker.Define(
+                "env",
+                "console.log",
+                Function.FromCallback(WASMStore,
+                    (Caller caller, int messagePtr) =>
                     {
-                        throw new InvalidOperationException();
-                    }
+                        var memory = caller.GetMemory("memory");
+                        if (memory is null)
+                        {
+                            throw new InvalidOperationException();
+                        }
 
-                    var message = ReadAssemblyScriptString(memory, messagePtr);
-                    Console.WriteLine(message);
-                })
-        );
+                        var message = ReadAssemblyScriptString(memory, messagePtr);
+                        Console.WriteLine(message);
+                    })
+            );
+
+            WASMLinker.Define(
+                "env",
+                "Date.now",
+                Function.FromCallback(WASMStore,
+                    (Caller _) => Convert.ToDouble(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                )
+            );
+            WASMLinker.Define(
+                "env",
+                "seed",
+                Function.FromCallback(WASMStore,
+                    (Caller _) => (random.NextDouble() * DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                )
+            );
+
+            wasmInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
+            wasmMemory = WASMInstance.GetMemory("memory");
+            if (WASMMemory is null)
+            {
+                throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
+            }
+
+            variableTypeMap.Add(TypeEnum.Boolean, GetGlobalValue<int>("VariableType.Boolean"));
+            variableTypeMap.Add(TypeEnum.Number, GetGlobalValue<int>("VariableType.Number"));
+            variableTypeMap.Add(TypeEnum.String, GetGlobalValue<int>("VariableType.String"));
+            variableTypeMap.Add(TypeEnum.JSON, GetGlobalValue<int>("VariableType.JSON"));
             
-        WASMLinker.Define(
-            "env",
-            "Date.now",
-            Function.FromCallback(WASMStore,
-                (Caller _) => Convert.ToDouble(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-            )
-        );
-        WASMLinker.Define(
-            "env",
-            "seed",
-            Function.FromCallback(WASMStore,
-                (Caller _) => (random.NextDouble() * DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-            )
-        );
-
-        wasmInstance = WASMLinker.Instantiate(WASMStore, WASMModule);
-        wasmMemory = WASMInstance.GetMemory("memory");
-        if (WASMMemory is null)
+            // cache the various functions from WASM
+            pinFunc = GetFunction("__pin");
+            unPinFunc = GetFunction("__unpin");
+            newFunc = GetFunction("__new");
+            collectFunc = GetFunction("__collect");
+            flushEventQueueFunc = GetFunction("flushEventQueue");
+            eventQueueSizeFunc = GetFunction("eventQueueSize");
+            markPayloadSuccessFunc = GetFunction("onPayloadSuccess");
+            queueEventFunc = GetFunction("queueEvent");
+            markPayloadFailureFunc = GetFunction("onPayloadFailure");
+            initEventQueueFunc = GetFunction("initEventQueue");
+            queueAggregateEventFunc = GetFunction("queueAggregateEvent");
+            variableForUserFunc = GetFunction("variableForUser");
+            variableForUserProtobufFunc = GetFunction("variableForUser_PB");
+            setConfigDataFunc = GetFunction("setConfigDataUTF8");
+            setPlatformDataFunc = GetFunction("setPlatformDataUTF8");
+            setClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
+            generateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
+            getConfigMetadataFunc = GetFunction("getConfigMetadata");
+        }
+        finally
         {
-            throw new InvalidOperationException("Could not get memory from WebAssembly Binary.");
+            ReleaseMutex();
         }
-
-        variableTypeMap.Add(TypeEnum.Boolean, GetGlobalValue<int>("VariableType.Boolean"));
-        variableTypeMap.Add(TypeEnum.Number, GetGlobalValue<int>("VariableType.Number"));
-        variableTypeMap.Add(TypeEnum.String, GetGlobalValue<int>("VariableType.String"));
-        variableTypeMap.Add(TypeEnum.JSON, GetGlobalValue<int>("VariableType.JSON"));
-            
-        // cache the various functions from WASM
-        pinFunc = GetFunction("__pin");
-        unPinFunc = GetFunction("__unpin");
-        newFunc = GetFunction("__new");
-        collectFunc = GetFunction("__collect");
-        flushEventQueueFunc = GetFunction("flushEventQueue");
-        eventQueueSizeFunc = GetFunction("eventQueueSize");
-        markPayloadSuccessFunc = GetFunction("onPayloadSuccess");
-        queueEventFunc = GetFunction("queueEvent");
-        markPayloadFailureFunc = GetFunction("onPayloadFailure");
-        initEventQueueFunc = GetFunction("initEventQueue");
-        queueAggregateEventFunc = GetFunction("queueAggregateEvent");
-        variableForUserFunc = GetFunction("variableForUser");
-        variableForUserProtobufFunc = GetFunction("variableForUser_PB");
-        setConfigDataFunc = GetFunction("setConfigDataUTF8");
-        setPlatformDataFunc = GetFunction("setPlatformDataUTF8");
-        setClientCustomDataFunc = GetFunction("setClientCustomDataUTF8");
-        generateBucketedConfigForUserFunc = GetFunction("generateBucketedConfigForUserUTF8");
-        getConfigMetadataFunc = GetFunction("getConfigMetadata");
-        
-        ReleaseMutex();
     }
         
     public void InitEventQueue(string sdkKey, string options)
     {
-        WaitForMutex();
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var clientUUIDAddress = GetParameter(ClientUUID);
-        var optionsAddress = GetParameter(options);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var clientUUIDAddress = GetParameter(ClientUUID);
+            var optionsAddress = GetParameter(options);
 
-        InitEventQueueFunc.Invoke(sdkKeyAddress, clientUUIDAddress, optionsAddress);
-
-        ReleaseMutex();
+            InitEventQueueFunc.Invoke(sdkKeyAddress, clientUUIDAddress, optionsAddress);
+        });
     }
 
     public BucketedUserConfig GenerateBucketedConfig(string sdkKey, string user)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var userAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(user));
-        var result = GenerateBucketedConfigForUserFunc.Invoke(sdkKeyAddress, userAddress);
-        var byteResp = ReadAssemblyScriptByteArray(WASMMemory, (int)result!);
-        var stringResp = Encoding.UTF8.GetString(byteResp);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var userAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(user));
+            var result = GenerateBucketedConfigForUserFunc.Invoke(sdkKeyAddress, userAddress);
+            var byteResp = ReadAssemblyScriptByteArray(WASMMemory, (int)result!);
+            var stringResp = Encoding.UTF8.GetString(byteResp);
             
-        var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
-        config?.Initialize();
+            var config = JsonConvert.DeserializeObject<BucketedUserConfig>(stringResp);
+            config?.Initialize();
 
-        ReleaseMutex();
-        return config;
+            return config;
+        });
     }
 
     public int EventQueueSize(string sdkKey)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-            
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var result = (int)EventQueueSizeFunc.Invoke(sdkKeyAddress);
-
-        ReleaseMutex();
-        return result;
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            return (int)EventQueueSizeFunc.Invoke(sdkKeyAddress);
+        });
     }
 
     public void QueueEvent(string sdkKey, string user, string eventString)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-   
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var userAddress = GetParameterPinned(user);
-        var eventAddress = GetParameter(eventString);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var userAddress = GetParameterPinned(user);
+            var eventAddress = GetParameter(eventString);
 
-        QueueEventFunc.Invoke(sdkKeyAddress, userAddress, eventAddress);
-     
-        ReleaseMutex();
+            QueueEventFunc.Invoke(sdkKeyAddress, userAddress, eventAddress);
+        });
     }
 
     public void QueueAggregateEvent(string sdkKey, string eventString, string variableVariationMapStr)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-            
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var eventAddress = GetParameterPinned(eventString);
-        var variableMapAddress = GetParameter(variableVariationMapStr);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var eventAddress = GetParameterPinned(eventString);
+            var variableMapAddress = GetParameter(variableVariationMapStr);
 
-        QueueAggregateEventFunc.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
-      
-        ReleaseMutex();
+            QueueAggregateEventFunc.Invoke(sdkKeyAddress, eventAddress, variableMapAddress);
+        });
     }
 
     public List<FlushPayload> FlushEventQueue(string sdkKey)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var result = FlushEventQueueFunc.Invoke(sdkKeyAddress);
-        var stringResp = ReadAssemblyScriptString(WASMMemory, (int)result!);
-        var payloads = JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
-
-        ReleaseMutex();
-        return payloads;
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var result = FlushEventQueueFunc.Invoke(sdkKeyAddress);
+            var stringResp = ReadAssemblyScriptString(WASMMemory, (int)result!);
+            return JsonConvert.DeserializeObject<List<FlushPayload>>(stringResp);
+        });
     }
 
     public void OnPayloadSuccess(string sdkKey, string payloadId)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var payloadIdAddress = GetParameter(payloadId);
-        MarkPayloadSuccessFunc.Invoke(sdkKeyAddress, payloadIdAddress);
-
-        ReleaseMutex();
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var payloadIdAddress = GetParameter(payloadId);
+            MarkPayloadSuccessFunc.Invoke(sdkKeyAddress, payloadIdAddress);
+        });
     }
 
     public void OnPayloadFailure(string sdkKey, string payloadId, bool retryable)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var payloadIdAddress = GetParameter(payloadId);
-        MarkPayloadFailureFunc.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
-
-        ReleaseMutex();
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var payloadIdAddress = GetParameter(payloadId);
+            MarkPayloadFailureFunc.Invoke(sdkKeyAddress, payloadIdAddress, retryable ? 1 : 0);
+        });
     }
 
     public void StoreConfig(string sdkKey, string config)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-            
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var configAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(config));
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var configAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(config));
 
-        SetConfigDataFunc.Invoke(sdkKeyAddress, configAddress);
-            
-        ReleaseMutex();
+            SetConfigDataFunc.Invoke(sdkKeyAddress, configAddress);
+        });
     }
 
     public void SetPlatformData(string platformData)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var platformDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(platformData));
-        SetPlatformDataFunc.Invoke(platformDataAddress);
-
-        ReleaseMutex();
+            var platformDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(platformData));
+            SetPlatformDataFunc.Invoke(platformDataAddress);
+        });
     }
 
     public string GetVariable(string sdkKey, string userJSON, string key, TypeEnum variableType, bool shouldTrackEvent)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        var userAddress = GetParameter(userJSON);
-        var keyAddress = GetParameter(key);
-        // convert to the native variable types in the WASM binary
-        int varType = variableTypeMap[variableType];
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var userAddress = GetParameter(userJSON);
+            var keyAddress = GetParameter(key);
+            // convert to the native variable types in the WASM binary
+            int varType = variableTypeMap[variableType];
 
-        var variableAddress = VariableForUserFunc.Invoke(sdkKeyAddress, userAddress, keyAddress, varType, shouldTrackEvent ? 1 : 0);
-        string varJSON = null;
-        if ((int)variableAddress > 0)
-        {
-            varJSON = ReadAssemblyScriptString(WASMMemory, (int)variableAddress!);    
-        }
-            
-        ReleaseMutex();
-        return varJSON;
+            var variableAddress = VariableForUserFunc.Invoke(sdkKeyAddress, userAddress, keyAddress, varType, shouldTrackEvent ? 1 : 0);
+            if ((int)variableAddress > 0)
+            {
+                return ReadAssemblyScriptString(WASMMemory, (int)variableAddress!);
+            }
+
+            return null;
+        });
     }
 
     public string GetConfigMetadata(string sdkKey)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-            
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
 
-        var configMetadataAddress=  GetConfigMetadataFunc.Invoke(sdkKeyAddress);
-        string configMetadata = null;
-        if ((int)configMetadataAddress > 0)
-        {
-            configMetadata = ReadAssemblyScriptString(WASMMemory, (int)configMetadataAddress);
-        }
-           
-        ReleaseMutex();
-        return configMetadata;
+            var configMetadataAddress=  GetConfigMetadataFunc.Invoke(sdkKeyAddress);
+            if ((int)configMetadataAddress > 0)
+            {
+                return ReadAssemblyScriptString(WASMMemory, (int)configMetadataAddress);
+            }
+
+            return null;
+        });
     }
 
     public byte[] GetVariableForUserProtobuf(byte[] serializedParams)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        return WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
+            var paramsAddr = GetUint8ArrayParameter(serializedParams);
+            var variableAddress = VariableForUserProtobufFunc.Invoke(paramsAddr);
 
-        var paramsAddr = GetUint8ArrayParameter(serializedParams);
-        var variableAddress = VariableForUserProtobufFunc.Invoke(paramsAddr);
+            if ((int)variableAddress > 0)
+            {
+                return ReadAssemblyScriptByteArray(WASMMemory, (int)variableAddress!);
+            }
 
-        byte[] varBytes = null;
-        if ((int)variableAddress > 0)
-        {
-            varBytes = ReadAssemblyScriptByteArray(WASMMemory, (int)variableAddress!);
-        }
-
-        ReleaseMutex();
-        return varBytes;
+            return null;
+        });
     }
         
     public void SetClientCustomData(string sdkKey, string customData)
     {
-        WaitForMutex();
-
-        handleError = (message) =>
+        WithWasmMutex(() =>
         {
-            ReleaseMutex();
-            throw new LocalBucketingException(message);
-        };
-        var customDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(customData));
-        var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
-        SetClientCustomDataFunc.Invoke(sdkKeyAddress, customDataAddress);
-
-        ReleaseMutex();
+            var customDataAddress = GetUint8ArrayParameter(Encoding.UTF8.GetBytes(customData));
+            var sdkKeyAddress = GetSDKKeyAddress(sdkKey);
+            SetClientCustomDataFunc.Invoke(sdkKeyAddress, customDataAddress);
+        });
     }
             
     private Function GetFunction(string name)
@@ -641,7 +552,34 @@ public class WASMLocalBucketing : ILocalBucketing
     private void WaitForMutex()
     {
         WasmMutex.Wait();
-        UnpinAll();
+    }
+
+    private void WithWasmMutex(Action action)
+    {
+        WaitForMutex();
+        try
+        {
+            UnpinAll();
+            action();
+        }
+        finally
+        {
+            ReleaseMutex();
+        }
+    }
+
+    private T WithWasmMutex<T>(Func<T> action)
+    {
+        WaitForMutex();
+        try
+        {
+            UnpinAll();
+            return action();
+        }
+        finally
+        {
+            ReleaseMutex();
+        }
     }
 
     private void ReleaseMutex()
