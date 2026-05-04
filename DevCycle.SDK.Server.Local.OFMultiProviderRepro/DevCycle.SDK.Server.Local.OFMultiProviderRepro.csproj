@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Suppress NU1605 (package downgrade warning-as-error) — the SDK csproj
+         pins some packages lower than OpenFeature 2.13 transitively requires;
+         this repro project pins them at the higher versions explicitly below. -->
+    <NoWarn>NU1605</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevCycle.SDK.Server.Common\DevCycle.SDK.Server.Common.csproj" />
+    <ProjectReference Include="..\DevCycle.SDK.Server.Local\DevCycle.SDK.Server.Local.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MultiProvider 2.13.0 requires OpenFeature >= 2.13.0 (same version as DevCycle.SDK.Server.Common) -->
+    <PackageReference Include="OpenFeature" Version="2.13.0" />
+    <PackageReference Include="OpenFeature.Providers.MultiProvider" Version="2.13.0" />
+    <PackageReference Include="RichardSzalay.MockHttp" Version="7.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Text.Json" Version="10.0.0" />
+    <!-- Pin logging abstractions to match what the SDK rebuilds to (10.x from System.Text.Json bump) -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="minimal_no_features_config.json" />
+  </ItemGroup>
+
+</Project>

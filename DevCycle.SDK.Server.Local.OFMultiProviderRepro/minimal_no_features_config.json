@@ -1,0 +1,21 @@
+{
+  "project": {
+    "settings": {
+      "edgeDB": {
+        "enabled": false
+      }
+    },
+    "_id": "000000000000000000000001",
+    "key": "repro-project",
+    "a0_organization": "org_repro"
+  },
+  "environment": {
+    "_id": "000000000000000000000002",
+    "key": "production"
+  },
+  "features": [],
+  "variables": [],
+  "featureVariationMap": {},
+  "variableVariationMap": {},
+  "variableHashes": {}
+}
