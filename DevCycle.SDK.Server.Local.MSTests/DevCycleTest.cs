@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
@@ -231,6 +231,67 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
                 var variable = api.Variable(null, "some_key", true).Result;
             });
+        }
+
+        [TestMethod]
+        public void Variable_NullKey_ThrowsArgumentException()
+        {
+            // Reaching the WASM bucketing engine with a null/empty flag key
+            // triggers an internal abort() and corrupts the WASM heap. Match
+            // the Java/Python SDKs (and Cloud client) by failing fast with a
+            // clear ArgumentException before we ever enter WASM.
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            Assert.Throws<ArgumentException>(() => api.Variable(user, null, true).Result);
+        }
+
+        [TestMethod]
+        public void Variable_EmptyKey_ThrowsArgumentException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            Assert.Throws<ArgumentException>(() => api.Variable(user, "", true).Result);
+        }
+
+        [TestMethod]
+        public async Task VariableAsync_NullKey_ThrowsArgumentException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            await Assert.ThrowsExactlyAsync<ArgumentException>(async () =>
+                await api.VariableAsync(user, null, true));
+        }
+
+        [TestMethod]
+        public async Task VariableAsync_EmptyKey_ThrowsArgumentException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            await Assert.ThrowsExactlyAsync<ArgumentException>(async () =>
+                await api.VariableAsync(user, "", true));
+        }
+
+        [TestMethod]
+        public void Variable_NullDefaultValue_ThrowsArgumentNullException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            Assert.Throws<ArgumentNullException>(() => api.Variable<string>(user, "some_key", null).Result);
+        }
+
+        [TestMethod]
+        public async Task VariableAsync_NullDefaultValue_ThrowsArgumentNullException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
+                await api.VariableAsync<string>(user, "some_key", null));
         }
 
         [TestMethod]
