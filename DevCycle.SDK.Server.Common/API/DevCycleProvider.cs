@@ -24,6 +24,11 @@ namespace DevCycle.SDK.Server.Common.API
             return new Metadata(Client.SdkPlatform);
         }
 
+        public override Task InitializeAsync(EvaluationContext context, CancellationToken cancellationToken = default)
+        {
+            return Client.InitializeAsync(cancellationToken);
+        }
+
         public override async Task<ResolutionDetails<bool>> ResolveBooleanValueAsync(string flagKey, bool defaultValue, EvaluationContext context = null,
             CancellationToken cancellationToken = new CancellationToken())
         {

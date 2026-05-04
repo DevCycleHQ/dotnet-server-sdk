@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using SystemTimer = System.Timers.Timer;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
@@ -73,8 +75,9 @@ namespace DevCycle.SDK.Server.Local.Api
         private readonly EventQueue eventQueue;
         private readonly ILocalBucketing localBucketing;
         private readonly ILogger logger;
-        private readonly Timer timer;
+        private readonly SystemTimer timer;
         private bool closing;
+        private readonly Task initializeTask;
         private DevCycleProvider OpenFeatureProvider { get; }
         private readonly EvalHooksRunner evalHooksRunner;
 
@@ -103,11 +106,11 @@ namespace DevCycle.SDK.Server.Local.Api
                 logger.LogWarning("The config CDN slug is being overriden, please ensure to update the config to v2 according to the config CDN updates documentation.");
 
             }
-            timer = new Timer(dvcLocalOptions.EventFlushIntervalMs);
+            timer = new SystemTimer(dvcLocalOptions.EventFlushIntervalMs);
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
-            Task.Run(async delegate { await this.configManager.InitializeConfigAsync(); });
+            initializeTask = Task.Run(async () => await this.configManager.InitializeConfigAsync());
             OpenFeatureProvider = new DevCycleProvider(this);
         }
 
@@ -257,6 +260,23 @@ namespace DevCycle.SDK.Server.Local.Api
         public override DevCycleProvider GetOpenFeatureProvider()
         {
             return OpenFeatureProvider;
+        }
+
+        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.CanBeCanceled)
+            {
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                using (cancellationToken.Register(() => tcs.TrySetResult(true)))
+                {
+                    var completed = await Task.WhenAny(initializeTask, tcs.Task).ConfigureAwait(false);
+                    if (completed != initializeTask)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            }
+            await initializeTask.ConfigureAwait(false);
         }
 
         public override Task<Dictionary<string, Feature>> AllFeatures(DevCycleUser user)
