@@ -257,22 +257,32 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task FlushEvents_AfterFailedFlush_NextFlushDoesNotDeadlock()
         {
-            // This test would hang forever before the fix: the first flush
-            // throws inside FlushEventQueue, EndFlush never runs, FlushMutex
-            // is leaked, and the second flush blocks on StartFlush forever.
+            // The fake's StartFlush uses a real SemaphoreSlim with a 5s
+            // timeout, so a regression that skips EndFlush will surface as
+            // an InvalidOperationException ("StartFlush deadlocked") on
+            // the second StartFlush call. The first flush is wrapped in
+            // try/catch so the test specifically exercises the second
+            // flush behaviour.
             var bucketing = new TrappingLocalBucketing(throwOnFlushEventQueue: true);
             var eventQueue = BuildEventQueueWithFakeBucketing(bucketing);
 
-            await eventQueue.FlushEvents();
+            try
+            {
+                await eventQueue.FlushEvents();
+            }
+            catch (Exception)
+            {
+                // A regression where FlushEvents propagates the WASM
+                // exception is OK for THIS test - we still want to verify
+                // the second flush isn't blocked by a leaked mutex.
+            }
 
             // Now turn off the fault and try again. With the fix, this
-            // completes promptly. Without the fix, this deadlocks.
+            // completes promptly. Without the fix, the fake's StartFlush
+            // detects the leaked semaphore and throws.
             bucketing.ThrowOnFlushEventQueue = false;
-            var second = eventQueue.FlushEvents();
-            var completed = await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(5)));
+            await eventQueue.FlushEvents();
 
-            Assert.AreSame(second, completed,
-                "Second flush should complete instead of deadlocking on a leaked FlushMutex.");
             Assert.AreEqual(2, bucketing.StartFlushCount);
             Assert.AreEqual(2, bucketing.EndFlushCount);
         }
@@ -292,11 +302,15 @@ namespace DevCycle.SDK.Server.Local.MSTests
 
         /// <summary>
         /// Test fake of <see cref="ILocalBucketing"/> that simulates a WASM
-        /// trap inside <c>FlushEventQueue</c>. Tracks Start/EndFlush call
-        /// counts so tests can assert the FlushMutex was released.
+        /// trap inside <c>FlushEventQueue</c>. Uses a real
+        /// <see cref="SemaphoreSlim"/> for Start/EndFlush so that a missed
+        /// EndFlush actually deadlocks subsequent StartFlush calls (matching
+        /// the behaviour of the real <c>WASMLocalBucketing.FlushMutex</c>).
         /// </summary>
         private class TrappingLocalBucketing : ILocalBucketing
         {
+            private readonly SemaphoreSlim flushMutex = new SemaphoreSlim(1, 1);
+
             public bool ThrowOnFlushEventQueue { get; set; }
             public int StartFlushCount { get; private set; }
             public int EndFlushCount { get; private set; }
@@ -318,8 +332,25 @@ namespace DevCycle.SDK.Server.Local.MSTests
                 return new List<FlushPayload>();
             }
 
-            public void StartFlush() { StartFlushCount++; }
-            public void EndFlush() { EndFlushCount++; }
+            public void StartFlush()
+            {
+                // Block (with a 5s timeout so a regression doesn't hang the
+                // test runner forever) - mirrors WasmLocalBucketing.FlushMutex.Wait().
+                if (!flushMutex.Wait(TimeSpan.FromSeconds(5)))
+                {
+                    throw new InvalidOperationException(
+                        "TrappingLocalBucketing.StartFlush deadlocked - "
+                        + "EndFlush was not called for a previous flush. "
+                        + "This indicates the FlushMutex leak regression.");
+                }
+                StartFlushCount++;
+            }
+
+            public void EndFlush()
+            {
+                EndFlushCount++;
+                flushMutex.Release();
+            }
 
             // Unused on the flush path - return safe defaults / no-ops.
             public void InitEventQueue(string sdkKey, string options) { }

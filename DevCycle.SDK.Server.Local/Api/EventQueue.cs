@@ -140,23 +140,12 @@ namespace DevCycle.SDK.Server.Local.Api
                         localBucketing.OnPayloadSuccess(sdkKey, flushPayload.PayloadID);
                     }
                 }
-                catch (Exception ex)
+                catch (DevCycleException ex)
                 {
                     logger.LogError($"DevCycle Error Flushing Events response message: ${ex.Message}");
-                    // Best-effort mark as failure; if this itself throws
-                    // (because the WASM is corrupted), swallow so we still
-                    // get to the outer finally and release the FlushMutex.
-                    try
-                    {
-                        localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, true);
-                    }
-                    catch (Exception markEx)
-                    {
-                        logger.LogError($"DevCycle Error marking payload as failure: ${markEx.Message}");
-                    }
+                    localBucketing.OnPayloadFailure(sdkKey, flushPayload.PayloadID, true);
                     flushResultEvent.Success = false;
-                    flushResultEvent.Errors.Add(ex as DevCycleException
-                        ?? new DevCycleException(new ErrorResponse(ex.Message)));
+                    flushResultEvent.Errors.Add(ex);
                 }
             }
 
