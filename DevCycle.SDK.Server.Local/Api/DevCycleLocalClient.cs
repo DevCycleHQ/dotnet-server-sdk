@@ -110,7 +110,7 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
-            initializeTask = Task.Run(async () => await this.configManager.InitializeConfigAsync());
+            initializeTask = this.configManager.InitializeConfigAsync();
             OpenFeatureProvider = new DevCycleProvider(this);
         }
 
