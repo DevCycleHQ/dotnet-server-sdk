@@ -1,8 +1,15 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Local.Api;
+using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
+using DevCycle.SDK.Server.Local.ConfigManager;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Environment = System.Environment;
 using System.Collections.Generic;
@@ -628,13 +635,64 @@ namespace DevCycle.SDK.Server.Local.MSTests
         [TestMethod]
         public async Task TestOpenFeatureProviderWaitsForClientInit()
         {
-            using var dvcClient = DevCycleTestClient.getTestClient();
-            await OpenFeature.Api.Instance.SetProviderAsync(dvcClient.GetOpenFeatureProvider());
-            // Verify that immediately after SetProviderAsync resolves the provider is ready:
-            // flag evaluation should return a real config value, not the default.
+            // Gate the config HTTP response so we can control when initialization completes.
+            var configGate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var handler = new GatedHttpMessageHandler(configGate.Task, new string(Fixtures.Config()));
+
+            var localBucketing = new WASMLocalBucketing();
+            var sdkKey = $"dvc_server_{Guid.NewGuid().ToString().Replace('-', '_')}_hash";
+            localBucketing.StoreConfig(sdkKey, new string(Fixtures.Config()));
+
+            var restOptions = new DevCycleRestClientOptions { ConfigureMessageHandler = _ => handler };
+            var configManager = new EnvironmentConfigManager(sdkKey, new DevCycleLocalOptions(),
+                new NullLoggerFactory(), localBucketing, restClientOptions: restOptions);
+
+            using var api = new DevCycleLocalClientBuilder()
+                .SetLocalBucketing(localBucketing)
+                .SetConfigManager(configManager)
+                .SetRestClientOptions(restOptions)
+                .SetOptions(new DevCycleLocalOptions())
+                .SetSDKKey(sdkKey)
+                .SetLogger(new NullLoggerFactory())
+                .Build();
+
+            // SetProviderAsync should block until InitializeAsync completes (i.e., until the
+            // config response is released). Without our InitializeAsync override it returns immediately.
+            var setProviderTask = OpenFeature.Api.Instance.SetProviderAsync(api.GetOpenFeatureProvider());
+
+            Assert.IsFalse(setProviderTask.IsCompleted,
+                "SetProviderAsync should be awaiting client initialization, not already complete");
+
+            // Release the config response — initialization can now finish.
+            configGate.SetResult(true);
+            await setProviderTask;
+
+            // After SetProviderAsync resolves, flag evaluation must return a real config value.
             var ctx = EvaluationContext.Builder().Set("user_id", "j_test").Build();
             var result = await OpenFeature.Api.Instance.GetClient().GetBooleanValueAsync("test", false, ctx);
             Assert.IsTrue(result);
+        }
+
+        private sealed class GatedHttpMessageHandler : HttpMessageHandler
+        {
+            private readonly Task _gate;
+            private readonly string _responseBody;
+
+            public GatedHttpMessageHandler(Task gate, string responseBody)
+            {
+                _gate = gate;
+                _responseBody = responseBody;
+            }
+
+            protected override async Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                await _gate.ConfigureAwait(false);
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(_responseBody, Encoding.UTF8, "application/json")
+                };
+            }
         }
     }
 }
