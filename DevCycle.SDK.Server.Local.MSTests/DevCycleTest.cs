@@ -285,6 +285,16 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
+        public async Task VariableAsync_NullDefaultValue_ThrowsArgumentNullException()
+        {
+            using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
+            var user = new DevCycleUser("test_user");
+
+            await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
+                await api.VariableAsync<string>(user, "some_key", null));
+        }
+
+        [TestMethod]
         public void User_NullUserId_ThrowsException()
         {
             Assert.Throws<ArgumentException>(() => { _ = new DevCycleUser(); });
