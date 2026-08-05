@@ -34,7 +34,10 @@ namespace DevCycle.SDK.Server.Common.Model
 
         public static DevCycleEvent FromTrackingEventDetails(TrackingEventDetails trackingEventDetails)
         {
-            var ret = new DevCycleEvent();
+            // Type is required by the constructor, and is set by the caller from the OpenFeature
+            // tracking event name once this event has been built. Passing an empty string keeps
+            // the constructor's null check from rejecting the placeholder.
+            var ret = new DevCycleEvent(string.Empty);
             var metadata = new Dictionary<string, object>();
             ret.Value = trackingEventDetails.Value ?? 0;
             foreach (var keyValuePair in trackingEventDetails.AsDictionary())

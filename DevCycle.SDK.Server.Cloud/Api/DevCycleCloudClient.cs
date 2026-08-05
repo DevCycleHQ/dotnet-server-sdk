@@ -44,7 +44,7 @@ namespace DevCycle.SDK.Server.Cloud.Api
             apiClient = new DevCycleApiClient(sdkKey, restClientOptions);
             logger = loggerFactory.CreateLogger<DevCycleCloudClient>();
             this.options = options != null ? (DevCycleCloudOptions)options : new DevCycleCloudOptions();
-            OpenFeatureProvider = new DevCycleProvider(this);
+            OpenFeatureProvider = new DevCycleProvider(this, logger);
             evalHooksRunner = new EvalHooksRunner(logger, this.options.EvalHooks);
         }
 
