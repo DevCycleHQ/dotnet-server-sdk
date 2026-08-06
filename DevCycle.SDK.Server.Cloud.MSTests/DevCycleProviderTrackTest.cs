@@ -22,7 +22,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         private static readonly TimeSpan LogWaitTimeout = TimeSpan.FromSeconds(5);
 
         [TestMethod]
-        public void Track_WhenClientTrackThrows_DoesNotThrowAndLogsError()
+        public void Track_WhenClientTrackThrows_DoesNotThrowAndLogsWarning()
         {
             var logger = new CapturingLogger();
             var client = new ThrowingTrackClient(new InvalidOperationException("track boom"));
@@ -32,14 +32,14 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             provider.Track("my-event", context, TrackingEventDetails.Empty);
 
-            var entry = WaitForError(logger);
-            Assert.IsNotNull(entry, "expected a logged error for the failed tracking call");
+            var entry = WaitForWarning(logger);
+            Assert.IsNotNull(entry, "expected a logged warning for the failed tracking call");
             StringAssert.Contains(entry.Message, "my-event");
             Assert.IsInstanceOfType(entry.Exception, typeof(InvalidOperationException));
         }
 
         [TestMethod]
-        public void Track_WithNullEvaluationContext_DoesNotThrowAndLogsError()
+        public void Track_WithNullEvaluationContext_DoesNotThrowAndLogsWarning()
         {
             var logger = new CapturingLogger();
             var client = new RecordingTrackClient();
@@ -47,13 +47,13 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             provider.Track("my-event", null, TrackingEventDetails.Empty);
 
-            var entry = WaitForError(logger);
-            Assert.IsNotNull(entry, "expected a logged error for the null evaluation context");
+            var entry = WaitForWarning(logger);
+            Assert.IsNotNull(entry, "expected a logged warning for the null evaluation context");
             Assert.AreEqual(0, client.CallCount, "client should not be called when context conversion fails");
         }
 
         [TestMethod]
-        public void Track_WithContextMissingTargetingKey_DoesNotThrowAndLogsError()
+        public void Track_WithContextMissingTargetingKey_DoesNotThrowAndLogsWarning()
         {
             var logger = new CapturingLogger();
             var client = new RecordingTrackClient();
@@ -63,13 +63,13 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             provider.Track("my-event", context, TrackingEventDetails.Empty);
 
-            var entry = WaitForError(logger);
-            Assert.IsNotNull(entry, "expected a logged error for the missing targeting key");
+            var entry = WaitForWarning(logger);
+            Assert.IsNotNull(entry, "expected a logged warning for the missing targeting key");
             Assert.AreEqual(0, client.CallCount, "client should not be called when context conversion fails");
         }
 
         [TestMethod]
-        public void Track_WithNullTrackingEventDetails_DoesNotThrowAndLogsError()
+        public void Track_WithNullTrackingEventDetails_DoesNotThrowAndLogsWarning()
         {
             var logger = new CapturingLogger();
             var client = new RecordingTrackClient();
@@ -79,8 +79,8 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
 
             provider.Track("my-event", context, null);
 
-            var entry = WaitForError(logger);
-            Assert.IsNotNull(entry, "expected a logged error for the null tracking event details");
+            var entry = WaitForWarning(logger);
+            Assert.IsNotNull(entry, "expected a logged warning for the null tracking event details");
             Assert.AreEqual(0, client.CallCount, "client should not be called when event conversion fails");
         }
 
@@ -113,13 +113,13 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             Assert.IsTrue(WaitFor(() => client.CallCount == 1), "expected the client to be invoked");
             Assert.AreEqual("my-event", client.LastEvent.Type);
             Assert.AreEqual("user-1", client.LastUser.UserId);
-            Assert.AreEqual(0, logger.Entries.Count, "no errors expected on the success path");
+            Assert.AreEqual(0, logger.Entries.Count, "no warnings expected on the success path");
         }
 
-        private static LogEntry WaitForError(CapturingLogger logger)
+        private static LogEntry WaitForWarning(CapturingLogger logger)
         {
             WaitFor(() => logger.Entries.Count > 0);
-            return logger.Entries.FirstOrDefault(entry => entry.Level == LogLevel.Error);
+            return logger.Entries.FirstOrDefault(entry => entry.Level == LogLevel.Warning);
         }
 
         private static bool WaitFor(Func<bool> condition)

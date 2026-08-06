@@ -96,7 +96,7 @@ namespace DevCycle.SDK.Server.Common.API
                 }
                 catch (System.Exception ex)
                 {
-                    logger?.LogError(ex, "Failed to track OpenFeature event {EventName}", trackingEventName);
+                    logger?.LogWarning(ex, "Failed to track OpenFeature event {EventName}", trackingEventName);
                 }
             });
         }
