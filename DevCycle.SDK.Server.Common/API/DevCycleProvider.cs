@@ -8,6 +8,9 @@ using Newtonsoft.Json.Linq;
 using OpenFeature;
 using OpenFeature.Constant;
 using OpenFeature.Model;
+// DevCycle.SDK.Server.Common has a child namespace named Exception, which shadows the type here,
+// so System.Exception needs an alias to be referenced by a simple name.
+using SysException = System.Exception;
 
 namespace DevCycle.SDK.Server.Common.API
 {
@@ -55,7 +58,7 @@ namespace DevCycle.SDK.Server.Common.API
             CancellationToken cancellationToken = new CancellationToken())
         {
             if (!defaultValue.IsStructure)
-                throw new System.Exception("Cannot call ResolveStructureValue with non-structure Value's");
+                throw new SysException("Cannot call ResolveStructureValue with non-structure Value's");
             var jsonString = JsonSerializer.Serialize(defaultValue,
                 new JsonSerializerOptions() { Converters = { new OpenFeatureValueJsonConverter() } });
 
@@ -94,7 +97,7 @@ namespace DevCycle.SDK.Server.Common.API
                     e.Type = trackingEventName;
                     await Client.Track(DevCycleUser.FromEvaluationContext(evaluationContext), e);
                 }
-                catch (System.Exception ex)
+                catch (SysException ex)
                 {
                     logger?.LogWarning(ex, "Failed to track OpenFeature event {EventName}", trackingEventName);
                 }

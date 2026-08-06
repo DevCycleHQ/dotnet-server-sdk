@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.API;
 using DevCycle.SDK.Server.Common.Model;
@@ -128,7 +129,7 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
             while (stopwatch.Elapsed < LogWaitTimeout)
             {
                 if (condition()) return true;
-                Task.Delay(10).Wait();
+                Thread.Sleep(10);
             }
 
             return condition();
