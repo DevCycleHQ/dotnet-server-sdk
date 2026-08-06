@@ -86,6 +86,24 @@ namespace DevCycle.SDK.Server.Cloud.MSTests
         }
 
         [TestMethod]
+        public void Track_WithNullEventName_DoesNotThrowAndLogsWarning()
+        {
+            var logger = new CapturingLogger();
+            var client = new RecordingTrackClient();
+            var provider = new DevCycleProvider(client, logger);
+
+            var context = EvaluationContext.Builder().SetTargetingKey("user-1").Build();
+
+            // DevCycleEvent requires a type, so a null event name must be rejected rather than
+            // sent to the client as a blank type.
+            provider.Track(null, context, TrackingEventDetails.Empty);
+
+            var entry = WaitForWarning(logger);
+            Assert.IsNotNull(entry, "expected a logged warning for the null event name");
+            Assert.AreEqual(0, client.CallCount, "client should not be called when the event name is missing");
+        }
+
+        [TestMethod]
         public void Track_WithNullLogger_DoesNotThrow()
         {
             var client = new ThrowingTrackClient(new InvalidOperationException("track boom"));

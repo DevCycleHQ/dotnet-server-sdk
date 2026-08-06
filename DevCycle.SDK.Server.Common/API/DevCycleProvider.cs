@@ -93,8 +93,7 @@ namespace DevCycle.SDK.Server.Common.API
             {
                 try
                 {
-                    var e = DevCycleEvent.FromTrackingEventDetails(trackingEventDetails);
-                    e.Type = trackingEventName;
+                    var e = DevCycleEvent.FromTrackingEventDetails(trackingEventDetails, trackingEventName);
                     await Client.Track(DevCycleUser.FromEvaluationContext(evaluationContext), e);
                 }
                 catch (SysException ex)
