@@ -129,7 +129,9 @@ namespace DevCycle.SDK.Server.Common.Model
 
             try
             {
-                var baseType = variableValue.GetType();
+                // A null default value is legitimate for JSON variables (and nullable strings),
+                // so fall back to the declared type rather than dereferencing the value.
+                var baseType = variableValue?.GetType() ?? typeof(T);
 
                 if (baseType == typeof(string))
                 {

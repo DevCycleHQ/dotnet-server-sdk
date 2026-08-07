@@ -335,11 +335,6 @@ namespace DevCycle.SDK.Server.Local.Api
                 throw new ArgumentException("key cannot be null or empty");
             }
 
-            if (defaultValue == null)
-            {
-                throw new ArgumentNullException(nameof(defaultValue));
-            }
-
             if (!configManager.Initialized)
             {
                 logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
@@ -402,11 +397,6 @@ namespace DevCycle.SDK.Server.Local.Api
             if (string.IsNullOrEmpty(key))
             {
                 throw new ArgumentException("key cannot be null or empty");
-            }
-
-            if (defaultValue == null)
-            {
-                throw new ArgumentNullException(nameof(defaultValue));
             }
 
             if (!configManager.Initialized)

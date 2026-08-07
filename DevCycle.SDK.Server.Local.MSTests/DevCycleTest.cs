@@ -4,6 +4,7 @@ using DevCycle.SDK.Server.Local.Api;
 using DevCycle.SDK.Server.Common.Model;
 using DevCycle.SDK.Server.Common.Model.Local;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using Environment = System.Environment;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -276,22 +277,27 @@ namespace DevCycle.SDK.Server.Local.MSTests
         }
 
         [TestMethod]
-        public void Variable_NullDefaultValue_ThrowsArgumentNullException()
+        public async Task Variable_NullJsonDefaultValue_IsAllowed()
         {
+            // A null default is legitimate for JSON variables, so the key validation
+            // above must not be extended to defaultValue.
             using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             var user = new DevCycleUser("test_user");
 
-            Assert.Throws<ArgumentNullException>(() => api.Variable<string>(user, "some_key", null).Result);
+            var variable = await api.Variable<JObject>(user, "some_key", null);
+
+            Assert.IsNotNull(variable);
         }
 
         [TestMethod]
-        public async Task VariableAsync_NullDefaultValue_ThrowsArgumentNullException()
+        public async Task VariableAsync_NullJsonDefaultValue_IsAllowed()
         {
             using DevCycleLocalClient api = DevCycleTestClient.getTestClient();
             var user = new DevCycleUser("test_user");
 
-            await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () =>
-                await api.VariableAsync<string>(user, "some_key", null));
+            var variable = await api.VariableAsync<JObject>(user, "some_key", null);
+
+            Assert.IsNotNull(variable);
         }
 
         [TestMethod]
