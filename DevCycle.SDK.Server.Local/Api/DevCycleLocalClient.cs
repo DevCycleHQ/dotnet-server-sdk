@@ -110,7 +110,10 @@ namespace DevCycle.SDK.Server.Local.Api
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
-            initializeTask = this.configManager.InitializeConfigAsync();
+            // Dispatched via Task.Run so the initial config fetch never continues on the
+            // constructing thread's SynchronizationContext. Callers that block on
+            // InitializeAsync from a UI or legacy ASP.NET thread would otherwise deadlock.
+            initializeTask = Task.Run(() => this.configManager.InitializeConfigAsync());
             OpenFeatureProvider = new DevCycleProvider(this, logger);
         }
 
