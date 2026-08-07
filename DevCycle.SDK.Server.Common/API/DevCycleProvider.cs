@@ -3,20 +3,26 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DevCycle.SDK.Server.Common.Model;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OpenFeature;
 using OpenFeature.Constant;
 using OpenFeature.Model;
+// DevCycle.SDK.Server.Common has a child namespace named Exception, which shadows the type here,
+// so System.Exception needs an alias to be referenced by a simple name.
+using SysException = System.Exception;
 
 namespace DevCycle.SDK.Server.Common.API
 {
     public class DevCycleProvider : FeatureProvider
     {
         private DevCycleBaseClient Client { get; }
+        private readonly ILogger logger;
 
-        public DevCycleProvider(DevCycleBaseClient client)
+        public DevCycleProvider(DevCycleBaseClient client, ILogger logger = null)
         {
             Client = client;
+            this.logger = logger;
         }
 
         public override Metadata GetMetadata()
@@ -52,7 +58,7 @@ namespace DevCycle.SDK.Server.Common.API
             CancellationToken cancellationToken = new CancellationToken())
         {
             if (!defaultValue.IsStructure)
-                throw new System.Exception("Cannot call ResolveStructureValue with non-structure Value's");
+                throw new SysException("Cannot call ResolveStructureValue with non-structure Value's");
             var jsonString = JsonSerializer.Serialize(defaultValue,
                 new JsonSerializerOptions() { Converters = { new OpenFeatureValueJsonConverter() } });
 
@@ -73,12 +79,28 @@ namespace DevCycle.SDK.Server.Common.API
             return Task.CompletedTask;
         }
 
-        public override async void Track(string trackingEventName, EvaluationContext evaluationContext = null,
+        /// <summary>
+        /// Tracks an event against the DevCycle client. The OpenFeature tracking API is
+        /// fire-and-forget and returns void, so the work is dispatched to the thread pool and
+        /// any failure is logged rather than surfaced to the caller. This must never be
+        /// <c>async void</c>: an exception escaping an <c>async void</c> method is rethrown on
+        /// the thread pool and terminates the host process.
+        /// </summary>
+        public override void Track(string trackingEventName, EvaluationContext evaluationContext = null,
             TrackingEventDetails trackingEventDetails = null)
         {
-            var e = DevCycleEvent.FromTrackingEventDetails(trackingEventDetails);
-            e.Type = trackingEventName;
-            await Client.Track(DevCycleUser.FromEvaluationContext(evaluationContext), e);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var e = DevCycleEvent.FromTrackingEventDetails(trackingEventDetails, trackingEventName);
+                    await Client.Track(DevCycleUser.FromEvaluationContext(evaluationContext), e);
+                }
+                catch (SysException ex)
+                {
+                    logger?.LogWarning(ex, "Failed to track OpenFeature event {EventName}", trackingEventName);
+                }
+            });
         }
 
         private async Task<ResolutionDetails<T>> EvaluateDevCycle<T>(string flagKey, T defaultValue,
