@@ -103,11 +103,6 @@ namespace DevCycle.SDK.Server.Cloud.Api
                 throw new ArgumentException("key cannot be null or empty");
             }
 
-            if (defaultValue == null)
-            {
-                throw new ArgumentNullException(nameof(defaultValue));
-            }
-
             AddDefaults(user);
 
             string lowerKey = key.ToLower();

@@ -330,6 +330,11 @@ namespace DevCycle.SDK.Server.Local.Api
         {
             var requestUser = new DevCyclePopulatedUser(user);
 
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentException("key cannot be null or empty");
+            }
+
             if (!configManager.Initialized)
             {
                 logger.LogWarning("Variable called before DevCycleClient has initialized, returning default value");
@@ -388,6 +393,11 @@ namespace DevCycle.SDK.Server.Local.Api
         public async Task<Variable<T>> VariableAsync<T>(DevCycleUser user, string key, T defaultValue)
         {
             var requestUser = new DevCyclePopulatedUser(user);
+
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentException("key cannot be null or empty");
+            }
 
             if (!configManager.Initialized)
             {
