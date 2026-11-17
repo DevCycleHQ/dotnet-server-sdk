@@ -1,31 +1,56 @@
 name: Release
+
+# NuGet trusted publishing is tied to this workflow file, so release-please and
+# the publish job both live here.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      version-increment-type:
-        description: "Which part of the version to increment:"
-        required: true
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
-        default: "patch"
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      local_release_created: ${{ steps.release.outputs.release_created }}
+      local_tag_name: ${{ steps.release.outputs.tag_name }}
+      cloud_release_created: ${{ steps.release.outputs['DevCycle.SDK.Server.Cloud--release_created'] }}
+      cloud_tag_name: ${{ steps.release.outputs['DevCycle.SDK.Server.Cloud--tag_name'] }}
+      common_release_created: ${{ steps.release.outputs['DevCycle.SDK.Server.Common--release_created'] }}
+      common_tag_name: ${{ steps.release.outputs['DevCycle.SDK.Server.Common--tag_name'] }}
+    steps:
+      # Uses GITHUB_TOKEN, so CI does not run on the release PR by itself.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+
   publish:
     name: build, pack & publish
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      # All packages released together come from the same release PR merge commit.
       - uses: actions/checkout@v7
         with:
-          token: ${{ secrets.AUTOMATION_USER_TOKEN }}
-          fetch-depth: 0
+          ref: ${{ needs.release-please.outputs.local_tag_name || needs.release-please.outputs.cloud_tag_name || needs.release-please.outputs.common_tag_name }}
       # Get a short-lived NuGet API key
-      - name: NuGet login 
+      - name: NuGet login
         uses: NuGet/login@v1
         id: login
         with:
@@ -35,65 +60,14 @@ jobs:
         with:
           secrets_map: '{}'
           aws_account_id: '134377926370'
-      - name: Set Git User Config
-        run: |
-          git config --global user.email "foundation-admin@devcycle.com"
-          git config --global user.name "DevCycle Automation"
-      - name: Install xq
-        run: |
-          curl -sSL https://bit.ly/install-xq | sudo bash
-      - name: Get current version of Cloud SDK
-        id: cloud-version
-        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj)" >> "$GITHUB_OUTPUT"
-      - name: Get current version of Common Library
-        id: common-version
-        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj)" >> "$GITHUB_OUTPUT"
-      - name: Get current version of Local SDK
-        id: local-version
-        run: echo "version=$(xq -x //Project/PropertyGroup/PackageVersion DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj)" >> "$GITHUB_OUTPUT"
-      - name: Bump Cloud Version
-        id: semverbump-cloud
-        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
-        with:
-          version: ${{ steps.cloud-version.outputs.version }}
-      - name: Bump Common Version
-        id: semverbump-common
-        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
-        with:
-          version: ${{ steps.common-version.outputs.version }}
-      - name: Bump Local Version
-        id: semverbump-local
-        uses: WyriHaximus/github-action-next-semvers@18aa9ed4152808ab99b88d71f5481e41f8d89930
-        with:
-          version: ${{ steps.local-version.outputs.version }}
-      - name: Replace the versions for all SDKs (major)
-        if: ${{ github.event.inputs.version-increment-type == 'major' }}
-        run: |
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.major }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.major }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.major }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
-      - name: Replace the versions for all SDKs (minor)
-        if: ${{ github.event.inputs.version-increment-type == 'minor' }}
-        run: |
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.minor }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.minor }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.minor }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
-      - name: Replace the versions for all SDKs (patch)
-        if: ${{ github.event.inputs.version-increment-type == 'patch' }}
-        run: |
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-cloud.outputs.patch }}|g" DevCycle.SDK.Server.Cloud/DevCycle.SDK.Server.Cloud.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-common.outputs.patch }}|g" DevCycle.SDK.Server.Common/DevCycle.SDK.Server.Common.csproj
-          sed -E -i "s|<(.*)Version>[0-9]+\.[0-9]+\.[0-9]|<\1Version>${{ steps.semverbump-local.outputs.patch }}|g" DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj
-      - name: Commit and Push Version Bumps
-        run: |
-          git add .
-          git commit -m "Version Bumping"
-          git push -u origin main
       - name: Package
         run: dotnet build -c Release
       - name: Publish Local to NuGet
+        if: needs.release-please.outputs.local_release_created == 'true'
         run: dotnet nuget push DevCycle.SDK.Server.Local/bin/Release/DevCycle.SDK.Server.Local.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Cloud to NuGet
+        if: needs.release-please.outputs.cloud_release_created == 'true'
         run: dotnet nuget push DevCycle.SDK.Server.Cloud/bin/Release/DevCycle.SDK.Server.Cloud.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
       - name: Publish Common to NuGet
+        if: needs.release-please.outputs.common_release_created == 'true'
         run: dotnet nuget push DevCycle.SDK.Server.Common/bin/Release/DevCycle.SDK.Server.Common.*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate

@@ -12,17 +12,17 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <RootNamespace>DevCycle</RootNamespace>
-    <Version>4.10.0</Version>
-    <ReleaseVersion>4.10.0</ReleaseVersion>
+    <Version>4.10.0</Version> <!-- x-release-please-version -->
+    <ReleaseVersion>4.10.0</ReleaseVersion> <!-- x-release-please-version -->
     <Copyright>2022</Copyright>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Owners>DevCycle</Owners>
     <PackageProjectUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</PackageProjectUrl>
     <Title>.NET Server Local Bucketing SDK for DevCycle</Title>
-    <PackageVersion>4.10.0</PackageVersion>
-    <AssemblyVersion>4.10.0</AssemblyVersion>
-    <FileVersion>4.10.0</FileVersion>
+    <PackageVersion>4.10.0</PackageVersion> <!-- x-release-please-version -->
+    <AssemblyVersion>4.10.0</AssemblyVersion> <!-- x-release-please-version -->
+    <FileVersion>4.10.0</FileVersion> <!-- x-release-please-version -->
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <RepositoryUrl>https://github.com/DevCycleHQ/dotnet-server-sdk</RepositoryUrl>

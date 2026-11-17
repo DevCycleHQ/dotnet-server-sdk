@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "b099bc210e418bceef64a7adb1269f83466e6ff4",
+  "release-type": "simple",
+  "include-component-in-tag": true,
+  "include-v-in-tag": false,
+  "tag-separator": "@",
+  "packages": {
+    ".": {
+      "component": "local-sdk",
+      "changelog-path": "DevCycle.SDK.Server.Local/CHANGELOG.md",
+      "exclude-paths": [
+        "DevCycle.SDK.Server.Cloud",
+        "DevCycle.SDK.Server.Cloud.Example",
+        "DevCycle.SDK.Server.Cloud.MSTests"
+      ],
+      "extra-files": [
+        "DevCycle.SDK.Server.Local/DevCycle.SDK.Server.Local.csproj"
+      ]
+    },
+    "DevCycle.SDK.Server.Cloud": {
+      "component": "cloud-sdk",
+      "extra-files": [
+        "DevCycle.SDK.Server.Cloud.csproj"
+      ]
+    },
+    "DevCycle.SDK.Server.Common": {
+      "component": "common",
+      "extra-files": [
+        "DevCycle.SDK.Server.Common.csproj"
+      ]
+    }
+  }
+}

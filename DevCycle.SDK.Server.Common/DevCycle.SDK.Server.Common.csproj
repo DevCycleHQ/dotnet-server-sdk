@@ -6,9 +6,9 @@
         <LangVersion>latest</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>DevCycle</Authors>
-        <PackageVersion>3.10.0</PackageVersion>
-        <AssemblyVersion>3.10.0</AssemblyVersion>
-        <FileVersion>3.10.0</FileVersion>
+        <PackageVersion>3.10.0</PackageVersion> <!-- x-release-please-version -->
+        <AssemblyVersion>3.10.0</AssemblyVersion> <!-- x-release-please-version -->
+        <FileVersion>3.10.0</FileVersion> <!-- x-release-please-version -->
         <Title>DevCycle.SDK.Server.Common</Title>
         <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
         <PackageReadmeFile>README.md</PackageReadmeFile>
