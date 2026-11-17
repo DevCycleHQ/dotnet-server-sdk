@@ -30,12 +30,5 @@
         "DevCycle.SDK.Server.Common.csproj"
       ]
     }
-  },
-  "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "cloud-sdk",
-      "components": ["cloud-sdk", "common"]
-    }
-  ]
+  }
 }
